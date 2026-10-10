@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>海岛奇兵雕刻选择</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#121821; --card:#1b2430; --card2:#222d3c; --line:#2c3848;
+  --tx:#e8edf3; --mut:#8b98a9; --mut2:#61707f;
+  --gold:#e3a84b; --gold-d:#b9822f;
+  --g:#43d17a; --b:#4cc3f5; --r:#ff7043; --p:#9e2f85;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0}
+html,body{height:100%}
+body{background:#0b0f15;color:var(--tx);
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  display:flex;justify-content:center}
+.app{width:100%;max-width:430px;height:100dvh;overflow:hidden;display:flex;flex-direction:column;
+  background:var(--bg);position:relative;box-shadow:0 0 40px rgba(0,0,0,.5)}
+.topbar{display:flex;align-items:center;gap:10px;padding:14px 16px;
+  padding-top:calc(14px + env(safe-area-inset-top));flex:none;
+  background:rgba(18,24,33,.92);border-bottom:1px solid var(--line)}
+.topbar h1{font-size:16px;font-weight:600;flex:1}
+.topbar .sub{font-size:11px;color:var(--mut)}
+.screen{display:none;flex-direction:column;flex:1;min-height:0}
+.screen.active{display:flex}
+.content{flex:1;overflow-y:auto;padding:14px 16px 16px;-webkit-overflow-scrolling:touch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h3{font-size:12px;color:var(--mut);font-weight:600;margin-bottom:10px;letter-spacing:.3px}
+.dots{display:flex;gap:6px;align-items:center}
+.cdot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.c-g{background:var(--g)}.c-b{background:var(--b)}.c-r{background:var(--r)}.c-p{background:var(--p)}
+.duo{display:flex;gap:10px}
+.duo .card{flex:1;margin-bottom:12px}
+.seq{display:flex;gap:7px;margin-top:4px;min-height:34px;align-items:center;flex-wrap:wrap}
+.tile{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:14px;color:#0c1117}
+.t-g{background:var(--g)}.t-b{background:var(--b)}.t-r{background:var(--r)}.t-p{background:var(--p)}
+.efx{font-size:11px;color:var(--mut);margin-top:7px;line-height:1.5}
+.efx b{color:var(--tx);font-weight:600}
+.gtime{font-size:10.5px;color:var(--mut2);margin-top:5px}
+.gempty{color:var(--mut2);font-size:12px}
+.opt{display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--line);
+  border-radius:13px;padding:12px;margin-bottom:10px;cursor:pointer;transition:.13s;width:100%;text-align:left;color:var(--tx)}
+.opt:active{transform:scale(.99)}
+.opt.sel{border-color:var(--gold);background:linear-gradient(180deg,#26303f,#1d2735)}
+.opt .tiles{display:flex;gap:5px;flex-wrap:wrap}
+.opt .mini{width:26px;height:26px;border-radius:7px;font-size:12px;color:#0c1117;
+  display:flex;align-items:center;justify-content:center;font-weight:700}
+.opt .meta{flex:1;min-width:0}
+.opt .meta .t{font-size:13px;font-weight:600}
+.opt .cost{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap}
+.opt .cost span{font-size:11px;color:var(--mut);display:flex;align-items:center;gap:4px}
+.radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none}
+.opt.sel .radio{border:5px solid var(--gold)}
+.confirm{width:100%;border:none;border-radius:11px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;
+  background:var(--gold);color:#1a1305;display:none;align-items:center;justify-content:center;gap:8px;margin-bottom:12px}
+.confirm.show{display:flex}
+.opbar{flex:none;display:flex;background:rgba(20,27,37,.98);border-top:1px solid var(--line);
+  padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+.opbtn{flex:1;border:none;background:none;color:var(--mut2);display:flex;flex-direction:column;
+  align-items:center;gap:2px;padding:4px 0;font-size:9.5px;cursor:pointer}
+.opbtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8}
+.opbtn.on{color:var(--gold)}
+.tabbar{flex:none;display:flex;background:rgba(20,27,37,.98);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;border:none;background:none;color:var(--mut2);padding:7px 0 6px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;cursor:pointer}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+.tab.on{color:var(--gold)}
+.seg{display:flex;background:var(--card2);border-radius:10px;padding:3px;margin-bottom:14px}
+.seg button{flex:1;border:none;background:none;color:var(--mut);padding:8px 4px;border-radius:8px;
+  font-size:12.5px;cursor:pointer}
+.seg button.on{background:var(--gold);color:#1a1305;font-weight:700}
+.pane{display:none}.pane.on{display:block}
+.choice{display:flex;align-items:center;gap:11px;width:100%;background:var(--card2);border:1.5px solid transparent;
+  border-radius:11px;padding:11px 12px;margin-bottom:8px;color:var(--tx);cursor:pointer;text-align:left;font-size:13.5px}
+.choice.on{border-color:var(--gold)}
+.choice .rd{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);margin-left:auto;flex:none}
+.choice.on .rd{border:5px solid var(--gold)}
+.choice small{display:block;color:var(--mut);font-size:11px;margin-top:2px}
+.cinput{display:flex;align-items:center;gap:10px;background:var(--card2);border-radius:11px;padding:10px 12px;margin-bottom:8px}
+.cinput label{font-size:13px;display:flex;align-items:center;gap:8px;flex:1}
+.cinput input{width:90px;background:#10161e;border:1px solid var(--line);border-radius:8px;color:var(--tx);
+  font-size:16px;padding:7px 9px;text-align:right;font-variant-numeric:tabular-nums}
+.hday{font-size:11px;color:var(--mut2);margin:14px 2px 7px}
+.hitem{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
+  border-radius:11px;padding:11px 12px;margin-bottom:8px}
+.hitem .n{font-size:11px;color:var(--mut2);width:34px}
+.hitem .nm{flex:1;font-size:13px}
+.hitem .nm small{display:block;color:var(--mut);font-size:10.5px;margin-top:3px;font-weight:400}
+.hitem .tm{font-size:11px;color:var(--mut)}
+.about-hero{text-align:center;padding:18px 0 6px}
+.logo{width:64px;height:64px;border-radius:16px;margin:0 auto 10px;
+  background:linear-gradient(145deg,var(--gold),var(--gold-d));display:flex;align-items:center;justify-content:center}
+.logo svg{width:34px;height:34px;stroke:#1a1305;fill:none;stroke-width:1.8}
+.ver{font-size:12px;color:var(--mut)}
+.accrow{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);
+  border-radius:12px;margin-bottom:8px;background:var(--card);cursor:pointer}
+.accrow.on{border-color:var(--gold);background:var(--card2)}
+.accrow .av{width:38px;height:38px;border-radius:50%;background:var(--card2);display:flex;align-items:center;
+  justify-content:center;font-weight:700;color:var(--gold);flex:none}
+.accrow.on .av{background:var(--gold);color:#1a1305}
+.accrow .accinfo{flex:1;display:flex;flex-direction:column;min-width:0;text-align:left}
+.accrow .accinfo b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.accrow .accinfo small{font-size:11px;color:var(--mut)}
+.accrow .ren{flex:none;border:none;background:var(--card2);color:var(--mut2);border-radius:8px;
+  width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.accrow .rd{width:16px;height:16px;border:2px solid var(--mut2);border-radius:50%;flex:none}
+.accrow.on .rd{border-color:var(--gold);background:var(--gold);box-shadow:inset 0 0 0 3px var(--card2)}
+.acc .av{width:40px;height:40px;border-radius:50%;background:var(--card2);display:flex;align-items:center;
+  justify-content:center;font-size:16px;font-weight:700;color:var(--gold);flex:none}
+.wl{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;margin-bottom:2px}
+.wl b{color:var(--gold)}
+.wl .q{flex:none;width:22px;height:22px;border:1px solid var(--line);border-radius:50%;background:var(--card2);
+  color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.lnsel{margin-top:12px;padding-top:11px;border-top:1px dashed var(--line)}
+.infobody{padding:4px 2px;font-size:13px;line-height:1.75;color:var(--tx);white-space:pre-line}
+.accrow .del{flex:none;border:none;background:var(--card2);color:#e0645c;border-radius:8px;
+  width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.wl .wv{width:76px;background:#10161e;border:1px solid var(--line);border-radius:8px;color:var(--gold);
+  font-size:14px;padding:5px 8px;text-align:right;font-variant-numeric:tabular-nums}
+/* 雕刻权重双滑块 */
+.efxw{display:flex;align-items:center;gap:9px;padding:5px 0;border-bottom:1px solid var(--line)}
+.efxw:last-child{border-bottom:none}
+.efxw-n{width:76px;font-size:12.5px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dual{position:relative;height:30px;flex:1;min-width:0}
+.dual .track{position:absolute;top:13px;left:0;right:0;height:4px;background:var(--line);border-radius:2px}
+.dual input{position:absolute;inset:0;width:100%;appearance:none;-webkit-appearance:none;background:transparent;
+  pointer-events:none;margin:0;height:30px}
+.dual input::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;
+  cursor:pointer;pointer-events:auto;border:2px solid #0c1117}
+.dual input.es::-webkit-slider-thumb{background:var(--gold)}
+.dual input.eb::-webkit-slider-thumb{background:var(--b)}
+.dual input::-moz-range-thumb{width:16px;height:16px;border-radius:50%;cursor:pointer;pointer-events:auto;border:2px solid #0c1117}
+.dual input.es::-moz-range-thumb{background:var(--gold)}
+.dual input.eb::-moz-range-thumb{background:var(--b)}
+.efxw-v{width:66px;font-size:10px;color:var(--mut);flex:none;text-align:right;font-variant-numeric:tabular-nums}
+/* 序列菜单/查看 */
+.modal{position:fixed;inset:0;background:rgba(5,8,12,.74);display:none;align-items:center;justify-content:center;z-index:50}
+.modal.show{display:flex}
+.mcard{width:86%;max-width:340px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.mcard h3{margin-bottom:12px;font-size:15px}
+.mopt{display:block;width:100%;padding:12px;margin-bottom:8px;background:var(--card2);border:1px solid var(--line);border-radius:10px;color:var(--tx);font-size:14px;text-align:left}
+.mopt:active{background:var(--line)}
+.mopt.ghost{background:none;color:var(--mut)}
+.mcard.wide{max-width:390px;height:76vh;display:flex;flex-direction:column}
+.mtitle{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.mtitle h3{font-size:14px;margin:0}
+.x{background:none;border:none;color:var(--mut);font-size:22px;padding:2px 8px}
+.seqbody{flex:1;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#0d1218}
+.seqt{width:100%;border-collapse:collapse;font-size:12px}
+.seqt th,.seqt td{padding:5px 4px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+.seqt th{position:sticky;top:0;background:var(--card2);color:var(--mut2)}
+.seqt th.cg{color:var(--g)}.seqt th.cb{color:var(--b)}.seqt th.cr{color:var(--r)}.seqt th.cp{color:var(--p)}
+input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
+.pchart{display:flex;align-items:flex-end;justify-content:space-around;height:150px;
+  border-bottom:2px solid var(--line);padding:0 4px;margin-bottom:6px}
+.pcol{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;flex:1}
+.pbar{width:34px;background:linear-gradient(#7fb0e8,#5b93d6);border-radius:5px 5px 0 0;min-height:2px;transition:height .12s}
+.pnum{font-size:12px;font-weight:700;margin-bottom:3px}
+.plab{font-size:10.5px;color:var(--mut);margin-top:5px}
+.pinfo{font-size:12px;line-height:1.7;color:var(--tx)}
+.pinfo b{color:#e05a4f;font-weight:700}
+.miss{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.miss span{font-size:11px;padding:4px 9px;border-radius:14px;background:var(--card2);color:var(--mut)}
+.miss b{color:var(--gold)}
+.toast{position:absolute;left:50%;bottom:104px;transform:translateX(-50%) translateY(20px);
+  background:#0d131b;border:1.2px solid var(--gold);color:#fff;font-weight:700;font-size:13.5px;
+  padding:10px 16px;max-width:86%;text-align:center;white-space:normal;
+  border-radius:24px;opacity:0;pointer-events:none;transition:.22s;z-index:20;
+  box-shadow:0 3px 12px rgba(0,0,0,.6)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ==== 与 App 1.1.0 对齐的补充样式 ==== */
+.appl{margin-left:auto;background:var(--gold);color:#1a1305;border:none;border-radius:8px;
+  padding:8px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+.seqt{font-size:11px}
+.seqt th,.seqt td{padding:5px 3px}
+.cellw{display:flex;align-items:center;justify-content:center;gap:3px;min-width:0}
+.cellw .enm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.cellw .egr{font-weight:700;flex:none}
+.logv{font-size:12.5px;font-weight:700;color:var(--gold)}
+.logd{font-size:11px;color:var(--mut2);margin-left:8px}
+.logi{display:flex;gap:7px;font-size:12px;color:var(--mut);line-height:1.55;margin-top:4px}
+.logi i{flex:none;width:4px;height:4px;border-radius:50%;background:var(--gold);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ============ 主页 HOME ============ -->
+  <section class="screen active" data-screen="home">
+    <div class="topbar"><h1>海岛奇兵雕刻选择</h1><span class="sub" id="roundSub"></span></div>
+    <div class="content">
+      <div class="duo">
+        <div class="card">
+          <h3 data-i18n="gain"></h3>
+          <div id="gainContent"><span class="gempty" data-i18n="gainEmpty"></span></div>
+        </div>
+        <div class="card">
+          <h3 data-i18n="lines"></h3>
+          <input type="number" id="startLine" min="1" value="12"
+            style="width:100%;background:#10161e;border:1px solid var(--line);border-radius:9px;color:var(--tx);font-size:16px;padding:10px">
+          <div class="efx" id="startHint"></div>
+        </div>
+      </div>
+
+      <h3 style="font-size:12px;color:var(--mut);font-weight:600;margin:4px 2px 10px" data-i18n="options"></h3>
+      <div id="optList"></div>
+      <button class="confirm" id="confirmBtn">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+        <span data-i18n="confirm"></span></button>
+    </div>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section class="screen" data-screen="history">
+    <div class="topbar"><button class="back" data-back>‹</button><h1 data-i18n="history"></h1></div>
+    <div class="content"><div id="histList"></div></div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section class="screen" data-screen="settings">
+    <div class="topbar"><button class="back" data-back>‹</button><h1 data-i18n="settings"></h1><button class="appl" id="efxApply" data-i18n="apply" style="display:none"></button></div>
+    <div class="content">
+      <div class="seg" id="setSeg">
+        <button class="on" data-pane="preference" data-i18n="preference"></button>
+        <button data-pane="language" data-i18n="language"></button>
+        <button data-pane="about" data-i18n="about"></button>
+        <button data-pane="account" data-i18n="account"></button>
+      </div>
+
+      <div class="pane on" data-pane="preference">
+        <div class="card">
+          <h3 data-i18n="weights"></h3>
+          <div style="margin-bottom:10px">
+            <div class="wl"><span data-i18n="wCrystal"></span><button class="q" data-q="cry">?</button><input class="wv" id="wv0" data-i="0" type="number" min="-1" max="1" step="0.01" value="0"></div>
+            <input type="range" class="ws" min="-1" max="1" step="0.01" value="0"></div>
+          <div style="margin-bottom:10px">
+            <div class="wl"><span data-i18n="wTime"></span><button class="q" data-q="time">?</button><input class="wv" id="wv1" data-i="1" type="number" min="-1" max="1" step="0.01" value="0"></div>
+            <input type="range" class="ws" min="-1" max="1" step="0.01" value="0"></div>
+          <div style="margin-bottom:10px">
+            <div class="wl"><span data-i18n="wQuality"></span><button class="q" data-q="quality">?</button><input class="wv" id="wv2" data-i="2" type="number" min="-1" max="1" step="0.01" value="0"></div>
+            <input type="range" class="ws" min="-1" max="1" step="0.01" value="0"></div>
+          <div class="lnsel">
+            <button class="choice on" data-grp="lines" data-lines="auto"><span data-i18n="lAuto"></span><span class="rd"></span></button>
+            <button class="choice" data-grp="lines" data-lines="custom"><span data-i18n="lFlex"></span><span class="rd"></span></button>
+            <div id="customNBox" style="display:none;margin-top:9px">
+              <div class="cinput"><label><span data-i18n="linesN"></span></label>
+                <input type="number" id="customN" min="1" max="4" value="2" style="width:64px"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 data-i18n="simTitle"></h3>
+          <div class="pchart" id="pchart"></div>
+          <div class="pinfo" id="pinfo"></div>
+          <div class="miss" id="pmiss"></div>
+        </div>
+        <div class="card">
+          <h3 data-i18n="strategy"></h3>
+          <button class="choice on" data-grp="strat" data-pref="attack"><span data-i18n="sAttack"></span><span class="rd"></span></button>
+          <button class="choice" data-grp="strat" data-pref="defence"><span data-i18n="sDefence"></span><span class="rd"></span></button>
+          <button class="choice" data-grp="strat" data-pref="custom"><span data-i18n="sCustom"></span><span class="rd"></span></button>
+        </div>
+        <div class="card">
+          <h3 data-i18n="efxWeight"></h3>
+          <div class="seg" id="efxSeg">
+            <button class="on" data-efxpane="atk" data-i18n="efxAtk"></button>
+            <button data-efxpane="def" data-i18n="efxDef"></button>
+          </div>
+          <div id="efxList"></div>
+
+        </div>
+        <div class="card">
+          <h3 data-i18n="crystals"></h3>
+          <div class="cinput"><label><i class="cdot c-g"></i><span data-i18n="cG"></span></label><input type="number" class="cryst" data-c="绿色" value="1000"></div>
+          <div class="cinput"><label><i class="cdot c-b"></i><span data-i18n="cB"></span></label><input type="number" class="cryst" data-c="蓝色" value="1000"></div>
+          <div class="cinput"><label><i class="cdot c-r"></i><span data-i18n="cR"></span></label><input type="number" class="cryst" data-c="红色" value="1000"></div>
+          <div class="cinput"><label><i class="cdot c-p"></i><span data-i18n="cP"></span></label><input type="number" class="cryst" data-c="紫色" value="1000"></div>
+        </div>
+      </div>
+
+      <div class="pane" data-pane="language">
+        <div class="card">
+          <h3 data-i18n="langTitle"></h3>
+          <button class="choice" data-grp="lang" data-lang="en">English<span class="rd"></span></button>
+          <button class="choice" data-grp="lang" data-lang="tc">繁體中文<span class="rd"></span></button>
+          <button class="choice" data-grp="lang" data-lang="sc">简体中文<span class="rd"></span></button>
+        </div>
+      </div>
+
+      <div class="pane" data-pane="about">
+        <div class="card">
+          <div class="about-hero">
+            <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
+            <div style="font-size:16px;font-weight:700">海岛奇兵雕刻选择</div>
+            <div class="ver">Version 1.1.0</div>
+          </div>
+          <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
+        </div>
+        <div class="card">
+          <h3 data-i18n="changelog"></h3>
+          <div id="logBox"></div>
+        </div>
+      </div>
+
+      <div class="pane" data-pane="account">
+        <div class="card">
+          <h3 data-i18n="accTitle"></h3>
+          <div id="accList"></div>
+          <button class="btn btn-s" id="newAcc" data-i18n="newAcc"></button>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 操作图标条（底部栏上方） -->
+  <div class="opbar" id="opbar">
+    <button class="opbtn" id="undoBtn">
+      <svg viewBox="0 0 24 24"><path d="M9 14l-4-4 4-4"/><path d="M5 10h9a5 5 0 0 1 0 10h-3"/></svg><span data-i18n="undo"></span></button>
+    <button class="opbtn" id="redoBtn" disabled>
+      <svg viewBox="0 0 24 24"><path d="M15 14l4-4-4-4"/><path d="M19 10h-9a5 5 0 0 0 0 10h3"/></svg><span data-i18n="redo"></span></button>
+    <button class="opbtn" id="importBtn">
+      <svg viewBox="0 0 24 24"><path d="M12 15V4m0 0L8.5 7.5M12 4l3.5 3.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><span data-i18n="import"></span></button>
+    <button class="opbtn" id="exportBtn">
+      <svg viewBox="0 0 24 24"><path d="M12 4v11m0 0l-3.5-3.5M12 15l3.5-3.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><span data-i18n="export"></span></button>
+    <button class="opbtn" id="orderBtn">
+      <svg viewBox="0 0 24 24"><path d="M4 6h13M4 12h13M4 18h9"/><path d="M20 4l2 2-2 2M20 14l2 2-2 2"/></svg><span data-i18n="order"></span></button>
+  </div>
+
+  <!-- 导入预设菜单 -->
+  <div class="modal" id="importMenu">
+    <div class="mcard">
+      <h3 data-i18n="importPreset"></h3>
+      <button class="mopt" id="mImportBackup" data-i18n="importBackup"></button>
+      <button class="mopt" id="mImportSeq" data-i18n="importSeq"></button>
+      <button class="mopt ghost" id="mImportClose" data-i18n="close"></button>
+    </div>
+  </div>
+  <!-- 滑块说明 -->
+  <div class="modal" id="infoModal">
+    <div class="mcard">
+      <div class="mtitle"><h3 id="infoTitle"></h3><button class="x" id="infoClose">×</button></div>
+      <div id="infoBody" class="infobody"></div>
+    </div>
+  </div>
+  <!-- 序列菜单 -->
+  <div class="modal" id="seqMenu">
+    <div class="mcard">
+      <h3 data-i18n="seqTitle"></h3>
+      <button class="mopt" id="mViewSeq" data-i18n="viewSeq"></button>
+      <button class="mopt" id="mChangeSeq" data-i18n="changeSeq"></button>
+      <button class="mopt ghost" id="mClose" data-i18n="close"></button>
+    </div>
+  </div>
+  <!-- 序列查看 -->
+  <div class="modal" id="seqView">
+    <div class="mcard wide">
+      <div class="mtitle"><h3 id="seqViewTitle"></h3><button class="x" id="svClose">×</button></div>
+      <div id="seqViewBody" class="seqbody"></div>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
+  <nav class="tabbar">
+    <button class="tab on" data-go="home">
+      <svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg><span data-i18n="home"></span></button>
+    <button class="tab" data-go="history">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span data-i18n="history"></span></button>
+    <button class="tab" data-go="settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8"/></svg><span data-i18n="settings"></span></button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+</div>
+<script>
+const SEQ_MAIN = {
+"1": {"绿色": ["炼金技术", "S"], "蓝色": ["炼金技术", "S"], "红色": ["战地急救", "S"], "紫色": ["炼金技术", "S"]},
+"2": {"绿色": ["炼金技术", "B"], "蓝色": ["情报压制", "S"], "红色": ["前仆后继", "S"], "紫色": ["活力汲取", "S"]},
+"3": {"绿色": ["战地急救", "S"], "蓝色": ["活力汲取", "S"], "红色": ["绝缘材料", "S"], "紫色": ["炮火连天", "S"]},
+"4": {"绿色": ["炼金技术", "S"], "蓝色": ["干扰信号", "S"], "红色": ["活力汲取", "S"], "紫色": ["战地急救", "S"]},
+"5": {"绿色": ["炮火连天", "S"], "蓝色": ["破坏阻滞", "S"], "红色": ["战地急救", "S"], "紫色": ["绝缘材料", "S"]},
+"6": {"绿色": ["坚固装甲", "S"], "蓝色": ["情报压制", "S"], "红色": ["炼金技术", "S"], "紫色": ["能量涌动", "S"]},
+"7": {"绿色": ["破坏阻滞", "S"], "蓝色": ["坚固装甲", "S"], "红色": ["活力汲取", "S"], "紫色": ["破坏阻滞", "S"]},
+"8": {"绿色": ["情报压制", "S"], "蓝色": ["能量涌动", "S"], "红色": ["干扰信号", "S"], "紫色": ["炮火连天", "S"]},
+"9": {"绿色": ["战地急救", "S"], "蓝色": ["干扰信号", "S"], "红色": ["干扰信号", "S"], "紫色": ["炮火连天", "S"]},
+"10": {"绿色": ["坚固装甲", "S"], "蓝色": ["干扰信号", "S"], "红色": ["前仆后继", "S"], "紫色": ["能量涌动", "S"]},
+"11": {"绿色": ["炼金技术", "S"], "蓝色": ["绝缘材料", "S"], "红色": ["能量涌动", "S"], "紫色": ["炼金技术", "S"]},
+"12": {"绿色": ["干扰信号", "S"], "蓝色": ["坚固装甲", "B"], "红色": ["前仆后继", "B"], "紫色": ["干扰信号", "S"]},
+"13": {"绿色": ["前仆后继", "S"], "蓝色": ["能量涌动", "S"], "红色": ["前仆后继", "S"], "紫色": ["炮火连天", "S"]},
+"14": {"绿色": ["破坏阻滞", "S"], "蓝色": ["坚固装甲", "S"], "红色": ["战地急救", "S"], "紫色": ["破坏阻滞", "S"]},
+"15": {"绿色": ["能量涌动", "S"], "蓝色": ["炼金技术", "S"], "红色": ["活力汲取", "S"], "紫色": ["能量涌动", "S"]},
+"16": {"绿色": ["战地急救", "S"], "蓝色": ["情报压制", "S"], "红色": ["炮火连天", "S"], "紫色": ["活力汲取", "S"]},
+"17": {"绿色": ["前仆后继", "S"], "蓝色": ["炼金技术", "B"], "红色": ["活力汲取", "B"], "紫色": ["绝缘材料", "S"]},
+"18": {"绿色": ["炼金技术", "S"], "蓝色": ["情报压制", "S"], "红色": ["绝缘材料", "S"], "紫色": ["炼金技术", "S"]},
+"19": {"绿色": ["肾上腺素", "S"], "蓝色": ["破坏阻滞", "S"], "红色": ["坚固装甲", "S"], "紫色": ["肾上腺素", "S"]},
+"20": {"绿色": ["前仆后继", "B"], "蓝色": ["情报压制", "B"], "红色": ["活力汲取", "S"], "紫色": ["绝缘材料", "B"]},
+"21": {"绿色": ["前仆后继", "S"], "蓝色": ["战地急救", "S"], "红色": ["干扰信号", "S"], "紫色": ["绝缘材料", "S"]},
+"22": {"绿色": ["炼金技术", "S"], "蓝色": ["情报压制", "S"], "红色": ["情报压制", "S"], "紫色": ["活力汲取", "S"]},
+"23": {"绿色": ["肾上腺素", "S"], "蓝色": ["坚固装甲", "S"], "红色": ["情报压制", "S"], "紫色": ["肾上腺素", "S"]},
+"24": {"绿色": ["绝缘材料", "S"], "蓝色": ["干扰信号", "S"], "红色": ["绝缘材料", "S"], "紫色": ["能量涌动", "S"]},
+"25": {"绿色": ["活力汲取", "S"], "蓝色": ["情报压制", "B"], "红色": ["前仆后继", "B"], "紫色": ["炮火连天", "S"]},
+"26": {"绿色": ["前仆后继", "S"], "蓝色": ["坚固装甲", "S"], "红色": ["炼金技术", "S"], "紫色": ["炮火连天", "S"]},
+"27": {"绿色": ["前仆后继", "B"], "蓝色": ["坚固装甲", "S"], "红色": ["炮火连天", "S"], "紫色": ["炮火连天", "S"]},
+"28": {"绿色": ["绝缘材料", "S"], "蓝色": ["破坏阻滞", "S"], "红色": ["战地急救", "S"], "紫色": ["坚固装甲", "S"]},
+"29": {"绿色": ["坚固装甲", "S"], "蓝色": ["干扰信号", "S"], "红色": ["干扰信号", "S"], "紫色": ["能量涌动", "B"]},
+"30": {"绿色": ["绝缘材料", "S"], "蓝色": ["炮火连天", "S"], "红色": ["绝缘材料", "S"], "紫色": ["坚固装甲", "S"]},
+"31": {"绿色": ["破坏阻滞", "B"], "蓝色": ["能量涌动", "B"], "红色": ["活力汲取", "S"], "紫色": ["破坏阻滞", "B"]},
+"32": {"绿色": ["绝缘材料", "S"], "蓝色": ["破坏阻滞", "S"], "红色": ["能量涌动", "S"], "紫色": ["能量涌动", "S"]},
+"33": {"绿色": ["干扰信号", "S"], "蓝色": ["干扰信号", "B"], "红色": ["前仆后继", "B"], "紫色": ["干扰信号", "S"]},
+"34": {"绿色": ["能量涌动", "S"], "蓝色": ["炼金技术", "S"], "红色": ["肾上腺素", "S"], "紫色": ["能量涌动", "S"]},
+"35": {"绿色": ["肾上腺素", "S"], "蓝色": ["前仆后继", "S"], "红色": ["绝缘材料", "S"], "紫色": ["肾上腺素", "S"]},
+"36": {"绿色": ["情报压制", "S"], "蓝色": ["炮火连天", "S"], "红色": ["肾上腺素", "S"], "紫色": ["炮火连天", "B"]},
+"37": {"绿色": ["炼金技术", "B"], "蓝色": ["炮火连天", "S"], "红色": ["活力汲取", "B"], "紫色": ["炼金技术", "S"]},
+"38": {"绿色": ["能量涌动", "S"], "蓝色": ["破坏阻滞", "S"], "红色": ["干扰信号", "B"], "紫色": ["能量涌动", "S"]},
+"39": {"绿色": ["炼金技术", "S"], "蓝色": ["干扰信号", "S"], "红色": ["情报压制", "S"], "紫色": ["战地急救", "S"]},
+"40": {"绿色": ["情报压制", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["情报压制", "B"], "紫色": ["炮火连天", "B"]},
+"41": {"绿色": ["战地急救", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["活力汲取", "B"], "紫色": ["炮火连天", "B"]},
+"42": {"绿色": ["能量涌动", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["活力汲取", "S"], "紫色": ["能量涌动", "B"]},
+"43": {"绿色": ["干扰信号", "S"], "蓝色": ["能量涌动", "B"], "红色": ["前仆后继", "B"], "紫色": ["干扰信号", "S"]},
+"44": {"绿色": ["能量涌动", "S"], "蓝色": ["炼金技术", "B"], "红色": ["战地急救", "S"], "紫色": ["能量涌动", "S"]},
+"45": {"绿色": ["战地急救", "B"], "蓝色": ["肾上腺素", "S"], "红色": ["活力汲取", "S"], "紫色": ["前仆后继", "B"]},
+"46": {"绿色": ["干扰信号", "B"], "蓝色": ["破坏阻滞", "S"], "红色": ["战地急救", "S"], "紫色": ["干扰信号", "B"]},
+"47": {"绿色": ["炼金技术", "S"], "蓝色": ["战地急救", "B"], "红色": ["活力汲取", "S"], "紫色": ["炼金技术", "S"]},
+"48": {"绿色": ["干扰信号", "B"], "蓝色": ["肾上腺素", "S"], "红色": ["绝缘材料", "S"], "紫色": ["干扰信号", "B"]},
+"49": {"绿色": ["炼金技术", "B"], "蓝色": ["情报压制", "S"], "红色": ["破坏阻滞", "S"], "紫色": ["战地急救", "S"]},
+"50": {"绿色": ["干扰信号", "S"], "蓝色": ["战地急救", "S"], "红色": ["活力汲取", "S"], "紫色": ["干扰信号", "S"]},
+"51": {"绿色": ["炼金技术", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["前仆后继", "S"], "紫色": ["战地急救", "S"]},
+"52": {"绿色": ["炼金技术", "S"], "蓝色": ["活力汲取", "S"], "红色": ["绝缘材料", "S"], "紫色": ["活力汲取", "S"]},
+"53": {"绿色": ["炼金技术", "B"], "蓝色": ["炼金技术", "S"], "红色": ["活力汲取", "B"], "紫色": ["战地急救", "B"]},
+"54": {"绿色": ["炼金技术", "S"], "蓝色": ["活力汲取", "S"], "红色": ["肾上腺素", "S"], "紫色": ["情报压制", "S"]},
+"55": {"绿色": ["活力汲取", "B"], "蓝色": ["干扰信号", "B"], "红色": ["前仆后继", "B"], "紫色": ["炮火连天", "B"]},
+"56": {"绿色": ["炼金技术", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["绝缘材料", "B"], "紫色": ["战地急救", "B"]},
+"57": {"绿色": ["肾上腺素", "S"], "蓝色": ["干扰信号", "B"], "红色": ["前仆后继", "S"], "紫色": ["肾上腺素", "S"]},
+"58": {"绿色": ["肾上腺素", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["炼金技术", "S"], "紫色": ["肾上腺素", "B"]},
+"59": {"绿色": ["坚固装甲", "S"], "蓝色": ["炼金技术", "S"], "红色": ["炮火连天", "S"], "紫色": ["能量涌动", "B"]},
+"60": {"绿色": ["炼金技术", "B"], "蓝色": ["干扰信号", "B"], "红色": ["肾上腺素", "S"], "紫色": ["战地急救", "B"]},
+"61": {"绿色": ["战地急救", "S"], "蓝色": ["情报压制", "S"], "红色": ["炮火连天", "S"], "紫色": ["炮火连天", "S"]},
+"62": {"绿色": ["肾上腺素", "S"], "蓝色": ["坚固装甲", "B"], "红色": ["绝缘材料", "S"], "紫色": ["肾上腺素", "S"]},
+"63": {"绿色": ["活力汲取", "S"], "蓝色": ["干扰信号", "B"], "红色": ["肾上腺素", "B"], "紫色": ["炮火连天", "B"]},
+"64": {"绿色": ["坚固装甲", "S"], "蓝色": ["干扰信号", "S"], "红色": ["绝缘材料", "B"], "紫色": ["能量涌动", "B"]},
+"65": {"绿色": ["战地急救", "S"], "蓝色": ["战地急救", "S"], "红色": ["战地急救", "B"], "紫色": ["前仆后继", "S"]},
+"66": {"绿色": ["情报压制", "S"], "蓝色": ["战地急救", "S"], "红色": ["破坏阻滞", "S"], "紫色": ["炮火连天", "B"]},
+"67": {"绿色": ["肾上腺素", "S"], "蓝色": ["活力汲取", "S"], "红色": ["战地急救", "S"], "紫色": ["肾上腺素", "S"]},
+"68": {"绿色": ["战地急救", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["炼金技术", "B"], "紫色": ["炮火连天", "B"]},
+"69": {"绿色": ["活力汲取", "S"], "蓝色": ["活力汲取", "S"], "红色": ["绝缘材料", "B"], "紫色": ["炮火连天", "S"]},
+"70": {"绿色": ["情报压制", "S"], "蓝色": ["情报压制", "S"], "红色": ["前仆后继", "S"], "紫色": ["炮火连天", "B"]},
+"71": {"绿色": ["炼金技术", "B"], "蓝色": ["情报压制", "B"], "红色": ["活力汲取", "B"], "紫色": ["情报压制", "S"]},
+"72": {"绿色": ["坚固装甲", "B"], "蓝色": ["战地急救", "B"], "红色": ["战地急救", "B"], "紫色": ["能量涌动", "B"]},
+"73": {"绿色": ["情报压制", "B"], "蓝色": ["情报压制", "B"], "红色": ["活力汲取", "B"], "紫色": ["炮火连天", "B"]},
+"74": {"绿色": ["能量涌动", "B"], "蓝色": ["肾上腺素", "S"], "红色": ["炼金技术", "B"], "紫色": ["能量涌动", "B"]},
+"75": {"绿色": ["坚固装甲", "B"], "蓝色": ["战地急救", "S"], "红色": ["肾上腺素", "S"], "紫色": ["能量涌动", "B"]},
+"76": {"绿色": ["炮火连天", "S"], "蓝色": ["干扰信号", "S"], "红色": ["绝缘材料", "B"], "紫色": ["坚固装甲", "S"]},
+"77": {"绿色": ["干扰信号", "S"], "蓝色": ["能量涌动", "S"], "红色": ["前仆后继", "B"], "紫色": ["干扰信号", "S"]},
+"78": {"绿色": ["战地急救", "S"], "蓝色": ["炮火连天", "S"], "红色": ["前仆后继", "B"], "紫色": ["活力汲取", "S"]},
+"79": {"绿色": ["战地急救", "S"], "蓝色": ["炮火连天", "S"], "红色": ["肾上腺素", "S"], "紫色": ["炮火连天", "S"]},
+"80": {"绿色": ["炮火连天", "S"], "蓝色": ["能量涌动", "S"], "红色": ["肾上腺素", "S"], "紫色": ["坚固装甲", "S"]},
+"81": {"绿色": ["炮火连天", "B"], "蓝色": ["干扰信号", "B"], "红色": ["肾上腺素", "B"], "紫色": ["坚固装甲", "B"]},
+"82": {"绿色": ["破坏阻滞", "S"], "蓝色": ["情报压制", "B"], "红色": ["干扰信号", "B"], "紫色": ["破坏阻滞", "S"]},
+"83": {"绿色": ["肾上腺素", "B"], "蓝色": ["情报压制", "B"], "红色": ["前仆后继", "B"], "紫色": ["肾上腺素", "B"]},
+"84": {"绿色": ["战地急救", "B"], "蓝色": ["情报压制", "B"], "红色": ["活力汲取", "B"], "紫色": ["炮火连天", "B"]},
+"85": {"绿色": ["战地急救", "B"], "蓝色": ["情报压制", "B"], "红色": ["肾上腺素", "B"], "紫色": ["前仆后继", "S"]},
+"86": {"绿色": ["坚固装甲", "S"], "蓝色": ["破坏阻滞", "S"], "红色": ["活力汲取", "S"], "紫色": ["能量涌动", "B"]},
+"87": {"绿色": ["炮火连天", "S"], "蓝色": ["坚固装甲", "S"], "红色": ["绝缘材料", "B"], "紫色": ["坚固装甲", "S"]},
+"88": {"绿色": ["炼金技术", "B"], "蓝色": ["肾上腺素", "B"], "红色": ["坚固装甲", "B"], "紫色": ["炼金技术", "B"]},
+"89": {"绿色": ["战地急救", "S"], "蓝色": ["坚固装甲", "B"], "红色": ["坚固装甲", "B"], "紫色": ["前仆后继", "S"]},
+"90": {"绿色": ["炼金技术", "B"], "蓝色": ["肾上腺素", "S"], "红色": ["炼金技术", "B"], "紫色": ["情报压制", "S"]},
+"91": {"绿色": ["炼金技术", "B"], "蓝色": ["情报压制", "B"], "红色": ["绝缘材料", "B"], "紫色": ["炼金技术", "S"]},
+"92": {"绿色": ["坚固装甲", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["肾上腺素", "S"], "紫色": ["能量涌动", "B"]},
+"93": {"绿色": ["干扰信号", "B"], "蓝色": ["炮火连天", "B"], "红色": ["情报压制", "S"], "紫色": ["干扰信号", "B"]},
+"94": {"绿色": ["绝缘材料", "B"], "蓝色": ["炮火连天", "S"], "红色": ["战地急救", "B"], "紫色": ["坚固装甲", "B"]},
+"95": {"绿色": ["坚固装甲", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["能量涌动", "S"], "紫色": ["能量涌动", "B"]},
+"96": {"绿色": ["情报压制", "B"], "蓝色": ["干扰信号", "B"], "红色": ["肾上腺素", "B"], "紫色": ["炮火连天", "B"]},
+"97": {"绿色": ["能量涌动", "S"], "蓝色": ["炼金技术", "S"], "红色": ["炮火连天", "S"], "紫色": ["能量涌动", "B"]},
+"98": {"绿色": ["战地急救", "B"], "蓝色": ["情报压制", "B"], "红色": ["绝缘材料", "B"], "紫色": ["炮火连天", "B"]},
+"99": {"绿色": ["活力汲取", "S"], "蓝色": ["坚固装甲", "B"], "红色": ["活力汲取", "B"], "紫色": ["炮火连天", "B"]},
+"100": {"绿色": ["战地急救", "B"], "蓝色": ["干扰信号", "S"], "红色": ["炮火连天", "S"], "紫色": ["活力汲取", "S"]},
+"101": {"绿色": ["炼金技术", "S"], "蓝色": ["破坏阻滞", "B"], "红色": ["绝缘材料", "B"], "紫色": ["活力汲取", "S"]},
+"102": {"绿色": ["情报压制", "B"], "蓝色": ["前仆后继", "B"], "红色": ["破坏阻滞", "B"], "紫色": ["炮火连天", "S"]},
+"103": {"绿色": ["炼金技术", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["活力汲取", "B"], "紫色": ["战地急救", "S"]},
+"104": {"绿色": ["破坏阻滞", "S"], "蓝色": ["炼金技术", "S"], "红色": ["活力汲取", "S"], "紫色": ["破坏阻滞", "S"]},
+"105": {"绿色": ["战地急救", "B"], "蓝色": ["战地急救", "S"], "红色": ["绝缘材料", "B"], "紫色": ["前仆后继", "S"]},
+"106": {"绿色": ["炼金技术", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["能量涌动", "S"], "紫色": ["情报压制", "S"]},
+"107": {"绿色": ["坚固装甲", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["炼金技术", "S"], "紫色": ["能量涌动", "B"]},
+"108": {"绿色": ["炼金技术", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["炮火连天", "S"], "紫色": ["活力汲取", "B"]},
+"109": {"绿色": ["炼金技术", "B"], "蓝色": ["活力汲取", "S"], "红色": ["炮火连天", "B"], "紫色": ["炼金技术", "S"]},
+"110": {"绿色": ["前仆后继", "B"], "蓝色": ["活力汲取", "B"], "红色": ["炼金技术", "B"], "紫色": ["炮火连天", "B"]},
+"111": {"绿色": ["战地急救", "B"], "蓝色": ["情报压制", "B"], "红色": ["能量涌动", "B"], "紫色": ["前仆后继", "B"]},
+"112": {"绿色": ["前仆后继", "S"], "蓝色": ["能量涌动", "S"], "红色": ["情报压制", "S"], "紫色": ["炮火连天", "B"]},
+"113": {"绿色": ["破坏阻滞", "B"], "蓝色": ["干扰信号", "B"], "红色": ["前仆后继", "B"], "紫色": ["破坏阻滞", "B"]},
+"114": {"绿色": ["炼金技术", "S"], "蓝色": ["炮火连天", "S"], "红色": ["干扰信号", "S"], "紫色": ["情报压制", "S"]},
+"115": {"绿色": ["干扰信号", "B"], "蓝色": ["活力汲取", "B"], "红色": ["绝缘材料", "B"], "紫色": ["干扰信号", "B"]},
+"116": {"绿色": ["绝缘材料", "B"], "蓝色": ["干扰信号", "B"], "红色": ["活力汲取", "B"], "紫色": ["坚固装甲", "B"]},
+"117": {"绿色": ["炮火连天", "S"], "蓝色": ["战地急救", "S"], "红色": ["前仆后继", "B"], "紫色": ["坚固装甲", "B"]},
+"118": {"绿色": ["战地急救", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["肾上腺素", "B"], "紫色": ["前仆后继", "S"]},
+"119": {"绿色": ["战地急救", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["破坏阻滞", "B"], "紫色": ["活力汲取", "B"]},
+"120": {"绿色": ["战地急救", "B"], "蓝色": ["战地急救", "B"], "红色": ["炼金技术", "S"], "紫色": ["炮火连天", "S"]},
+"121": {"绿色": ["肾上腺素", "B"], "蓝色": ["炮火连天", "B"], "红色": ["肾上腺素", "B"], "紫色": ["肾上腺素", "B"]},
+"122": {"绿色": ["活力汲取", "S"], "蓝色": ["前仆后继", "S"], "红色": ["炮火连天", "B"], "紫色": ["炮火连天", "B"]},
+"123": {"绿色": ["前仆后继", "S"], "蓝色": ["前仆后继", "S"], "红色": ["情报压制", "S"], "紫色": ["绝缘材料", "S"]},
+"124": {"绿色": ["肾上腺素", "B"], "蓝色": ["情报压制", "B"], "红色": ["能量涌动", "B"], "紫色": ["肾上腺素", "B"]},
+"125": {"绿色": ["情报压制", "B"], "蓝色": ["战地急救", "B"], "红色": ["前仆后继", "B"], "紫色": ["炮火连天", "B"]},
+"126": {"绿色": ["肾上腺素", "B"], "蓝色": ["情报压制", "B"], "红色": ["炼金技术", "B"], "紫色": ["肾上腺素", "B"]},
+"127": {"绿色": ["干扰信号", "S"], "蓝色": ["肾上腺素", "B"], "红色": ["炮火连天", "B"], "紫色": ["干扰信号", "S"]},
+"128": {"绿色": ["前仆后继", "B"], "蓝色": ["战地急救", "B"], "红色": ["活力汲取", "B"], "紫色": ["绝缘材料", "B"]},
+"129": {"绿色": ["能量涌动", "B"], "蓝色": ["干扰信号", "B"], "红色": ["破坏阻滞", "S"], "紫色": ["能量涌动", "B"]},
+"130": {"绿色": ["活力汲取", "S"], "蓝色": ["干扰信号", "B"], "红色": ["绝缘材料", "B"], "紫色": ["炮火连天", "B"]},
+"131": {"绿色": ["情报压制", "B"], "蓝色": ["干扰信号", "B"], "红色": ["炼金技术", "S"], "紫色": ["炮火连天", "B"]},
+"132": {"绿色": ["炼金技术", "B"], "蓝色": ["情报压制", "B"], "红色": ["肾上腺素", "B"], "紫色": ["战地急救", "S"]},
+"133": {"绿色": ["前仆后继", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["干扰信号", "S"], "紫色": ["炮火连天", "B"]},
+"134": {"绿色": ["活力汲取", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["破坏阻滞", "S"], "紫色": ["炮火连天", "B"]},
+"135": {"绿色": ["情报压制", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["活力汲取", "B"], "紫色": ["炮火连天", "B"]},
+"136": {"绿色": ["活力汲取", "S"], "蓝色": ["干扰信号", "S"], "红色": ["前仆后继", "B"], "紫色": ["炮火连天", "B"]},
+"137": {"绿色": ["炼金技术", "S"], "蓝色": ["炮火连天", "S"], "红色": ["前仆后继", "B"], "紫色": ["炼金技术", "B"]},
+"138": {"绿色": ["干扰信号", "B"], "蓝色": ["前仆后继", "S"], "红色": ["活力汲取", "B"], "紫色": ["干扰信号", "B"]},
+"139": {"绿色": ["肾上腺素", "S"], "蓝色": ["能量涌动", "S"], "红色": ["肾上腺素", "B"], "紫色": ["肾上腺素", "S"]},
+"140": {"绿色": ["破坏阻滞", "B"], "蓝色": ["坚固装甲", "S"], "红色": ["破坏阻滞", "B"], "紫色": ["破坏阻滞", "B"]},
+"141": {"绿色": ["前仆后继", "B"], "蓝色": ["情报压制", "B"], "红色": ["肾上腺素", "B"], "紫色": ["绝缘材料", "B"]},
+"142": {"绿色": ["炼金技术", "S"], "蓝色": ["情报压制", "S"], "红色": ["前仆后继", "S"], "紫色": ["炼金技术", "S"]},
+"143": {"绿色": ["战地急救", "S"], "蓝色": ["情报压制", "B"], "红色": ["炼金技术", "S"], "紫色": ["炮火连天", "B"]},
+"144": {"绿色": ["战地急救", "S"], "蓝色": ["肾上腺素", "S"], "红色": ["战地急救", "S"], "紫色": ["炮火连天", "B"]},
+"145": {"绿色": ["炼金技术", "B"], "蓝色": ["干扰信号", "B"], "红色": ["坚固装甲", "S"], "紫色": ["情报压制", "S"]},
+"146": {"绿色": ["炼金技术", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["坚固装甲", "S"], "紫色": ["战地急救", "B"]},
+"147": {"绿色": ["情报压制", "B"], "蓝色": ["能量涌动", "B"], "红色": ["活力汲取", "B"], "紫色": ["炮火连天", "B"]},
+"148": {"绿色": ["战地急救", "B"], "蓝色": ["炮火连天", "B"], "红色": ["活力汲取", "B"], "紫色": ["前仆后继", "B"]},
+"149": {"绿色": ["战地急救", "B"], "蓝色": ["绝缘材料", "S"], "红色": ["炼金技术", "S"], "紫色": ["前仆后继", "B"]},
+"150": {"绿色": ["肾上腺素", "B"], "蓝色": ["炼金技术", "B"], "红色": ["干扰信号", "B"], "紫色": ["肾上腺素", "B"]},
+"151": {"绿色": ["活力汲取", "S"], "蓝色": ["情报压制", "B"], "红色": ["绝缘材料", "B"], "紫色": ["炮火连天", "S"]},
+"152": {"绿色": ["炼金技术", "S"], "蓝色": ["破坏阻滞", "S"], "红色": ["炮火连天", "S"], "紫色": ["活力汲取", "B"]},
+"153": {"绿色": ["干扰信号", "S"], "蓝色": ["干扰信号", "B"], "红色": ["破坏阻滞", "S"], "紫色": ["干扰信号", "S"]},
+"154": {"绿色": ["炼金技术", "B"], "蓝色": ["坚固装甲", "S"], "红色": ["肾上腺素", "B"], "紫色": ["炼金技术", "S"]},
+"155": {"绿色": ["坚固装甲", "B"], "蓝色": ["炮火连天", "B"], "红色": ["情报压制", "S"], "紫色": ["能量涌动", "S"]},
+"156": {"绿色": ["肾上腺素", "S"], "蓝色": ["肾上腺素", "S"], "红色": ["活力汲取", "B"], "紫色": ["肾上腺素", "S"]},
+"157": {"绿色": ["干扰信号", "B"], "蓝色": ["前仆后继", "B"], "红色": ["战地急救", "B"], "紫色": ["干扰信号", "B"]},
+"158": {"绿色": ["炼金技术", "S"], "蓝色": ["炼金技术", "S"], "红色": ["活力汲取", "S"], "紫色": ["情报压制", "S"]},
+"159": {"绿色": ["坚固装甲", "S"], "蓝色": ["破坏阻滞", "S"], "红色": ["前仆后继", "S"], "紫色": ["能量涌动", "S"]},
+"160": {"绿色": ["炼金技术", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["绝缘材料", "B"], "紫色": ["炼金技术", "B"]},
+"161": {"绿色": ["破坏阻滞", "S"], "蓝色": ["破坏阻滞", "S"], "红色": ["活力汲取", "S"], "紫色": ["破坏阻滞", "S"]},
+"162": {"绿色": ["炼金技术", "B"], "蓝色": ["绝缘材料", "S"], "红色": ["炮火连天", "S"], "紫色": ["战地急救", "S"]},
+"163": {"绿色": ["炮火连天", "B"], "蓝色": ["情报压制", "B"], "红色": ["绝缘材料", "B"], "紫色": ["坚固装甲", "B"]},
+"164": {"绿色": ["干扰信号", "S"], "蓝色": ["活力汲取", "S"], "红色": ["绝缘材料", "B"], "紫色": ["干扰信号", "S"]},
+"165": {"绿色": ["炮火连天", "B"], "蓝色": ["干扰信号", "B"], "红色": ["前仆后继", "B"], "紫色": ["坚固装甲", "B"]},
+"166": {"绿色": ["战地急救", "B"], "蓝色": ["炮火连天", "B"], "红色": ["情报压制", "B"], "紫色": ["炮火连天", "B"]},
+"167": {"绿色": ["炼金技术", "B"], "蓝色": ["肾上腺素", "S"], "红色": ["肾上腺素", "B"], "紫色": ["炼金技术", "S"]},
+"168": {"绿色": ["炼金技术", "B"], "蓝色": ["情报压制", "B"], "红色": ["活力汲取", "B"], "紫色": ["活力汲取", "B"]},
+"169": {"绿色": ["活力汲取", "B"], "蓝色": ["炼金技术", "B"], "红色": ["前仆后继", "B"], "紫色": ["炮火连天", "B"]},
+"170": {"绿色": ["前仆后继", "B"], "蓝色": ["情报压制", "B"], "红色": ["绝缘材料", "B"], "紫色": ["炮火连天", "B"]},
+"171": {"绿色": ["情报压制", "B"], "蓝色": ["干扰信号", "B"], "红色": ["绝缘材料", "B"], "紫色": ["炮火连天", "B"]},
+"172": {"绿色": ["破坏阻滞", "B"], "蓝色": ["战地急救", "B"], "红色": ["炼金技术", "S"], "紫色": ["破坏阻滞", "B"]},
+"173": {"绿色": ["绝缘材料", "S"], "蓝色": ["干扰信号", "S"], "红色": ["肾上腺素", "B"], "紫色": ["能量涌动", "S"]},
+"174": {"绿色": ["干扰信号", "S"], "蓝色": ["干扰信号", "B"], "红色": ["肾上腺素", "S"], "紫色": ["干扰信号", "S"]},
+"175": {"绿色": ["坚固装甲", "B"], "蓝色": ["干扰信号", "B"], "红色": ["肾上腺素", "S"], "紫色": ["能量涌动", "S"]},
+"176": {"绿色": ["炼金技术", "B"], "蓝色": ["肾上腺素", "B"], "红色": ["炮火连天", "S"], "紫色": ["情报压制", "B"]},
+"177": {"绿色": ["破坏阻滞", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["活力汲取", "B"], "紫色": ["破坏阻滞", "B"]},
+"178": {"绿色": ["炼金技术", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["绝缘材料", "S"], "紫色": ["活力汲取", "S"]},
+"179": {"绿色": ["炼金技术", "B"], "蓝色": ["干扰信号", "B"], "红色": ["绝缘材料", "B"], "紫色": ["炼金技术", "B"]},
+"180": {"绿色": ["炼金技术", "B"], "蓝色": ["战地急救", "B"], "红色": ["前仆后继", "B"], "紫色": ["炼金技术", "B"]},
+"181": {"绿色": ["肾上腺素", "B"], "蓝色": ["坚固装甲", "S"], "红色": ["坚固装甲", "S"], "紫色": ["肾上腺素", "B"]},
+"182": {"绿色": ["炼金技术", "B"], "蓝色": ["干扰信号", "B"], "红色": ["绝缘材料", "S"], "紫色": ["炼金技术", "B"]},
+"183": {"绿色": ["绝缘材料", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["前仆后继", "B"], "紫色": ["能量涌动", "B"]},
+"184": {"绿色": ["战地急救", "B"], "蓝色": ["干扰信号", "B"], "红色": ["炼金技术", "B"], "紫色": ["活力汲取", "B"]},
+"185": {"绿色": ["炼金技术", "B"], "蓝色": ["战地急救", "B"], "红色": ["前仆后继", "B"], "紫色": ["情报压制", "B"]},
+"186": {"绿色": ["能量涌动", "B"], "蓝色": ["炮火连天", "B"], "红色": ["干扰信号", "B"], "紫色": ["能量涌动", "B"]},
+"187": {"绿色": ["炼金技术", "B"], "蓝色": ["炮火连天", "B"], "红色": ["前仆后继", "B"], "紫色": ["战地急救", "B"]},
+"188": {"绿色": ["破坏阻滞", "S"], "蓝色": ["坚固装甲", "B"], "红色": ["干扰信号", "B"], "紫色": ["破坏阻滞", "S"]},
+"189": {"绿色": ["战地急救", "S"], "蓝色": ["干扰信号", "B"], "红色": ["破坏阻滞", "S"], "紫色": ["炮火连天", "B"]},
+"190": {"绿色": ["炼金技术", "B"], "蓝色": ["活力汲取", "B"], "红色": ["绝缘材料", "S"], "紫色": ["炼金技术", "S"]},
+"191": {"绿色": ["前仆后继", "B"], "蓝色": ["绝缘材料", "S"], "红色": ["前仆后继", "B"], "紫色": ["绝缘材料", "S"]},
+"192": {"绿色": ["肾上腺素", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["坚固装甲", "S"], "紫色": ["肾上腺素", "B"]},
+"193": {"绿色": ["坚固装甲", "B"], "蓝色": ["干扰信号", "B"], "红色": ["绝缘材料", "B"], "紫色": ["能量涌动", "B"]},
+"194": {"绿色": ["炼金技术", "B"], "蓝色": ["干扰信号", "B"], "红色": ["肾上腺素", "B"], "紫色": ["活力汲取", "B"]},
+"195": {"绿色": ["绝缘材料", "S"], "蓝色": ["战地急救", "S"], "红色": ["破坏阻滞", "S"], "紫色": ["能量涌动", "B"]},
+"196": {"绿色": ["肾上腺素", "B"], "蓝色": ["情报压制", "B"], "红色": ["肾上腺素", "B"], "紫色": ["肾上腺素", "B"]},
+"197": {"绿色": ["炮火连天", "S"], "蓝色": ["炼金技术", "B"], "红色": ["活力汲取", "B"], "紫色": ["坚固装甲", "B"]},
+"198": {"绿色": ["炮火连天", "S"], "蓝色": ["肾上腺素", "S"], "红色": ["绝缘材料", "B"], "紫色": ["绝缘材料", "S"]},
+"199": {"绿色": ["战地急救", "B"], "蓝色": ["干扰信号", "B"], "红色": ["干扰信号", "B"], "紫色": ["前仆后继", "B"]},
+"200": {"绿色": ["炼金技术", "S"], "蓝色": ["干扰信号", "S"], "红色": ["前仆后继", "B"], "紫色": ["情报压制", "S"]},
+"201": {"绿色": ["干扰信号", "B"], "蓝色": ["干扰信号", "B"], "红色": ["肾上腺素", "B"], "紫色": ["干扰信号", "B"]},
+"202": {"绿色": ["干扰信号", "B"], "蓝色": ["情报压制", "B"], "红色": ["坚固装甲", "B"], "紫色": ["干扰信号", "B"]},
+"203": {"绿色": ["活力汲取", "S"], "蓝色": ["干扰信号", "S"], "红色": ["能量涌动", "S"], "紫色": ["炮火连天", "S"]},
+"204": {"绿色": ["活力汲取", "B"], "蓝色": ["干扰信号", "B"], "红色": ["活力汲取", "B"], "紫色": ["炮火连天", "B"]},
+"205": {"绿色": ["炼金技术", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["前仆后继", "B"], "紫色": ["炼金技术", "B"]},
+"206": {"绿色": ["炮火连天", "S"], "蓝色": ["干扰信号", "B"], "红色": ["情报压制", "B"], "紫色": ["坚固装甲", "S"]},
+"207": {"绿色": ["战地急救", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["肾上腺素", "B"], "紫色": ["前仆后继", "S"]},
+"208": {"绿色": ["坚固装甲", "S"], "蓝色": ["坚固装甲", "S"], "红色": ["炼金技术", "S"], "紫色": ["能量涌动", "B"]},
+"209": {"绿色": ["炼金技术", "B"], "蓝色": ["炮火连天", "B"], "红色": ["战地急救", "B"], "紫色": ["战地急救", "B"]},
+"210": {"绿色": ["炮火连天", "S"], "蓝色": ["前仆后继", "B"], "红色": ["活力汲取", "B"], "紫色": ["坚固装甲", "S"]},
+"211": {"绿色": ["战地急救", "B"], "蓝色": ["干扰信号", "B"], "红色": ["炼金技术", "B"], "紫色": ["前仆后继", "B"]},
+"212": {"绿色": ["炼金技术", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["活力汲取", "B"], "紫色": ["情报压制", "B"]},
+"213": {"绿色": ["战地急救", "B"], "蓝色": ["活力汲取", "B"], "红色": ["破坏阻滞", "B"], "紫色": ["前仆后继", "B"]},
+"214": {"绿色": ["干扰信号", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["活力汲取", "B"], "紫色": ["干扰信号", "B"]},
+"215": {"绿色": ["能量涌动", "B"], "蓝色": ["活力汲取", "S"], "红色": ["活力汲取", "S"], "紫色": ["能量涌动", "B"]},
+"216": {"绿色": ["炼金技术", "B"], "蓝色": ["炼金技术", "B"], "红色": ["活力汲取", "B"], "紫色": ["炼金技术", "B"]},
+"217": {"绿色": ["炼金技术", "B"], "蓝色": ["前仆后继", "B"], "红色": ["活力汲取", "B"], "紫色": ["炼金技术", "B"]},
+"218": {"绿色": ["绝缘材料", "S"], "蓝色": ["炼金技术", "B"], "红色": ["前仆后继", "S"], "紫色": ["能量涌动", "B"]},
+"219": {"绿色": ["前仆后继", "B"], "蓝色": ["情报压制", "B"], "红色": ["前仆后继", "B"], "紫色": ["炮火连天", "B"]},
+"220": {"绿色": ["绝缘材料", "S"], "蓝色": ["绝缘材料", "S"], "红色": ["活力汲取", "B"], "紫色": ["能量涌动", "B"]},
+"221": {"绿色": ["炼金技术", "B"], "蓝色": ["破坏阻滞", "S"], "红色": ["活力汲取", "B"], "紫色": ["炼金技术", "B"]},
+"222": {"绿色": ["战地急救", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["坚固装甲", "S"], "紫色": ["炮火连天", "B"]},
+"223": {"绿色": ["肾上腺素", "B"], "蓝色": ["绝缘材料", "S"], "红色": ["绝缘材料", "S"], "紫色": ["肾上腺素", "B"]},
+"224": {"绿色": ["能量涌动", "S"], "蓝色": ["活力汲取", "B"], "红色": ["肾上腺素", "S"], "紫色": ["能量涌动", "B"]},
+"225": {"绿色": ["情报压制", "S"], "蓝色": ["干扰信号", "B"], "红色": ["活力汲取", "B"], "紫色": ["炮火连天", "B"]},
+"226": {"绿色": ["战地急救", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["坚固装甲", "B"], "紫色": ["活力汲取", "B"]},
+"227": {"绿色": ["干扰信号", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["绝缘材料", "B"], "紫色": ["干扰信号", "B"]},
+"228": {"绿色": ["炮火连天", "B"], "蓝色": ["干扰信号", "B"], "红色": ["活力汲取", "B"], "紫色": ["坚固装甲", "B"]},
+"229": {"绿色": ["炼金技术", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["情报压制", "B"], "紫色": ["情报压制", "B"]},
+"230": {"绿色": ["坚固装甲", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["能量涌动", "S"], "紫色": ["能量涌动", "B"]},
+"231": {"绿色": ["能量涌动", "B"], "蓝色": ["炮火连天", "B"], "红色": ["坚固装甲", "B"], "紫色": ["能量涌动", "B"]},
+"232": {"绿色": ["肾上腺素", "B"], "蓝色": ["前仆后继", "S"], "红色": ["前仆后继", "B"], "紫色": ["肾上腺素", "B"]},
+"233": {"绿色": ["炼金技术", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["肾上腺素", "B"], "紫色": ["情报压制", "B"]},
+"234": {"绿色": ["炼金技术", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["前仆后继", "B"], "紫色": ["情报压制", "B"]},
+"235": {"绿色": ["情报压制", "S"], "蓝色": ["绝缘材料", "S"], "红色": ["绝缘材料", "B"], "紫色": ["炮火连天", "S"]},
+"236": {"绿色": ["干扰信号", "B"], "蓝色": ["前仆后继", "B"], "红色": ["炼金技术", "B"], "紫色": ["干扰信号", "B"]},
+"237": {"绿色": ["炮火连天", "B"], "蓝色": ["战地急救", "B"], "红色": ["炼金技术", "B"], "紫色": ["坚固装甲", "B"]},
+"238": {"绿色": ["战地急救", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["战地急救", "B"], "紫色": ["炮火连天", "B"]},
+"239": {"绿色": ["能量涌动", "S"], "蓝色": ["战地急救", "B"], "红色": ["绝缘材料", "B"], "紫色": ["能量涌动", "B"]},
+"240": {"绿色": ["炼金技术", "B"], "蓝色": ["干扰信号", "B"], "红色": ["前仆后继", "B"], "紫色": ["活力汲取", "S"]},
+"241": {"绿色": ["战地急救", "B"], "蓝色": ["炼金技术", "B"], "红色": ["前仆后继", "B"], "紫色": ["炮火连天", "B"]},
+"242": {"绿色": ["坚固装甲", "S"], "蓝色": ["干扰信号", "B"], "红色": ["活力汲取", "B"], "紫色": ["能量涌动", "B"]},
+"243": {"绿色": ["炼金技术", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["能量涌动", "S"], "紫色": ["情报压制", "B"]},
+"244": {"绿色": ["炼金技术", "B"], "蓝色": ["干扰信号", "B"], "红色": ["活力汲取", "B"], "紫色": ["情报压制", "B"]},
+"245": {"绿色": ["坚固装甲", "S"], "蓝色": ["干扰信号", "S"], "红色": ["情报压制", "B"], "紫色": ["能量涌动", "B"]},
+"246": {"绿色": ["能量涌动", "B"], "蓝色": ["干扰信号", "B"], "红色": ["炼金技术", "S"], "紫色": ["能量涌动", "B"]},
+"247": {"绿色": ["炼金技术", "B"], "蓝色": ["绝缘材料", "B"], "红色": ["前仆后继", "B"], "紫色": ["战地急救", "B"]},
+"248": {"绿色": ["炮火连天", "B"], "蓝色": ["炮火连天", "B"], "红色": ["前仆后继", "B"], "紫色": ["坚固装甲", "B"]},
+"249": {"绿色": ["情报压制", "B"], "蓝色": ["活力汲取", "S"], "红色": ["炮火连天", "S"], "紫色": ["炮火连天", "S"]},
+"250": {"绿色": ["干扰信号", "S"], "蓝色": ["破坏阻滞", "B"], "红色": ["绝缘材料", "B"], "紫色": ["干扰信号", "S"]},
+"251": {"绿色": ["战地急救", "B"], "蓝色": ["战地急救", "B"], "红色": ["能量涌动", "B"], "紫色": ["前仆后继", "B"]},
+"252": {"绿色": ["炮火连天", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["肾上腺素", "B"], "紫色": ["坚固装甲", "B"]},
+"253": {"绿色": ["炼金技术", "B"], "蓝色": ["炼金技术", "S"], "红色": ["肾上腺素", "B"], "紫色": ["炼金技术", "B"]},
+"254": {"绿色": ["战地急救", "S"], "蓝色": ["情报压制", "S"], "红色": ["干扰信号", "S"], "紫色": ["炮火连天", "B"]},
+"255": {"绿色": ["炼金技术", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["战地急救", "B"], "紫色": ["炼金技术", "B"]},
+"256": {"绿色": ["战地急救", "B"], "蓝色": ["干扰信号", "B"], "红色": ["炼金技术", "B"], "紫色": ["前仆后继", "B"]},
+"257": {"绿色": ["干扰信号", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["前仆后继", "B"], "紫色": ["干扰信号", "B"]},
+"258": {"绿色": ["炼金技术", "B"], "蓝色": ["肾上腺素", "B"], "红色": ["前仆后继", "B"], "紫色": ["战地急救", "S"]},
+"259": {"绿色": ["坚固装甲", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["绝缘材料", "B"], "紫色": ["能量涌动", "B"]},
+"260": {"绿色": ["炼金技术", "B"], "蓝色": ["坚固装甲", "S"], "红色": ["活力汲取", "B"], "紫色": ["活力汲取", "S"]},
+"261": {"绿色": ["炼金技术", "B"], "蓝色": ["干扰信号", "B"], "红色": ["炼金技术", "S"], "紫色": ["战地急救", "B"]},
+"262": {"绿色": ["炮火连天", "B"], "蓝色": ["情报压制", "S"], "红色": ["活力汲取", "B"], "紫色": ["坚固装甲", "B"]},
+"263": {"绿色": ["炼金技术", "B"], "蓝色": ["战地急救", "B"], "红色": ["绝缘材料", "B"], "紫色": ["活力汲取", "S"]},
+"264": {"绿色": ["能量涌动", "B"], "蓝色": ["前仆后继", "B"], "红色": ["能量涌动", "B"], "紫色": ["能量涌动", "B"]},
+"265": {"绿色": ["炮火连天", "B"], "蓝色": ["活力汲取", "B"], "红色": ["活力汲取", "B"], "紫色": ["坚固装甲", "B"]},
+"266": {"绿色": ["情报压制", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["绝缘材料", "B"], "紫色": ["炮火连天", "B"]},
+"267": {"绿色": ["破坏阻滞", "B"], "蓝色": ["绝缘材料", "B"], "红色": ["坚固装甲", "B"], "紫色": ["破坏阻滞", "B"]},
+"268": {"绿色": ["绝缘材料", "B"], "蓝色": ["炼金技术", "B"], "红色": ["活力汲取", "B"], "紫色": ["坚固装甲", "B"]},
+"269": {"绿色": ["战地急救", "B"], "蓝色": ["情报压制", "B"], "红色": ["能量涌动", "B"], "紫色": ["炮火连天", "B"]},
+"270": {"绿色": ["干扰信号", "S"], "蓝色": ["能量涌动", "S"], "红色": ["活力汲取", "S"], "紫色": ["干扰信号", "S"]},
+"271": {"绿色": ["干扰信号", "B"], "蓝色": ["炮火连天", "S"], "红色": ["活力汲取", "B"], "紫色": ["干扰信号", "B"]},
+"272": {"绿色": ["能量涌动", "B"], "蓝色": ["干扰信号", "B"], "红色": ["前仆后继", "B"], "紫色": ["能量涌动", "B"]},
+"273": {"绿色": ["炮火连天", "S"], "蓝色": ["情报压制", "B"], "红色": ["肾上腺素", "B"], "紫色": ["绝缘材料", "B"]},
+"274": {"绿色": ["活力汲取", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["情报压制", "B"], "紫色": ["炮火连天", "B"]},
+"275": {"绿色": ["前仆后继", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["战地急救", "B"], "紫色": ["绝缘材料", "S"]},
+"276": {"绿色": ["干扰信号", "B"], "蓝色": ["活力汲取", "S"], "红色": ["绝缘材料", "B"], "紫色": ["干扰信号", "B"]},
+"277": {"绿色": ["战地急救", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["炼金技术", "B"], "紫色": ["炮火连天", "B"]},
+"278": {"绿色": ["绝缘材料", "B"], "蓝色": ["情报压制", "B"], "红色": ["活力汲取", "B"], "紫色": ["坚固装甲", "B"]},
+"279": {"绿色": ["干扰信号", "B"], "蓝色": ["战地急救", "B"], "红色": ["前仆后继", "B"], "紫色": ["干扰信号", "B"]},
+"280": {"绿色": ["炮火连天", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["前仆后继", "B"], "紫色": ["坚固装甲", "B"]},
+"281": {"绿色": ["活力汲取", "B"], "蓝色": ["战地急救", "B"], "红色": ["炼金技术", "B"], "紫色": ["炮火连天", "B"]},
+"282": {"绿色": ["前仆后继", "B"], "蓝色": ["炮火连天", "S"], "红色": ["活力汲取", "S"], "紫色": ["绝缘材料", "B"]},
+"283": {"绿色": ["炼金技术", "B"], "蓝色": ["炼金技术", "S"], "红色": ["能量涌动", "B"], "紫色": ["炼金技术", "B"]},
+"284": {"绿色": ["炮火连天", "B"], "蓝色": ["坚固装甲", "B"], "红色": ["活力汲取", "B"], "紫色": ["坚固装甲", "B"]},
+"285": {"绿色": ["炼金技术", "B"], "蓝色": ["情报压制", "B"], "红色": ["干扰信号", "B"], "紫色": ["战地急救", "B"]},
+"286": {"绿色": ["能量涌动", "B"], "蓝色": ["干扰信号", "B"], "红色": ["绝缘材料", "B"], "紫色": ["能量涌动", "B"]},
+"287": {"绿色": ["炼金技术", "B"], "蓝色": ["绝缘材料", "B"], "红色": ["肾上腺素", "B"], "紫色": ["战地急救", "B"]},
+"288": {"绿色": ["战地急救", "B"], "蓝色": ["干扰信号", "B"], "红色": ["活力汲取", "B"], "紫色": ["炮火连天", "B"]},
+"289": {"绿色": ["战地急救", "B"], "蓝色": ["能量涌动", "B"], "红色": ["炼金技术", "B"], "紫色": ["活力汲取", "B"]},
+"290": {"绿色": ["前仆后继", "B"], "蓝色": ["情报压制", "B"], "红色": ["前仆后继", "B"], "紫色": ["绝缘材料", "B"]},
+"291": {"绿色": ["破坏阻滞", "B"], "蓝色": ["坚固装甲", "S"], "红色": ["干扰信号", "S"], "紫色": ["破坏阻滞", "B"]},
+"292": {"绿色": ["肾上腺素", "S"], "蓝色": ["战地急救", "S"], "红色": ["肾上腺素", "B"], "紫色": ["肾上腺素", "S"]},
+"293": {"绿色": ["炮火连天", "B"], "蓝色": ["情报压制", "B"], "红色": ["坚固装甲", "B"], "紫色": ["坚固装甲", "B"]},
+"294": {"绿色": ["战地急救", "B"], "蓝色": ["活力汲取", "B"], "红色": ["前仆后继", "B"], "紫色": ["活力汲取", "B"]},
+"295": {"绿色": ["绝缘材料", "B"], "蓝色": ["破坏阻滞", "B"], "红色": ["炮火连天", "B"], "紫色": ["能量涌动", "B"]},
+"296": {"绿色": ["情报压制", "S"], "蓝色": ["干扰信号", "B"], "红色": ["前仆后继", "B"], "紫色": ["炮火连天", "B"]},
+"297": {"绿色": ["炼金技术", "B"], "蓝色": ["情报压制", "S"], "红色": ["前仆后继", "S"], "紫色": ["情报压制", "B"]},
+"298": {"绿色": ["炮火连天", "B"], "蓝色": ["战地急救", "B"], "红色": ["肾上腺素", "B"], "紫色": ["坚固装甲", "B"]},
+"299": {"绿色": ["炼金技术", "B"], "蓝色": ["能量涌动", "B"], "红色": ["活力汲取", "B"], "紫色": ["活力汲取", "B"]},
+"300": {"绿色": ["坚固装甲", "B"], "蓝色": ["能量涌动", "S"], "红色": ["肾上腺素", "B"], "紫色": ["能量涌动", "B"]}
+}
+;
+
+const COLORS=["绿色","蓝色","红色","紫色"];
+const SCORES={"坚固装甲|S":14,"坚固装甲|B":10.5,"前仆后继|S":11,"前仆后继|B":8,
+ "破坏阻滞|S":10,"破坏阻滞|B":5,"情报压制|S":9,"情报压制|B":4,
+ "活力汲取|S":8,"活力汲取|B":3};
+const OTHER_S=2, OTHER_B=1;
+const ATTACK=new Set(["坚固装甲","前仆后继","破坏阻滞","情报压制","活力汲取",
+ "炼金技术","战地急救","炮火连天","绝缘材料","干扰信号","能量涌动","肾上腺素"]);
+const DEFENCE={"投诚":{S:11,B:8},"过热":{S:10,B:5},"昏沉":{S:9,B:4},"力竭":{S:9,B:4},
+ "接地":{S:8,B:3},"辅助":{S:8,B:3},"过载":{S:10,B:5},"硬化":{S:9,B:5},
+ "修补":{S:10,B:5},"干扰":{S:7,B:4},"加固":{S:8,B:4},"保险":{S:9,B:5}};
+const DEFENCE_NAMES=["过载","力竭","硬化","昏沉","修补","干扰","投诚","接地","加固","保险","过热","辅助"];
+
+let CRYSTAL_SLIDER=0, B=0, C=0, PREFERENCE="attack";
+const PREF_BOOST=1.2, PREF_PENALTY=0.8;
+const LINE_COST=[5,7,15,30];
+const DEFAULT_CRYSTALS={"绿色":1000,"蓝色":1000,"红色":1000,"紫色":1000};
+const HOURS_PER_RUN=8, DAILY_GAIN=2, TOPUP=500;
+const GOOD_T=0.95;   // 选1行所需的当前轮最高质量分（偏好后0~1），可调
+
+const PRESET_VERSION=2;   // 预设版本号：老存档一次性升级（与 App 一致）
+// 雕刻权重默认值：按 2026-10-10 表格「假如选择自定义（合并计算）」那一组
+const EFX_TABLE={"坚固装甲":[1,0.92],"昏沉":[0.98,0.91],"前仆后继":[0.9,0.84],"过热":[0.9,0.84],
+  "破坏阻滞":[0.85,0.79],"投诚":[0.85,0.79],"情报压制":[0.75,0.45],"修补":[0.75,0.45],
+  "活力汲取":[0.7,0.5],"力竭":[0.7,0.5],"战地急救":[0.45,0.25],"保险":[0.45,0.25],
+  "能量涌动":[0.35,0.21]};
+const EFX_OTHER=[0.2,0.1];
+const EFX_W={};
+[...ATTACK,...Object.keys(DEFENCE)].forEach(n=>{
+  const v=EFX_TABLE[n]||EFX_OTHER;
+  EFX_W[n]={S:v[0],B:v[1]};
+});
+// 旧版默认权重（分数/14、防御/14、其余 0.5）：只用来判断这个值还是不是旧默认值
+function legacyEfxW(){
+  const m={};
+  [...ATTACK,...Object.keys(DEFENCE)].forEach(n=>{
+    const s=SCORES[n+"|S"], b=SCORES[n+"|B"], ds=DEFENCE[n];
+    m[n]={S:s!==undefined?s/14:(ds?ds.S/14:0.5), B:b!==undefined?b/14:(ds?ds.B/14:0.5)};
+  });
+  return m;
+}
+// 老存档一次性升级：权重仍是旧默认值时换成新预设，用户自己调过的不动
+function migratePreset(d){
+  const pv=(d&&d.presetVersion)?+d.presetVersion:1;
+  if(pv>=PRESET_VERSION) return;
+  const w=document.querySelectorAll(".ws");
+  if(w.length>=3){
+    if(Math.abs(+w[1].value+0.85)<1e-9) w[1].value=0;
+    if(Math.abs(+w[2].value-1)<1e-9) w[2].value=0;
+  }
+  const legacy=legacyEfxW();
+  Object.keys(EFX_W).forEach(n=>{
+    const cur=EFX_W[n], old=legacy[n];
+    if(!cur||!old) return;
+    let s=+cur.S, b=+cur.B;
+    if(s>1) s/=14;
+    if(b>1) b/=14;
+    if(Math.abs(s-old.S)<1e-6&&Math.abs(b-old.B)<1e-6){
+      const v=EFX_TABLE[n]||EFX_OTHER; cur.S=v[0]; cur.B=v[1];
+    }
+  });
+}
+function qualityRaw(e,g){const w=EFX_W[e];return w&&w[g]!==undefined?w[g]:0.5;}
+function qualityNorm(e,g){return qualityRaw(e,g);}
+function applyPreference(q,e){
+  if(PREFERENCE==="custom") return q;
+  const ia=ATTACK.has(e), id=DEFENCE[e]!==undefined;
+  if(PREFERENCE==="attack"&&ia) return q*PREF_BOOST;
+  if(PREFERENCE==="defence"&&id) return q*PREF_BOOST;
+  if((PREFERENCE==="attack"||PREFERENCE==="defence")&&(ia||id)) return q*PREF_PENALTY;
+  return q;
+}
+function totalCost(n){let s=0;for(let i=0;i<n;i++)s+=LINE_COST[i];return s;}
+function balanceFactor(st){
+  const vs=COLORS.map(c=>st[c]); const m=vs.reduce((a,b)=>a+b,0)/vs.length;
+  if(m<=0) return 1;
+  const sd=Math.sqrt(vs.reduce((a,v)=>a+(v-m)**2,0)/vs.length);
+  return Math.max(0,Math.min(1,1-sd/m));
+}
+function crystalDim(n,picks,cry,sl){
+  if(sl===0||!cry) return 0;
+  const uniq=[...new Set(picks.map(p=>p[1]))];
+  const ranked=[...uniq].sort((a,b)=>cry[a]-cry[b]);
+  const co={}; ranked.forEach((c,i)=>co[c]=LINE_COST[i]);
+  const st={...cry}; picks.forEach(p=>{st[p[1]]-=co[p[1]];});
+  const save=1-Object.values(co).reduce((a,b)=>a+b,0)/totalCost(4);
+  const bal=-(1-balanceFactor(st));
+  return sl>0? sl*save : (-sl)*bal;
+}
+function goodThreshold(Bv){
+  if(Bv<=0.8) return GOOD_T;                 // 0.8及以下：门槛很严，基本最低2
+  return GOOD_T*(1-(Bv-0.8)/0.2);           // 0.8 -> GOOD_T，1 -> 0（全放行）
+}
+function roundBest(data,r){
+  const pr=COLORS.filter(c=>data[r][c]&&data[r][c].length>=2)
+    .map(c=>applyPreference(qualityNorm(data[r][c][0],data[r][c][1]),data[r][c][0]));
+  return pr.length?Math.max(...pr):0;
+}
+function nTarget(Bv){
+  // 滑块决定的「目标条数」：-1 -> 4，0.8 -> 2，1 -> 1
+  if(Bv<=0.8) return 4-(Bv+1)/1.8*2;  // -1:4，0.8:2
+  return 2-(Bv-0.8)/0.2;              // 0.8:2，1:1
+}
+function timeScore(n,Bv){
+  // 离目标条数越近分越高（峰=1，每差1条约 -0.67）
+  return Math.max(-1, 1-Math.abs(n-nTarget(Bv))*0.67);
+}
+function comboTotal(picks,n,Q2,cry,ignoreTime){
+  let Q1=0; picks.forEach(p=>Q1+=applyPreference(qualityNorm(p[2],p[3]),p[2]));
+  const qs=Q2>0?2*(Q1/Q2)-1:-1;
+  const ts=ignoreTime?0:timeScore(n,B);
+  return crystalDim(n,picks,cry,CRYSTAL_SLIDER)+ts+qs*C;  // 时间分直接生效，B只定目标条数
+}
+function perms(arr,n){
+  const r=[];
+  (function rec(rem,cur){
+    if(cur.length===n){r.push(cur);return;}
+    for(let i=0;i<rem.length;i++)
+      rec(rem.slice(0,i).concat(rem.slice(i+1)),cur.concat(rem[i]));
+  })(arr,[]); return r;
+}
+function q2of(data,rounds){
+  let Q2=0;
+  rounds.forEach(rr=>{
+    const pr=COLORS.filter(c=>data[rr][c]&&data[rr][c].length>=2)
+      .map(c=>applyPreference(qualityNorm(data[rr][c][0],data[rr][c][1]),data[rr][c][0]));
+    if(pr.length) Q2+=Math.max(...pr);
+  }); return Q2;
+}
+function bestForN(data,start,n,cry){
+  const rounds=[]; for(let r=start;r<start+n;r++) if(data[r]) rounds.push(r);
+  if(rounds.length<n) return null;
+  const Q2=q2of(data,rounds);
+  let best=null;
+  for(const picked of perms(COLORS,n)){
+    const picks=[]; let ok=true;
+    rounds.forEach((rr,i)=>{
+      const cell=data[rr][picked[i]];
+      if(!cell||cell.length<2) ok=false; else picks.push([rr,picked[i],cell[0],cell[1]]);
+    });
+    if(!ok) continue;
+    const t=comboTotal(picks,n,Q2,cry);
+    if(!best||t>best[0]) best=[t,picks];
+  } return best;
+}
+function decideLines(data,start,cry){
+  const keys=Object.keys(data).map(Number);
+  const maxN=Math.min(4,Math.max(...keys)-start+1);
+  let best=null;
+  for(let n=1;n<=maxN;n++){
+    const rounds=[]; for(let r=start;r<start+n;r++) if(data[r]) rounds.push(r);
+    if(rounds.length<n) continue;
+    if(n===1 && roundBest(data,start)<goodThreshold(B)) continue;  // 没好雕刻不选1
+    const Q2=q2of(data,rounds);
+    const res=bestForN(data,start,n,cry);
+    if(!res) continue;
+    const [total,picks]=res;
+    let Q1=0; picks.forEach(p=>Q1+=applyPreference(qualityNorm(p[2],p[3]),p[2]));
+    const cand={n,per:total/n,
+      quality:Q2>0?2*(Q1/Q2)-1:-1,
+      time:timeScore(n,B),
+      crystal:crystalDim(n,picks,cry,CRYSTAL_SLIDER),picks};
+    if(!best||cand.per>best.per) best=cand;
+  } return best;
+}
+
+// ================= 基础 =================
+const app=document.getElementById("app"), toastEl=document.getElementById("toast");
+let toastTimer;
+function toast(msg){toastEl.textContent=msg;toastEl.classList.add("show");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove("show"),1600);}
+function show(name){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.dataset.screen===name));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.go===name));
+  const c=document.querySelector(".screen.active .content"); if(c) c.scrollTop=0;
+}
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>show(t.dataset.go)));
+document.querySelectorAll("[data-back]").forEach(b=>b.addEventListener("click",()=>show("home")));
+
+// ================= 多语言（完整三语） =================
+const I18N={
+ en:{gain:"Curve to Gain",gainEmpty:"Nothing gained yet",lines:"Lines (start)",
+   options:"Recommended · top by score",confirm:"Confirm",undoTitle:"Undo / Redo",
+   undo:"Undo",redo:"Redo",import:"Import",export:"Export",order:"Order",
+   home:"Home",history:"History",settings:"Settings",
+   preference:"Preference",language:"Language",about:"About",account:"Account",
+   weights:"Weights",wCrystal:"Crystal",wTime:"Time",wQuality:"Quality",
+   simTitle:"Simulation",strategy:"Strategy",sAttack:"Attack first",sDefence:"Defence first",sCustom:"Custom",
+   howMany:"How many lines",lAuto:"Automatic",lFlex:"Custom",efxWeight:"Effect weights",efxAtk:"Attack",efxDef:"Defence",linesN:"Lines (1-4)",viewSeq:"View current sequence",changeSeq:"Change sequence (CSV/XLSX)",seqTitle:"Sequence",close:"Close",
+   apply:"Apply",importPreset:"Import preset",importBackup:"Backup (.json)",importSeq:"Sequence (.csv/.xlsx)",
+   crystals:"Crystals",cG:"Green",cB:"Blue",cR:"Red",cP:"Purple",
+   langTitle:"Display language",aboutText:"Personal carving assistant. Offline-first, data stays on device.",
+   accTitle:"Accounts (up to 10)",newAcc:"New account",accMain:"Main account",accMainSub:"main@local",
+   accAlt:"Alt account",accAltSub:"alt@local",logout:"Log out current account",
+   changelog:"Changelog",missL:"May miss",missG:"solid",missF:"vanguard",missB:"block",
+   score:"score",line:" lines",roundP:"Round ",roundTail:" lines",choose:"Selected",gained:"Gained",
+   optionsTitle:"Recommended · top by score",noPlan:"No plan available",cost:"Cost",total:"total",timeW:"Time",days:"days",topups:"topups"},
+ sc:{gain:"获得顺序",gainEmpty:"尚未获得任何曲线",lines:"起始行",
+   options:"推荐方案 · 按得分",confirm:"确认",undoTitle:"撤销 / 重做",
+   undo:"撤销",redo:"重做",import:"导入",export:"导出",order:"顺序",
+   home:"主页",history:"历史",settings:"设置",
+   preference:"偏好",language:"语言",about:"关于",account:"账号",
+   weights:"权重",wCrystal:"水晶",wTime:"时间",wQuality:"质量",
+   simTitle:"模拟",strategy:"策略",sAttack:"攻击优先",sDefence:"防御优先",sCustom:"自定义",
+   howMany:"每次行数",lAuto:"自动",lFlex:"自定义",efxWeight:"雕刻权重",efxAtk:"攻击",efxDef:"防御",linesN:"行数 (1-4)",viewSeq:"查看当前雕刻序列",changeSeq:"更改雕刻序列（CSV/XLSX）",seqTitle:"雕刻序列",close:"关闭",
+   apply:"应用",importPreset:"导入预设",importBackup:"备份（.json）",importSeq:"序列（.csv/.xlsx）",
+   crystals:"水晶存量",cG:"绿色",cB:"蓝色",cR:"红色",cP:"紫色",
+   langTitle:"显示语言",aboutText:"个人雕刻选择辅助工具。离线优先，数据保存在本机。",
+   accTitle:"账号（最多 10 个）",newAcc:"新建账号",accMain:"主账号",accMainSub:"main@local",
+   accAlt:"备用账号",accAltSub:"alt@local",logout:"退出当前账号",
+   changelog:"更新日志",missL:"可能遗漏",missG:"个坚固",missF:"个前仆",missB:"个破坏",
+   score:"得分",line:"条",roundP:"第 ",roundTail:" 行",choose:"已选",gained:"获得",
+   optionsTitle:"推荐方案 · 按得分",noPlan:"无可选方案",cost:"消耗",total:"合计",timeW:"时间",days:"天",topups:"兜底"},
+ tc:{gain:"獲得順序",gainEmpty:"尚未獲得任何曲線",lines:"起始行",
+   options:"推薦方案 · 按得分",confirm:"確認",undoTitle:"撤銷 / 重做",
+   undo:"撤銷",redo:"重做",import:"導入",export:"匯出",order:"順序",
+   home:"主頁",history:"歷史",settings:"設定",
+   preference:"偏好",language:"語言",about:"關於",account:"帳號",
+   weights:"權重",wCrystal:"水晶",wTime:"時間",wQuality:"質量",
+   simTitle:"模擬",strategy:"策略",sAttack:"攻擊優先",sDefence:"防禦優先",sCustom:"自定義",
+   howMany:"每次行數",lAuto:"自動",lFlex:"自定義",efxWeight:"雕刻權重",efxAtk:"攻擊",efxDef:"防禦",linesN:"行數 (1-4)",viewSeq:"查看當前雕刻序列",changeSeq:"更改雕刻序列（CSV/XLSX）",seqTitle:"雕刻序列",close:"關閉",
+   apply:"應用",importPreset:"導入預設",importBackup:"備份（.json）",importSeq:"序列（.csv/.xlsx）",
+   crystals:"水晶存量",cG:"綠色",cB:"藍色",cR:"紅色",cP:"紫色",
+   langTitle:"顯示語言",aboutText:"個人雕刻選擇輔助工具。離線優先，資料保存在本機。",
+   accTitle:"帳號（最多 10 個）",newAcc:"新建帳號",accMain:"主帳號",accMainSub:"main@local",
+   accAlt:"備用帳號",accAltSub:"alt@local",logout:"退出當前帳號",
+   changelog:"更新日誌",missL:"可能遺漏",missG:"個堅固",missF:"個前仆",missB:"個破壞",
+   score:"得分",line:"條",roundP:"第 ",roundTail:" 行",choose:"已選",gained:"獲得",
+   optionsTitle:"推薦方案 · 按得分",noPlan:"無可選方案",cost:"消耗",total:"合計",timeW:"時間",days:"天",topups:"兜底"}
+};
+let lang="sc";
+function applyLang(){
+  document.querySelectorAll("[data-i18n]").forEach(e=>{
+    const k=e.dataset.i18n;
+    if(I18N[lang]&&I18N[lang][k]!==undefined) e.innerHTML=I18N[lang][k];
+  });
+  document.querySelectorAll(".choice[data-grp=lang]").forEach(x=>
+    x.classList.toggle("on",x.dataset.lang===lang));
+  renderSim(); renderRound(); renderHome(); renderHistory(); renderEfxW();
+}
+document.querySelectorAll(".choice[data-lang]").forEach(c=>
+  c.addEventListener("click",()=>{lang=c.dataset.lang;applyLang();}));
+
+// ================= 双账号 =================
+const LETTERS={"绿色":"G","蓝色":"B","红色":"R","紫色":"P"};
+const CH={"绿色":"绿","蓝色":"蓝","红色":"红","紫色":"紫"};
+const EN_EFX={"坚固装甲":"Solid","前仆后继":"Vanguard","破坏阻滞":"Block",
+"情报压制":"Intel Suppression","活力汲取":"Vitality Drain","炼金技术":"Alchemy",
+"战地急救":"Field Aid","能量涌动":"Energy Surge","干扰信号":"Jam Signal",
+"炮火连天":"Barrage","绝缘材料":"Insulation","投诚":"Defect","过热":"Overheat",
+"昏沉":"Drowsy","力竭":"Exhaust","接地":"Grounded","辅助":"Support","肾上腺素":"Adrenaline",
+"过载":"Overload","硬化":"Harden","修补":"Repair","干扰":"Jam","加固":"Reinforce","保险":"Insurance"};
+const TC_EFX={"坚固装甲":"堅固裝甲","前仆后继":"前仆後繼","破坏阻滞":"破壞阻滯",
+"情报压制":"情報壓制","活力汲取":"活力汲取","炼金技术":"煉金技術","战地急救":"戰地急救",
+"能量涌动":"能量湧動","干扰信号":"干擾信號","炮火连天":"炮火連天","绝缘材料":"絕緣材料",
+"肾上腺素":"腎上腺素","投诚":"投誠","过热":"過熱","昏沉":"昏沉","力竭":"力竭",
+"接地":"接地","辅助":"輔助","过载":"過載","硬化":"硬化","修补":"修補","干扰":"干擾",
+"加固":"加固","保险":"保險"};
+const TC_CH={"绿色":"綠","蓝色":"藍","红色":"紅","紫色":"紫"};
+function colorName(c){return lang==="en"?LETTERS[c]:lang==="tc"?TC_CH[c]:CH[c];}
+function efxName(n){return lang==="en"?(EN_EFX[n]||n):lang==="tc"?(TC_EFX[n]||n):n;}
+// 默认只有一个账号（名字跟随语言），四色各 1000，序列与历史为空  与 App 出厂预设一致。
+// 需要内置示例序列时，控制台执行：ACCTS.main.seq=SEQ_MAIN; DATA=ACCTS.main.seq; renderHome();
+let ACCTS={
+ main:{name:defaultAccName(lang),crystals:{...DEFAULT_CRYSTALS},start:1,seq:{},hist:[]}};
+let DATA=ACCTS.main.seq;
+let curAcc="main";
+function todayPart(){const d=new Date();return (d.getMonth()+1)+"月"+d.getDate()+"日";}
+function todayWord(){return lang==="en"?"Today":"今天";}
+function todayLabel(){return todayWord()+" · "+todayPart();}
+function defaultAccName(l){return l==="en"?"your account":l==="tc"?"你的賬號":"你的账号";}
+function curStock(){
+  const s={}; document.querySelectorAll(".cryst").forEach(i=>s[i.dataset.c]=+i.value||0);
+  return s;
+}
+const DAY_EN={"今天":"Today","昨天":"Yesterday","前天":"Two days ago"};
+function enDate(s){const m=String(s).match(/(\d+)月(\d+)日/);if(!m)return s;
+  const mo=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m[1]-1];
+  return mo+" "+ +m[2];}
+function renderHistory(){
+  const box=document.getElementById("histList"); let html="";
+  ACCTS[curAcc].hist.forEach(group=>{
+    const g0=group[0][0], g1=group[0][1];
+    const dn=lang==="en"?(DAY_EN[g0]||g0):g0;
+    const ds=lang==="en"?enDate(g1):g1;
+    html+='<div class="hday">'+dn+" · "+ds+"</div>";
+    group.slice(1).forEach(it=>{
+      const dots=it[2].map(c=>'<i class="cdot c-'+LETTERS[c[0]].toLowerCase()+'"></i>').join("");
+      const sub=it[2].map(c=>colorName(c[0])+" "+efxName(c[1])+" "+c[2]).join(" · ");
+      html+=`<div class="hitem"><span class="n">#${it[0]}</span><span class="dots">${dots}</span>
+        <span class="nm">${it[2][0][2]}<small>${sub}</small></span><span class="tm">${it[1]}</span></div>`;
+    });
+  });
+  box.innerHTML=html;
+}
+function renderRound(){
+  const start=parseInt(document.getElementById("startLine").value)||1;
+  const L=I18N[lang];
+  document.getElementById("roundSub").textContent=L.roundP+start+L.roundTail;
+  const last=start-1;
+  document.getElementById("startHint").innerHTML=
+    lang==="en"?"Last recorded to "+last+", defaults to next.":"上次记录到第 "+last+" 行，默认下一行";
+}
+function applyAccount(){
+  const a=ACCTS[curAcc];
+  DATA=ACCTS[curAcc].seq||{};
+  document.querySelectorAll(".cryst").forEach(i=>i.value=a.crystals[i.dataset.c]);
+  document.getElementById("startLine").value=a.start;
+  document.querySelectorAll(".accrow[data-acc]").forEach(x=>
+    x.classList.toggle("on",x.dataset.acc===curAcc));
+  renderRound(); renderHistory(); renderHome();
+}
+function escapeHtml(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function renderAccList(){
+  const box=document.getElementById("accList"); if(!box) return;
+  const keys=Object.keys(ACCTS);
+  box.innerHTML=keys.map(k=>{
+    const a=ACCTS[k], rows=Object.keys(a.seq||{}).length;
+    const sub=(lang==="en"?a.name+" · "+rows+" "+(rows===1?"row":"rows"):a.name+" · "+rows+" 行");
+    return `<div class="accrow${k===curAcc?" on":""}" data-acc="${k}">
+      <span class="av">${escapeHtml((a.name||k).charAt(0).toUpperCase())}</span>
+      <span class="accinfo"><b>${escapeHtml(a.name)}</b><small>${escapeHtml(sub)}</small></span>
+      <button class="ren" data-rename="${k}" title="${lang==="en"?"Rename":"重命名"}">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg></button>
+      <button class="del" data-del="${k}" title="${lang==="en"?"Delete":"删除"}">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 7h14M10 7V5h4v2M8 7l1 12h6l1-12M10 11v5M14 11v5"/></svg></button>
+      <span class="rd"></span></div>`;
+  }).join("")||'<div class="gempty">'+(lang==="en"?"No accounts":"无账号")+'</div>';
+}
+document.addEventListener("click",e=>{
+  const ren=e.target.closest("[data-rename]");
+  if(ren){const k=ren.dataset.rename;
+    const nn=prompt(lang==="en"?"New name for this account":"为该账号输入新名称",ACCTS[k].name);
+    if(nn&&nn.trim()){ACCTS[k].name=nn.trim();renderAccList();applyAccount();saveState();}
+    return;}
+  const del=e.target.closest("[data-del]");
+  if(del){const k=del.dataset.del;
+    if(Object.keys(ACCTS).length<=1){toast(lang==="en"?"At least one account required":"至少保留一个账号");return;}
+    if(confirm(lang==="en"?'Delete account "'+ACCTS[k].name+'"?':'删除账号 "'+ACCTS[k].name+'"？')){
+      delete ACCTS[k];
+      if(curAcc===k) curAcc=Object.keys(ACCTS)[0];
+      renderAccList(); applyAccount(); saveState();
+      toast(lang==="en"?"Account deleted":"账号已删除");
+    }
+    return;}
+  const row=e.target.closest(".accrow[data-acc]");
+  if(row){curAcc=row.dataset.acc;applyAccount();renderAccList();saveState();
+    toast((lang==="en"?"Switched to ":"已切换账号：")+ACCTS[curAcc].name);return;}
+  const na=e.target.closest("#newAcc");
+  if(na){
+    if(Object.keys(ACCTS).length>=10){toast(lang==="en"?"Account limit reached (10)":"已达账号上限（10 个）");return;}
+    const nn=prompt(lang==="en"?"New account name":"新账号名称","账号"+(Object.keys(ACCTS).length+1));
+    if(nn&&nn.trim()){
+      const key="acc"+(Object.keys(ACCTS).length+1);
+      ACCTS[key]={name:nn.trim(),crystals:{...DEFAULT_CRYSTALS},start:1,seq:{},hist:[]};
+      curAcc=key; renderAccList(); applyAccount(); saveState();
+      toast((lang==="en"?"Account created: ":"已创建账号：")+ACCTS[key].name);
+    }
+    return;
+  }
+});
+
+// ================= 通用单选（策略） =================
+document.querySelectorAll(".choice").forEach(c=>{
+  if(c.dataset.grp==="acc"||c.dataset.grp==="lang") return;
+  c.addEventListener("click",()=>{
+    document.querySelectorAll(`.choice[data-grp="${c.dataset.grp}"]`).forEach(x=>x.classList.remove("on"));
+    c.classList.add("on");
+    if(c.dataset.grp==="strat"){PREFERENCE=c.dataset.pref;renderSim();renderEfxW();}
+    if(c.dataset.grp==="lines"){
+      linesMode=c.dataset.lines;
+      document.getElementById("customNBox").style.display=(linesMode==="custom"?"block":"none");
+      renderSim();renderHome();
+    }
+  });
+});
+
+// 「应用」按钮只在「偏好」分段显示（放在设置页页眉，与「设置」同一行右侧）
+function syncApplyBtn(){
+  const btn=document.getElementById("efxApply");
+  const p=document.querySelector('#setSeg button[data-pane="preference"]');
+  if(btn) btn.style.display=(p&&p.classList.contains("on"))?"block":"none";
+}
+// ================= Settings 内分段 =================
+document.querySelectorAll("#setSeg button").forEach(b=>
+  b.addEventListener("click",()=>{
+    document.querySelectorAll("#setSeg button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    syncApplyBtn();
+    document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("on",p.dataset.pane===b.dataset.pane));
+  }));
+
+// ================= 操作图标条 =================
+let undoStack=[],redoStack=[];
+const undoBtn=document.getElementById("undoBtn"),redoBtn=document.getElementById("redoBtn");
+function setUru(){undoBtn.disabled=undoStack.length===0;redoBtn.disabled=redoStack.length===0;}
+undoBtn.addEventListener("click",()=>{
+  if(!undoStack.length){toast(I18N[lang].undo);return;}
+  const e=undoStack.pop(); redoStack.push(e);
+  const a=ACCTS[curAcc];
+  if(a.hist[0]&&a.hist[0][0][1]===todayPart()&&a.hist[0].length>1) a.hist[0].splice(1,1);
+  document.getElementById("startLine").value=e.from;
+  document.getElementById("gainContent").innerHTML=e.gainBefore;
+  setUru(); renderHistory(); renderRound(); renderHome();
+  saveState();
+  toast(I18N[lang].undo);
+});
+redoBtn.addEventListener("click",()=>{
+  if(!redoStack.length){toast(I18N[lang].redo);return;}
+  const e=redoStack.pop(); undoStack.push(e);
+  const a=ACCTS[curAcc];
+  if(a.hist[0]&&a.hist[0][0][1]===todayPart()) a.hist[0].splice(1,0,e.entry);
+  else a.hist.unshift([[todayWord(),todayPart()],e.entry]);
+  document.getElementById("startLine").value=e.to;
+  document.getElementById("gainContent").innerHTML=e.gainAfter;
+  setUru(); renderHistory(); renderRound(); renderHome();
+  saveState();
+  toast(I18N[lang].redo);
+});
+const fileInput=document.createElement("input"); fileInput.type="file";
+fileInput.accept=".json,.csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"; fileInput.style.display="none";
+document.body.appendChild(fileInput);
+document.getElementById("importBtn").addEventListener("click",()=>importMenu.classList.add("show"));
+function renderSeqView(){
+  const a=ACCTS[curAcc];
+  document.getElementById("seqViewTitle").textContent=
+    (lang==="en"?"Sequence":"雕刻序列")+" \u00B7 "+a.name+" ("+Object.keys(DATA).length+" "+(lang==="en"?"rows":"行")+")";
+  const keys=Object.keys(DATA).map(Number).sort((x,y)=>x-y);
+  let html='<table class="seqt"><thead><tr><th>'+(lang==="en"?"#":"行")+
+    '</th><th class="cg">'+colorName("绿色")+'</th><th class="cb">'+colorName("蓝色")+
+    '</th><th class="cr">'+colorName("红色")+'</th><th class="cp">'+colorName("紫色")+'</th></tr></thead><tbody>';
+  keys.forEach(k=>{
+    const d=DATA[k]||{};
+    html+='<tr><td>'+k+'</td>';
+    COLORS.forEach(c=>{
+      const v=d[c];
+      if(v&&v[0]){
+        html+='<td><div class="cellw"><span class="enm">'+efxName(v[0])+'</span><b class="egr">'+v[1]+'</b></div></td>';
+      }else{
+        html+='<td></td>';
+      }
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById("seqViewBody").innerHTML=
+    (keys.length?html:'<div class="gempty">'+(lang==="en"?"Empty sequence":"空序列，可用「更改雕刻序列」导入 CSV/XLSX")+'</div>');
+}
+// 打开序列表格后，自动定位到当前查询行（当前行出现在第 5 行位置，上方 4 行可见）
+function scrollSeqToCurrent(){
+  const body=document.getElementById("seqViewBody");
+  const trs=body.querySelectorAll("tbody tr");
+  if(!trs.length) return;
+  const keys=Object.keys(DATA).map(Number).sort((x,y)=>x-y);
+  const anchor=parseInt(document.getElementById("startLine").value)||1;
+  let idx=keys.findIndex(k=>k>=anchor);
+  if(idx<0) idx=keys.length-1;
+  const h=trs[0].offsetHeight||26;
+  body.scrollTop=Math.max(0,idx-4)*h;
+}
+const importMenu=document.getElementById("importMenu");
+document.getElementById("mImportBackup").addEventListener("click",()=>{importMenu.classList.remove("show");fileInput.click();});
+document.getElementById("mImportSeq").addEventListener("click",()=>{importMenu.classList.remove("show");fileInput.click();});
+document.getElementById("mImportClose").addEventListener("click",()=>importMenu.classList.remove("show"));
+importMenu.addEventListener("click",e=>{if(e.target===importMenu)importMenu.classList.remove("show");});
+const infoModal=document.getElementById("infoModal");
+const HELP={
+  cry:{en:"Crystal slider (-1 to 1):\n1 = save crystals (use abundant colors first, avoid scarce ones)\n-1 = balance crystal usage across the four colors\n0 = ignore crystals",
+    sc:"水晶滑块（-1～1）：\n1 = 尽量节省水晶（优先消耗储量多的颜色，避开储量少的）\n-1 = 均衡使用水晶（让四色储量尽量平衡）\n0 = 不考虑水晶",
+    tc:"水晶滑塊（-1～1）：\n1 = 盡量節省水晶（優先消耗儲量多的顏色，避開儲量少的）\n-1 = 均衡使用水晶（讓四色儲量盡量平衡）\n0 = 不考慮水晶"},
+  time:{en:"Time slider (-1 to 1):\n-1 = carve ~4 lines each run (fastest)\n0.8 = ~2 lines each run\n1 = 1 line each run (slowest)\nCloser to -1 = more time-saving",
+    sc:"时间滑块（-1～1）：\n-1 = 每次尽量多雕（约 4 条），最快\n0.8 = 每次约 2 条\n1 = 每次 1 条，最慢\n越靠近 -1 越省时间",
+    tc:"時間滑塊（-1～1）：\n-1 = 每次盡量多雕（約 4 條），最快\n0.8 = 每次約 2 條\n1 = 每次 1 條，最慢\n越靠近 -1 越省時間"},
+  quality:{en:"Quality slider (-1 to 1):\nhigher = prefer good carvings\n1 = quality only\n~0 = don't care\nnegative = prefer worse (not recommended)",
+    sc:"质量滑块（-1～1）：\n越高越看重雕刻质量（好雕刻优先被选中）\n1 = 只看质量\n0 附近 = 不太挑\n负数 = 倾向质量差的（一般不这样用）",
+    tc:"質量滑塊（-1～1）：\n越高越看重雕刻質量（好雕刻優先被選中）\n1 = 只看質量\n0 附近 = 不太挑\n負數 = 傾向質量差的（一般不這樣用）"}};
+const HELP_TITLE={cry:{en:"Crystal weight",sc:"水晶权重",tc:"水晶權重"},
+  time:{en:"Time weight",sc:"时间权重",tc:"時間權重"},
+  quality:{en:"Quality weight",sc:"质量权重",tc:"質量權重"}};
+document.querySelectorAll(".q").forEach(b=>b.addEventListener("click",()=>{
+  const k=b.dataset.q;
+  document.getElementById("infoTitle").textContent=HELP_TITLE[k][lang];
+  document.getElementById("infoBody").textContent=HELP[k][lang];
+  infoModal.classList.add("show");
+}));
+document.getElementById("infoClose").addEventListener("click",()=>infoModal.classList.remove("show"));
+infoModal.addEventListener("click",e=>{if(e.target===infoModal)infoModal.classList.remove("show");});
+const seqMenu=document.getElementById("seqMenu"),seqView=document.getElementById("seqView");
+document.getElementById("orderBtn").addEventListener("click",()=>seqMenu.classList.add("show"));
+document.getElementById("mViewSeq").addEventListener("click",()=>{
+  seqMenu.classList.remove("show"); renderSeqView(); seqView.classList.add("show");
+  scrollSeqToCurrent();
+});
+document.getElementById("mChangeSeq").addEventListener("click",()=>{seqMenu.classList.remove("show");fileInput.click();});
+document.getElementById("mClose").addEventListener("click",()=>seqMenu.classList.remove("show"));
+document.getElementById("svClose").addEventListener("click",()=>seqView.classList.remove("show"));
+[seqMenu,seqView].forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("show");}));
+function stamp(){const d=new Date();return ""+d.getFullYear()+("0"+(d.getMonth()+1)).slice(-2)+("0"+d.getDate()).slice(-2);}
+function backupJSON(){
+  const cry={}; document.querySelectorAll(".cryst").forEach(i=>cry[i.dataset.c]=+i.value||0);
+  const w=document.querySelectorAll(".ws");
+  const accounts={};
+  Object.keys(ACCTS).forEach(k=>{
+    accounts[k]=JSON.parse(JSON.stringify(ACCTS[k]));
+    if(!accounts[k].seq) accounts[k].seq={};
+    if(!accounts[k].hist) accounts[k].hist=[];
+  });
+  if(accounts[curAcc]) Object.keys(cry).forEach(c=>{accounts[curAcc].crystals[c]=cry[c];});
+  return {app:"carving_app",kind:"backup",version:1,exported:stamp(),presetVersion:PRESET_VERSION,
+    curAcc,accounts,lastGain:GAIN_PICKS,gainTime:GAIN_TIME,
+    settings:{cry,ws:[+w[0].value,+w[1].value,+w[2].value],PREFERENCE,linesMode,customN,EFX_W,lang}};
+}
+document.getElementById("exportBtn").addEventListener("click",()=>{
+  try{
+    const blob=new Blob([JSON.stringify(backupJSON())],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="预设-"+((ACCTS[curAcc]&&ACCTS[curAcc].name)||curAcc)+"-"+stamp()+".json";
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},200);
+    toast(lang==="en"?"Backup downloaded (saved to your downloads)":"备份已导出（文件已下载）");
+  }catch(err){toast(lang==="en"?"Export failed":"导出失败");}
+});
+function importBackup(o){
+  if(!o||o.app!=="carving_app"||o.kind!=="backup") return false;
+  if(o.accounts){
+    Object.keys(o.accounts).forEach(k=>{ACCTS[k]=o.accounts[k]; if(!ACCTS[k].seq) ACCTS[k].seq={};});
+    if(o.curAcc&&ACCTS[o.curAcc]) curAcc=o.curAcc;
+    else if(!ACCTS[curAcc]) curAcc=Object.keys(o.accounts)[0]||"main";
+  }
+  if(!ACCTS[curAcc].seq) ACCTS[curAcc].seq={};
+  if(o.seq&&!Object.keys(ACCTS[curAcc].seq).length) ACCTS[curAcc].seq=o.seq;
+  DATA=ACCTS[curAcc].seq;
+  if(o.lastGain&&o.lastGain.length){ GAIN_PICKS=o.lastGain; GAIN_TIME=o.gainTime||null;
+    document.getElementById("gainContent").innerHTML=gainHtml(GAIN_PICKS,GAIN_TIME); }
+  else if(o.gain){ document.getElementById("gainContent").innerHTML=o.gain; }
+  const s=o.settings||{};
+  if(Array.isArray(s.ws)&&s.ws.length===3){const w=document.querySelectorAll(".ws");w[0].value=s.ws[0];w[1].value=s.ws[1];w[2].value=s.ws[2];}
+  if(s.cry&&ACCTS[curAcc]) COLORS.forEach(c=>{if(s.cry[c]!==undefined)ACCTS[curAcc].crystals[c]=s.cry[c];});
+  if(s.PREFERENCE) PREFERENCE=s.PREFERENCE;
+  if(s.linesMode) linesMode=s.linesMode;
+  if(s.customN) customN=Math.max(1,Math.min(4,s.customN));
+  if(s.EFX_W) Object.keys(EFX_W).forEach(n=>{if(s.EFX_W[n]){
+    EFX_W[n].S=s.EFX_W[n].S!==undefined?s.EFX_W[n].S:EFX_W[n].S;
+    EFX_W[n].B=s.EFX_W[n].B!==undefined?s.EFX_W[n].B:EFX_W[n].B;}});
+  if(s.lang&&I18N[s.lang]) lang=s.lang;
+  document.getElementById("customNBox").style.display=(linesMode==="custom"?"block":"none");
+  document.getElementById("customN").value=customN;
+  document.querySelectorAll(".choice[data-grp=strat]").forEach(x=>x.classList.toggle("on",x.dataset.pref===PREFERENCE));
+  document.querySelectorAll(".choice[data-grp=lines]").forEach(x=>x.classList.toggle("on",x.dataset.lines===linesMode));
+  migratePreset(o); efxNeedSort=true;
+  applyAccount(); renderSim(); applyLang(); setUru();
+  return true;
+}
+// ---- 序列导入（CSV / XLSX）：表头识别列，自动跳过空行/空列/空单元格，行数任意 ----
+function csvRows(text){
+  const t=String(text||"").replace(/^\uFEFF/,"");
+  const delim=(t.includes("\t")&&!t.includes(","))?"\t":",";
+  return t.split(/\r?\n/).map(l=>l.split(delim).map(x=>String(x==null?"":x).trim()));
+}
+function parseSeq(rows2d){
+  if(!rows2d||!rows2d.length) return null;
+  let hdr=-1, col={};
+  for(let i=0;i<Math.min(rows2d.length,8);i++){
+    const r=rows2d[i]; if(!r) continue;
+    const map={};
+    r.forEach((v,c)=>{
+      const s=String(v==null?"":v).trim(); if(!s) return;
+      if(/次|轮/.test(s)) map.round=c;
+      else if(s.includes("绿")) map.g=c;
+      else if(s.includes("蓝")) map.b=c;
+      else if(s.includes("红")) map.r=c;
+      else if(s.includes("紫")) map.p=c;
+    });
+    if(map.g!==undefined||map.b!==undefined||map.r!==undefined||map.p!==undefined){hdr=i;col=map;break;}
+  }
+  if(hdr<0) return null;
+  const BYKEY={"g":"绿色","b":"蓝色","r":"红色","p":"紫色"};
+  const nd={}; let cnt=0;
+  for(let i=hdr+1;i<rows2d.length;i++){
+    const r=rows2d[i]; if(!r) continue;
+    const vals=r.map(v=>String(v==null?"":v).trim()).filter(Boolean);
+    if(!vals.length) continue;
+    let rno=col.round!==undefined?parseInt(r[col.round]):NaN;
+    if(!(rno>0)) rno=cnt+1;
+    const entry={};
+    ["g","b","r","p"].forEach(k=>{
+      if(col[k]===undefined) return;
+      const raw=String(r[col[k]]==null?"":r[col[k]]).trim();
+      if(!raw) return;
+      const m=raw.match(/^(.*?)([↑sSbB])$/);
+      if(!m||!m[1].trim()) return;
+      entry[BYKEY[k]]=[m[1].trim(), (m[2]==="↑"||m[2]==="S"||m[2]==="s")?"S":"B"];
+    });
+    if(Object.keys(entry).length){nd[String(rno)]=entry;cnt++;}
+  }
+  return nd;
+}
+function applySeq(nd){
+  if(!nd){toast(lang==="en"?"Header not found (need 次数/绿色/蓝色/红色/紫色 columns)":"未找到表头（需含 次数/绿/蓝/红/紫 列）");return;}
+  const ks=Object.keys(nd);
+  if(!ks.length){toast(lang==="en"?"No valid rows parsed":"未解析到有效数据行");return;}
+  Object.keys(DATA).forEach(k=>delete DATA[k]);
+  ks.forEach(k=>DATA[k]=nd[k]);
+  renderSim();renderHome();renderRound();saveState();
+  toast((lang==="en"?"Sequence imported: ":"序列已导入：")+ks.length+" "+(lang==="en"?"rows":"行"));
+}
+fileInput.addEventListener("change",e=>{
+  const f=e.target.files[0]; if(e.target) e.target.value="";
+  if(!f) return;
+  const ext=(f.name.split(".").pop()||"").toLowerCase();
+  const rd=new FileReader();
+  if(ext==="json"){
+    rd.onload=()=>{try{const o=JSON.parse(rd.result);
+      if(importBackup(o)) toast(lang==="en"?"Backup imported":"备份已导入");
+      else toast(lang==="en"?"Invalid backup file":"无效的备份文件");}
+    catch(err){toast(lang==="en"?"Invalid backup file":"无效的备份文件");}};
+    rd.readAsText(f);
+  }else if(ext==="csv"){
+    rd.onload=()=>applySeq(parseSeq(csvRows(rd.result)));
+    rd.readAsText(f);
+  }else if(ext==="xlsx"||ext==="xls"){
+    rd.onload=()=>{
+      if(!window.XLSX){toast(lang==="en"?"Parser needs internet, retry online":"解析库需联网加载，请联网后重试");return;}
+      try{
+        const wb=XLSX.read(new Uint8Array(rd.result),{type:"array"});
+        const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1});
+        applySeq(parseSeq(rows));
+      }catch(err){toast(lang==="en"?"Parse failed":"解析失败");}
+    };
+    rd.readAsArrayBuffer(f);
+  }else toast(lang==="en"?"Unsupported file type":"不支持的文件类型（支持 .json/.csv/.xlsx）");});
+// ================= Preference 实时模拟 =================
+const TOP3=new Set(["坚固装甲","前仆后继","破坏阻滞"]);
+function simulateApp(cv,tv,qv){
+  CRYSTAL_SLIDER=cv;B=tv;C=qv;
+  const keys=Object.keys(DATA).map(Number);
+  const rmin=Math.min(...keys),rmax=Math.max(...keys);
+  let stock={...DEFAULT_CRYSTALS};
+  const used={"绿色":0,"蓝色":0,"红色":0,"紫色":0};
+  const miss={"坚固装甲":0,"前仆后继":0,"破坏阻滞":0};
+  let topups=0,hb=0,start=rmin,guard=0; const counts=[];
+  while(start<=rmax&&guard<10000){
+    const d=decideLines(DATA,start,stock); if(!d) break;
+    const set=new Set(d.picks.map(p=>p[1]));
+    const ranked=[...set].sort((a,b)=>stock[a]-stock[b]);
+    const co={}; ranked.forEach((c,i)=>co[c]=LINE_COST[i]);
+    if(ranked.some(c=>stock[c]<co[c])){COLORS.forEach(c=>stock[c]+=TOPUP);topups++;}
+    ranked.forEach(c=>{stock[c]-=co[c];used[c]+=co[c];});
+    const pickedEff=new Set(d.picks.map(p=>p[2]));
+    for(let rr=start;rr<start+d.n;rr++){
+      if(!DATA[rr]) continue; let be=null,bq=-1;
+      COLORS.forEach(c=>{ if(DATA[rr][c]&&DATA[rr][c].length>=2){
+        const q=applyPreference(qualityNorm(DATA[rr][c][0],DATA[rr][c][1]),DATA[rr][c][0]);
+        if(q>bq){bq=q;be=DATA[rr][c][0];}}});
+      if(be&&TOP3.has(be)&&!pickedEff.has(be)) miss[be]++;
+    }
+    counts.push(d.n); start+=d.n; hb+=HOURS_PER_RUN;
+    while(hb>=24){hb-=24;COLORS.forEach(c=>stock[c]+=DAILY_GAIN);}
+    guard++;
+  }
+  const dist={1:0,2:0,3:0,4:0}; counts.forEach(n=>dist[n]++);
+  return {dist,used,hours:counts.length*HOURS_PER_RUN,topups,miss};
+}
+const ws=document.querySelectorAll(".ws");
+let linesMode="auto", customN=2;
+const LSKEY="carving_app_v1";
+function saveState(){
+  try{
+    const w=document.querySelectorAll(".ws");
+    const cry={}; document.querySelectorAll(".cryst").forEach(i=>cry[i.dataset.c]=+i.value||0);
+    if(ACCTS[curAcc]) ACCTS[curAcc].start=parseInt(document.getElementById("startLine").value)||1;
+    localStorage.setItem(LSKEY, JSON.stringify({ACCTS,curAcc,lang,PREFERENCE,
+      presetVersion:PRESET_VERSION,
+      ws:[+w[0].value,+w[1].value,+w[2].value],cry,linesMode,customN,EFX_W,
+      gain:document.getElementById("gainContent").innerHTML,lastGain:GAIN_PICKS,gainTime:GAIN_TIME,lastOpen:Date.now()}));
+  }catch(e){}
+}
+function loadState(){
+  try{
+    const d=JSON.parse(localStorage.getItem(LSKEY)); if(!d) return;
+    if(d.ACCTS) ACCTS=d.ACCTS;
+    if(d.curAcc&&ACCTS[d.curAcc]) curAcc=d.curAcc;
+    if(d.lang&&I18N[d.lang]) lang=d.lang;
+    if(d.PREFERENCE) PREFERENCE=d.PREFERENCE;
+    const w=document.querySelectorAll(".ws");
+    if(d.ws){w[0].value=d.ws[0];w[1].value=d.ws[1];w[2].value=d.ws[2];}
+    if(d.cry) document.querySelectorAll(".cryst").forEach(i=>{if(d.cry[i.dataset.c]!==undefined)i.value=d.cry[i.dataset.c];});
+    document.querySelectorAll(".choice[data-grp=strat]").forEach(x=>x.classList.toggle("on",x.dataset.pref===PREFERENCE));
+    if(d.linesMode) linesMode=d.linesMode;
+    if(d.customN) customN=Math.max(1,Math.min(4,d.customN));
+    if(d.EFX_W) Object.keys(EFX_W).forEach(n=>{if(d.EFX_W[n]){
+      EFX_W[n].S=d.EFX_W[n].S!==undefined?d.EFX_W[n].S:EFX_W[n].S;
+      EFX_W[n].B=d.EFX_W[n].B!==undefined?d.EFX_W[n].B:EFX_W[n].B;}});
+    migratePreset(d); efxNeedSort=true;
+    if(d.lastGain&&d.lastGain.length){ GAIN_PICKS=d.lastGain; GAIN_TIME=d.gainTime||null;
+      document.getElementById("gainContent").innerHTML=gainHtml(GAIN_PICKS,GAIN_TIME); }
+    else if(d.gain) document.getElementById("gainContent").innerHTML=d.gain;
+    // 行数自定义 UI 同步
+    document.getElementById("customNBox").style.display=(linesMode==="custom"?"block":"none");
+    document.getElementById("customN").value=customN;
+
+  }catch(e){}
+}
+function renderSim(){
+  const cv=+ws[0].value,tv=+ws[1].value,qv=+ws[2].value;
+  document.getElementById("wv0").value=cv.toFixed(2);
+  document.getElementById("wv1").value=tv.toFixed(2);
+  document.getElementById("wv2").value=qv.toFixed(2);
+  const r=simulateApp(cv,tv,qv), MAX=Math.max(1,r.dist[1],r.dist[2],r.dist[3],r.dist[4]);
+  let bars="";
+  for(let n=1;n<=4;n++){
+    const h=Math.round(r.dist[n]/MAX*120);
+    bars+=`<div class="pcol"><div class="pnum">${r.dist[n]}</div>
+      <div class="pbar" style="height:${h}px"></div><div class="plab">${n}${I18N[lang].line}</div></div>`;
+  }
+  document.getElementById("pchart").innerHTML=bars;
+  document.getElementById("pchart").style.display=(linesMode==="custom"?"none":"flex");
+  const u=r.used,sum=u["绿色"]+u["蓝色"]+u["红色"]+u["紫色"];
+  const L=I18N[lang];
+  document.getElementById("pinfo").innerHTML=
+    L.cost+": G <b>-"+u["绿色"]+"</b> B <b>-"+u["蓝色"]+"</b> R <b>-"+u["红色"]+"</b> P <b>-"+u["紫色"]+"</b> ("+L.total+" <b>-"+sum+"</b>)<br>"+
+    L.timeW+" <b>"+r.hours+"</b>h ("+(r.hours/24).toFixed(1)+" "+L.days+")　"+
+    L.topups+" <b>"+r.topups+"</b>";
+  document.getElementById("pmiss").innerHTML=
+    `<span>${L.missL} <b>${r.miss["坚固装甲"]}</b>${L.missG} <b>${r.miss["前仆后继"]}</b>${L.missF} <b>${r.miss["破坏阻滞"]}</b>${L.missB}</span>`;
+  saveState();
+}
+ws.forEach(s=>s.addEventListener("input",()=>{renderSim();renderHome();}));
+document.querySelectorAll(".wv").forEach(inp=>inp.addEventListener("change",()=>{
+  const i=+inp.dataset.i, v=Math.max(-1,Math.min(1,parseFloat(inp.value)||0));
+  ws[i].value=v; renderSim(); renderHome();
+}));
+document.getElementById("customN").addEventListener("input",()=>{
+  customN=Math.max(1,Math.min(4,parseInt(document.getElementById("customN").value)||2));
+  renderSim();renderHome();
+});
+
+// ================= 雕刻权重赋值 =================
+let efxPane="atk";
+let efxOrder=[], efxOrderKey="", efxNeedSort=true;
+function renderEfxW(){
+  const mixed=(PREFERENCE==="custom");
+  document.getElementById("efxSeg").style.display=mixed?"none":"flex";
+  let names=mixed?[...ATTACK,...DEFENCE_NAMES]:(efxPane==="atk"?[...ATTACK]:[...DEFENCE_NAMES]);
+  const key2=mixed?"custom":efxPane;
+  if(efxNeedSort||efxOrderKey!==key2||efxOrder.length!==names.length){
+    const idx={}; names.forEach((n,i)=>idx[n]=i);
+    names.sort((a,b)=>{
+      const d=EFX_W[b].S-EFX_W[a].S;   // 只看 S，从大到小
+      return d?d:(idx[a]-idx[b]);      // S 相同保持原顺序
+    });
+    efxOrder=names.slice(); efxOrderKey=key2; efxNeedSort=false;
+  }else{
+    names=efxOrder;
+  }
+  const box=document.getElementById("efxList");
+  let html=names.map(n=>{
+    const w=EFX_W[n];
+    return `<div class="efxw" data-e="${n}"><span class="efxw-n">${efxName(n)}</span>
+      <div class="dual"><div class="track"></div>
+        <input type="range" class="es" min="0" max="1" step="0.01" value="${w.S}">
+        <input type="range" class="eb" min="0" max="1" step="0.01" value="${w.B}">
+      </div><span class="efxw-v">S ${w.S.toFixed(2)} · B ${w.B.toFixed(2)}</span></div>`;
+  }).join("");
+  box.innerHTML=html||"";
+  box.querySelectorAll("input").forEach(r=>{
+    const row=r.closest(".efxw"), n=row.dataset.e, g=r.classList.contains("es")?"S":"B";
+    const upd=()=>{EFX_W[n][g]=+r.value;
+      row.querySelector(".efxw-v").textContent="S "+EFX_W[n].S.toFixed(2)+" · B "+EFX_W[n].B.toFixed(2);};
+    r.addEventListener("input",upd);
+  });
+}
+document.querySelectorAll("#efxSeg button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("#efxSeg button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); efxPane=b.dataset.efxpane; efxNeedSort=true; renderEfxW();
+}));
+document.getElementById("efxApply").addEventListener("click",()=>{
+  efxNeedSort=true; renderEfxW(); renderSim(); renderHome(); saveState();
+  toast(lang==="en"?"Applied":"已应用");
+});
+
+// ================= 主页动态推荐 =================
+let selectedPlan=null;
+function candidatePlans(start,stock){
+  const plans=[];
+  const keys=Object.keys(DATA).map(Number);
+  const rmax=keys.length?Math.max(...keys):0;
+  const maxN=Math.max(0,Math.min(4,rmax-start+1));
+  const ns=(linesMode==="custom")?(customN<=maxN?[customN]:[]):(Array.from({length:maxN},(_,i)=>i+1));
+  for(const n of ns){
+    const rounds=[]; for(let r=start;r<start+n;r++) if(DATA[r]) rounds.push(r);
+    if(rounds.length<n) continue;
+    const Q2=q2of(DATA,rounds);
+    for(const picked of perms(COLORS,n)){
+      const picks=[]; let ok=true;
+      rounds.forEach((rr,i)=>{const cell=DATA[rr][picked[i]];
+        if(!cell||cell.length<2)ok=false; else picks.push([rr,picked[i],cell[0],cell[1]]);});
+      if(!ok) continue;
+      plans.push({n,picks,total:comboTotal(picks,n,Q2,stock,linesMode==="custom")});
+    }
+  }
+  plans.sort((a,b)=>b.total-a.total);
+  const top=[]; const seen=new Set();
+  for(const p of plans){
+    if(linesMode==="custom"){ if(top.length>=3) break; top.push(p); continue; }
+    const key=p.total.toFixed(3);
+    if(!seen.has(key)){
+      if(seen.size>=3) break;
+      seen.add(key);
+    }
+    top.push(p);
+  }
+  return top;
+}
+let GAIN_PICKS=null, GAIN_TIME=null;
+// 与 App 一致的获得顺序卡片：lastGain=[[色,雕刻,等级]...] + 时间
+function gainHtml(picks,time){
+  if(!picks||!picks.length) return "";
+  const tiles=picks.map(x=>colorTile(x[0])).join("");
+  const efx=picks.map(x=>colorName(x[0])+" "+efxName(x[1])+" "+x[2]).join(" \u00B7 ");
+  return '<div class="seq">'+tiles+'</div><div class="efx"><b>'+efx+'</b></div>'+
+    '<div class="gtime">'+I18N[lang].gained+(time?" \u00B7 "+time:"")+'</div>';
+}
+function colorTile(c){return `<div class="mini t-${LETTERS[c].toLowerCase()}">${colorName(c)}</div>`;}
+function renderHome(){
+  const L=I18N[lang];
+  const start=parseInt(document.getElementById("startLine").value)||1;
+  const stock=curStock();
+  renderRound();
+  const plans=candidatePlans(start,stock);
+  let html="";
+  plans.forEach((p,idx)=>{
+    const ranked=[...new Set(p.picks.map(x=>x[1]))].sort((a,b)=>stock[a]-stock[b]);
+    const co={}; ranked.forEach((c,i)=>co[c]=LINE_COST[i]);
+    const tiles=p.picks.map(x=>colorTile(x[1])).join("");
+    const cost=ranked.map(c=>`<span><i class="cdot c-${LETTERS[c].toLowerCase()}"></i>${co[c]}</span>`).join("");
+    const efx=p.picks.map(x=>colorName(x[1])+" "+efxName(x[2])+" "+x[3]).join(" · ");
+    html+=`<button class="opt" data-plan="${idx}">
+      <div class="tiles">${tiles}</div>
+      <div class="meta"><div class="t">${p.n}${L.line} · ${L.score} ${p.total.toFixed(2)}</div>
+        <div class="cost">${cost}</div>
+        <div class="efx"><b>${efx}</b></div></div>
+      <div class="radio"></div></button>`;
+  });
+  const list=document.getElementById("optList");
+  list.innerHTML=html||`<div class="gempty">${L.noPlan}</div>`;
+  list.querySelectorAll(".opt[data-plan]").forEach(o=>o.addEventListener("click",()=>{
+    list.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));
+    o.classList.add("sel");
+    selectedPlan=plans[+o.dataset.plan];
+    document.getElementById("confirmBtn").classList.add("show");
+  }));
+  document.getElementById("confirmBtn").classList.remove("show");
+  saveState();
+}
+document.getElementById("startLine").addEventListener("input",renderHome);
+document.querySelectorAll(".cryst").forEach(i=>i.addEventListener("change",renderHome));
+document.getElementById("confirmBtn").addEventListener("click",()=>{
+  if(!selectedPlan) return;
+  const p=selectedPlan;
+  const stk=curStock();
+  const rk=[...new Set(p.picks.map(x=>x[1]))].sort((a,b)=>stk[a]-stk[b]);
+  const co={}; rk.forEach((c,i)=>co[c]=LINE_COST[i]);
+  document.querySelectorAll(".cryst").forEach(inp=>{
+    inp.value=Math.max(0,(+inp.value||0)-(co[inp.dataset.c]||0));
+  });
+  if(ACCTS[curAcc]) ACCTS[curAcc].crystals=curStock();
+  const now=new Date();
+  const t=(now.getHours()<10?"0":"")+now.getHours()+":"+(now.getMinutes()<10?"0":"")+now.getMinutes();
+  const tiles=p.picks.map(x=>colorTile(x[1])).join("");
+  const efx=p.picks.map(x=>colorName(x[1])+" "+efxName(x[2])+" "+x[3]).join(" · ");
+  const gainBefore=document.getElementById("gainContent").innerHTML;
+  const gainAfter=`<div class="seq">${tiles}</div><div class="efx"><b>${efx}</b></div>
+     <div class="gtime">${I18N[lang].gained} · ${t}</div>`;
+  document.getElementById("gainContent").innerHTML=gainAfter;
+  GAIN_PICKS=p.picks.map(x=>[x[1],x[2],x[3]]); GAIN_TIME=t;
+  const start=parseInt(document.getElementById("startLine").value)||1;
+  const newStart=start+p.n;
+  document.getElementById("startLine").value=newStart;
+  const a=ACCTS[curAcc];
+  const entry=[newStart,t,p.picks.map(x=>[x[1],x[2],x[3]])];
+  if(a.hist[0]&&a.hist[0][0][1]===todayPart()) a.hist[0].splice(1,0,entry);
+  else a.hist.unshift([[todayWord(),todayPart()],entry]);
+  undoStack.push({from:start,to:newStart,entry,gainBefore,gainAfter}); redoStack=[]; setUru();
+  renderHistory(); renderRound();
+  setTimeout(()=>renderHome(),1000);
+  saveState();
+  toast((lang==="en"?"Gained ":"已获得 ")+p.n+" "+I18N[lang].line);
+});
+
+// ==== 更新日志（内容与 App 的 lib/changelog.dart 保持一致，改 App 时同步这里）====
+const CHANGELOG=[{v:"1.1.0",d:"2026-10-10",items:[
+  "界面按确认稿的网页版重做：主页恢复「获得顺序 + 起始行」双卡片并排，推荐方案为列表卡片；底栏改成 5 个图标的操作条（撤销 / 重做 / 导入 / 导出 / 顺序）加 3 页导航，图标与网页同一套路径。",
+  "修复设置-偏好里滑块、按钮不实时刷新（要切换页面再回来才看到改动）的问题。",
+  "修复起始行错乱：输入第 100 行后确认 3 行方案，现在正确变成 103 行并写入历史。",
+  "修复雕刻权重默认值：坚固装甲等曾被误存成 14 这样的原始分，S / B 滑块因此跑到屏幕外看不见；老存档里仍是旧默认值的会自动升级到新表格。",
+  "雕刻权重的 S / B 双滑块现在可以拖动、实时显示数值。",
+  "历史记录、账号切换、新建账号即时刷新，不用退出重进。",
+  "语言切换立即全局生效（设置页、底栏、序列表格一起变）。",
+  "查看雕刻序列改为表格：表头（行 / 绿色 / 蓝色 / 红色 / 紫色）常驻，打开时自动定位到当前查询行附近；雕刻名和 S / B 分列显示，不会再被截断成「坚固...」。",
+  "导出改用系统「保存到」对话框，文件落在你自己选的位置，导入时能找到。",
+  "「顺序」改为弹出菜单（查看当前雕刻序列 / 更改雕刻序列），不再跳到账号页；设置-账号移除序列查看与添加。",
+  "「应用」按钮放到设置页页眉（「设置」两字右侧、分段栏上方），固定不随内容滚动。",
+  "雕刻权重列表改为只按 S 从大到小排序；拖动滑块时列表顺序不会乱跳，点「应用」后按最新 S 重新排序。",
+  "修复设置-账号里切换账号后列表不即时刷新的问题（与偏好页同一个原因）。",
+  "实时提示（获得 N 条等）提高文字对比度，位置不再被底栏遮挡。",
+  "预设调整：四色水晶各 1000；默认只有一个账号，命名为 你的账号 / 你的賬號 / your account；水晶、时间、质量三个权重默认都改为 0。",
+  "雕刻权重改为表格数值：坚固装甲 1 / 0.92、昏沉 0.98 / 0.91、前仆后继 0.9 / 0.84、过热 0.9 / 0.84、破坏阻滞 0.85 / 0.79、投诚 0.85 / 0.79、情报压制 0.75 / 0.45、修补 0.75 / 0.45、活力汲取 0.7 / 0.5、力竭 0.7 / 0.5、战地急救 0.45 / 0.25、保险 0.45 / 0.25、能量涌动 0.35 / 0.21，其余按「其他」0.2 / 0.1。",
+  "软件名改为「海岛奇兵雕刻选择」，设置-关于新增更新日志。"
+]}];
+function renderLog(){
+  const box=document.getElementById("logBox"); if(!box) return;
+  let h="";
+  CHANGELOG.forEach(e=>{
+    h+='<div style="margin-bottom:12px"><span class="logv">v'+e.v+'</span><span class="logd">'+e.d+'</span>';
+    e.items.forEach(it=>{ h+='<div class="logi"><i></i><span>'+it+'</span></div>'; });
+    h+='</div>';
+  });
+  box.innerHTML=h;
+}
+
+// ================= 初始化 =================
+loadState();
+applyAccount(); renderSim(); applyLang(); setUru(); renderEfxW(); renderAccList();
+syncApplyBtn(); renderLog();
+window.addEventListener("beforeunload",saveState);
+
+</script>
+</body>
+</html>
+<!-- （注：内容由AI生成） -->
