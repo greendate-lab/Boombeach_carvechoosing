@@ -34,9 +34,9 @@ body{background:#0b0f15;color:var(--tx);
 .c-g{background:var(--g)}.c-b{background:var(--b)}.c-r{background:var(--r)}.c-p{background:var(--p)}
 .duo{display:flex;gap:10px}
 .duo .card{flex:1;margin-bottom:12px}
-.seq{display:flex;gap:7px;margin-top:4px;min-height:34px;align-items:center;flex-wrap:wrap}
-.tile{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;
-  font-weight:700;font-size:14px;color:#0c1117}
+.seq{display:flex;gap:5px;margin-top:4px;min-height:30px;align-items:center;flex-wrap:nowrap}
+.tile{width:calc((100% - 15px)/4);max-width:32px;aspect-ratio:1/1;height:auto;border-radius:22%;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#0c1117}
 .t-g{background:var(--g)}.t-b{background:var(--b)}.t-r{background:var(--r)}.t-p{background:var(--p)}
 .efx{font-size:11px;color:var(--mut);margin-top:7px;line-height:1.5}
 .efx b{color:var(--tx);font-weight:600}
@@ -51,12 +51,13 @@ body{background:#0b0f15;color:var(--tx);
   display:flex;align-items:center;justify-content:center;font-weight:700}
 .opt .meta{flex:1;min-width:0}
 .opt .meta .t{font-size:13px;font-weight:600}
-.opt .cost{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap}
-.opt .cost span{font-size:11px;color:var(--mut);display:flex;align-items:center;gap:4px}
+.opt .cost{display:flex;gap:7px;margin-top:5px;flex-wrap:nowrap;overflow:hidden}
+.opt .cost span{font-size:10.5px;color:var(--mut);display:flex;align-items:center;gap:3px;flex:none}
 .radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none}
 .opt.sel .radio{border:5px solid var(--gold)}
-.confirm{width:100%;border:none;border-radius:11px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;
-  background:var(--gold);color:#1a1305;display:none;align-items:center;justify-content:center;gap:8px;margin-bottom:12px}
+.confirm{width:100%;border:none;padding:15px 16px;font-size:14px;font-weight:700;cursor:pointer;
+  background:var(--gold);color:#1a1305;display:none;align-items:center;justify-content:center;gap:8px;
+  flex:none;box-shadow:0 -8px 18px rgba(0,0,0,.55)}
 .confirm.show{display:flex}
 .opbar{flex:none;display:flex;background:rgba(20,27,37,.98);border-top:1px solid var(--line);
   padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
@@ -86,8 +87,12 @@ body{background:#0b0f15;color:var(--tx);
 .cinput input{width:90px;background:#10161e;border:1px solid var(--line);border-radius:8px;color:var(--tx);
   font-size:16px;padding:7px 9px;text-align:right;font-variant-numeric:tabular-nums}
 .hday{font-size:11px;color:var(--mut2);margin:14px 2px 7px}
-.hitem{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
+.hitem{display:block;background:var(--card);border:1px solid var(--line);
   border-radius:11px;padding:11px 12px;margin-bottom:8px}
+.hrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.hrange{font-size:12.5px;font-weight:700;color:var(--gold)}
+.hpick{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--tx)}
+.htime{font-size:10.5px;color:var(--mut);margin-top:6px}
 .hitem .n{font-size:11px;color:var(--mut2);width:34px}
 .hitem .nm{flex:1;font-size:13px}
 .hitem .nm small{display:block;color:var(--mut);font-size:10.5px;margin-top:3px;font-weight:400}
@@ -185,6 +190,18 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
 .logd{font-size:11px;color:var(--mut2);margin-left:8px}
 .logi{display:flex;gap:7px;font-size:12px;color:var(--mut);line-height:1.55;margin-top:4px}
 .logi i{flex:none;width:4px;height:4px;border-radius:50%;background:var(--gold);margin-top:6px}
+/* 水晶图（内嵌 base64，与 App 同一批图） */
+.cimg{display:inline-block;width:9px;height:14px;background-repeat:no-repeat;background-size:contain;background-position:center bottom;flex:none}
+.cimg-lg{width:14px;height:22px}
+.cimg-g{background-image:url(data:image/png;base64,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)}
+.cimg-b{background-image:url(data:image/png;base64,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)}
+.cimg-r{background-image:url(data:image/png;base64,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)}
+.cimg-p{background-image:url(data:image/png;base64,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)}
+/* 权重预设按钮 */
+.whead{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.whead h3{margin-bottom:0;flex:1}
+.chip{border:1px solid var(--gold);background:none;color:var(--gold);border-radius:8px;padding:4px 8px;
+  font-size:10.5px;cursor:pointer;flex:none;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -209,10 +226,10 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
 
       <h3 style="font-size:12px;color:var(--mut);font-weight:600;margin:4px 2px 10px" data-i18n="options"></h3>
       <div id="optList"></div>
-      <button class="confirm" id="confirmBtn">
-        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
-        <span data-i18n="confirm"></span></button>
     </div>
+    <button class="confirm" id="confirmBtn">
+      <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+      <span data-i18n="confirm"></span></button>
   </section>
 
   <!-- ============ HISTORY ============ -->
@@ -234,7 +251,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
 
       <div class="pane on" data-pane="preference">
         <div class="card">
-          <h3 data-i18n="weights"></h3>
+          <div class="whead"><h3 data-i18n="weights"></h3><button class="chip" id="wPreset"></button></div>
           <div style="margin-bottom:10px">
             <div class="wl"><span data-i18n="wCrystal"></span><button class="q" data-q="cry">?</button><input class="wv" id="wv0" data-i="0" type="number" min="-1" max="1" step="0.01" value="0"></div>
             <input type="range" class="ws" min="-1" max="1" step="0.01" value="0"></div>
@@ -276,10 +293,10 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
         </div>
         <div class="card">
           <h3 data-i18n="crystals"></h3>
-          <div class="cinput"><label><i class="cdot c-g"></i><span data-i18n="cG"></span></label><input type="number" class="cryst" data-c="绿色" value="1000"></div>
-          <div class="cinput"><label><i class="cdot c-b"></i><span data-i18n="cB"></span></label><input type="number" class="cryst" data-c="蓝色" value="1000"></div>
-          <div class="cinput"><label><i class="cdot c-r"></i><span data-i18n="cR"></span></label><input type="number" class="cryst" data-c="红色" value="1000"></div>
-          <div class="cinput"><label><i class="cdot c-p"></i><span data-i18n="cP"></span></label><input type="number" class="cryst" data-c="紫色" value="1000"></div>
+          <div class="cinput"><label><i class="cimg cimg-lg cimg-g"></i><span data-i18n="cG"></span></label><input type="number" class="cryst" data-c="绿色" value="1000"></div>
+          <div class="cinput"><label><i class="cimg cimg-lg cimg-b"></i><span data-i18n="cB"></span></label><input type="number" class="cryst" data-c="蓝色" value="1000"></div>
+          <div class="cinput"><label><i class="cimg cimg-lg cimg-r"></i><span data-i18n="cR"></span></label><input type="number" class="cryst" data-c="红色" value="1000"></div>
+          <div class="cinput"><label><i class="cimg cimg-lg cimg-p"></i><span data-i18n="cP"></span></label><input type="number" class="cryst" data-c="紫色" value="1000"></div>
         </div>
       </div>
 
@@ -297,7 +314,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <div class="about-hero">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
             <div style="font-size:16px;font-weight:700">海岛奇兵雕刻选择</div>
-            <div class="ver">Version 1.1.0</div>
+            <div class="ver">Version 1.2.1</div>
           </div>
           <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
         </div>
@@ -875,7 +892,7 @@ const I18N={
    langTitle:"Display language",aboutText:"Personal carving assistant. Offline-first, data stays on device.",
    accTitle:"Accounts (up to 10)",newAcc:"New account",accMain:"Main account",accMainSub:"main@local",
    accAlt:"Alt account",accAltSub:"alt@local",logout:"Log out current account",
-   changelog:"Changelog",missL:"May miss",missG:"solid",missF:"vanguard",missB:"block",
+   changelog:"Changelog",preset:"Preset",presetApplied:"Preset applied",buildTime:"Built",claimTime:"Claimed",notClaimed:"not claimed yet",missL:"May miss",missG:"solid",missF:"vanguard",missB:"block",
    score:"score",line:" lines",roundP:"Round ",roundTail:" lines",choose:"Selected",gained:"Gained",
    optionsTitle:"Recommended · top by score",noPlan:"No plan available",cost:"Cost",total:"total",timeW:"Time",days:"days",topups:"topups"},
  sc:{gain:"获得顺序",gainEmpty:"尚未获得任何曲线",lines:"起始行",
@@ -891,7 +908,7 @@ const I18N={
    langTitle:"显示语言",aboutText:"个人雕刻选择辅助工具。离线优先，数据保存在本机。",
    accTitle:"账号（最多 10 个）",newAcc:"新建账号",accMain:"主账号",accMainSub:"main@local",
    accAlt:"备用账号",accAltSub:"alt@local",logout:"退出当前账号",
-   changelog:"更新日志",missL:"可能遗漏",missG:"个坚固",missF:"个前仆",missB:"个破坏",
+   changelog:"更新日志",preset:"预设",presetApplied:"已套用预设",buildTime:"建造时间",claimTime:"领取时间",notClaimed:"尚未领取",missL:"可能遗漏",missG:"个坚固",missF:"个前仆",missB:"个破坏",
    score:"得分",line:"条",roundP:"第 ",roundTail:" 行",choose:"已选",gained:"获得",
    optionsTitle:"推荐方案 · 按得分",noPlan:"无可选方案",cost:"消耗",total:"合计",timeW:"时间",days:"天",topups:"兜底"},
  tc:{gain:"獲得順序",gainEmpty:"尚未獲得任何曲線",lines:"起始行",
@@ -907,7 +924,7 @@ const I18N={
    langTitle:"顯示語言",aboutText:"個人雕刻選擇輔助工具。離線優先，資料保存在本機。",
    accTitle:"帳號（最多 10 個）",newAcc:"新建帳號",accMain:"主帳號",accMainSub:"main@local",
    accAlt:"備用帳號",accAltSub:"alt@local",logout:"退出當前帳號",
-   changelog:"更新日誌",missL:"可能遺漏",missG:"個堅固",missF:"個前仆",missB:"個破壞",
+   changelog:"更新日誌",preset:"預設",presetApplied:"已套用預設",buildTime:"建造時間",claimTime:"領取時間",notClaimed:"尚未領取",missL:"可能遺漏",missG:"個堅固",missF:"個前仆",missB:"個破壞",
    score:"得分",line:"條",roundP:"第 ",roundTail:" 行",choose:"已選",gained:"獲得",
    optionsTitle:"推薦方案 · 按得分",noPlan:"無可選方案",cost:"消耗",total:"合計",timeW:"時間",days:"天",topups:"兜底"}
 };
@@ -919,6 +936,8 @@ function applyLang(){
   });
   document.querySelectorAll(".choice[data-grp=lang]").forEach(x=>
     x.classList.toggle("on",x.dataset.lang===lang));
+  const wp=document.getElementById("wPreset");
+  if(wp) wp.textContent=(I18N[lang].preset||"Preset")+" -0.05 / -0.8 / 1";
   renderSim(); renderRound(); renderHome(); renderHistory(); renderEfxW();
 }
 document.querySelectorAll(".choice[data-lang]").forEach(c=>
@@ -962,21 +981,31 @@ function enDate(s){const m=String(s).match(/(\d+)月(\d+)日/);if(!m)return s;
   return mo+" "+ +m[2];}
 function renderHistory(){
   const box=document.getElementById("histList"); let html="";
-  ACCTS[curAcc].hist.forEach(group=>{
+  const L=I18N[lang];
+  const hist=ACCTS[curAcc].hist||[];
+  // 拍平（新的在前）：某条的领取时间 = 比它新的那条的建造时间
+  const flat=[];
+  hist.forEach(g=>g.slice(1).forEach(it=>flat.push(it)));
+  hist.forEach(group=>{
     const g0=group[0][0], g1=group[0][1];
     const dn=lang==="en"?(DAY_EN[g0]||g0):g0;
     const ds=lang==="en"?enDate(g1):g1;
-    html+='<div class="hday">'+dn+" · "+ds+"</div>";
+    html+='<div class="hday">'+dn+"  "+ds+"</div>";
     group.slice(1).forEach(it=>{
-      const dots=it[2].map(c=>'<i class="cdot c-'+LETTERS[c[0]].toLowerCase()+'"></i>').join("");
-      const sub=it[2].map(c=>colorName(c[0])+" "+efxName(c[1])+" "+c[2]).join(" · ");
-      html+=`<div class="hitem"><span class="n">#${it[0]}</span><span class="dots">${dots}</span>
-        <span class="nm">${it[2][0][2]}<small>${sub}</small></span><span class="tm">${it[1]}</span></div>`;
+      const idx=flat.indexOf(it);
+      const claim=(idx>0)?flat[idx-1][1]:null;
+      const picks=it[2]||[];
+      const k=picks.length;
+      const range=(k<=1)?("#"+(k===0?it[0]:(it[0]-1))):("#"+(it[0]-k)+" - "+(it[0]-1));
+      const items=picks.map(c=>'<span class="hpick"><i class="cimg cimg-'+LETTERS[c[0]].toLowerCase()+'"></i>'+efxName(c[1])+" "+c[2]+'</span>').join("");
+      const times=(claim==null)?("（"+L.buildTime+"："+it[1]+"　"+L.notClaimed+"）")
+                              :("（"+L.buildTime+"："+it[1]+"　"+L.claimTime+"："+claim+"）");
+      html+='<div class="hitem"><div class="hrow"><span class="hrange">'+range+'</span>'+items+'</div>'+
+        '<div class="htime">'+times+'</div></div>';
     });
   });
   box.innerHTML=html;
-}
-function renderRound(){
+}function renderRound(){
   const start=parseInt(document.getElementById("startLine").value)||1;
   const L=I18N[lang];
   document.getElementById("roundSub").textContent=L.roundP+start+L.roundTail;
@@ -991,7 +1020,7 @@ function applyAccount(){
   document.getElementById("startLine").value=a.start;
   document.querySelectorAll(".accrow[data-acc]").forEach(x=>
     x.classList.toggle("on",x.dataset.acc===curAcc));
-  renderRound(); renderHistory(); renderHome();
+  renderRound(); renderHistory(); renderHome(); renderGain();
 }
 function escapeHtml(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function renderAccList(){
@@ -1214,9 +1243,10 @@ function importBackup(o){
   if(!ACCTS[curAcc].seq) ACCTS[curAcc].seq={};
   if(o.seq&&!Object.keys(ACCTS[curAcc].seq).length) ACCTS[curAcc].seq=o.seq;
   DATA=ACCTS[curAcc].seq;
-  if(o.lastGain&&o.lastGain.length){ GAIN_PICKS=o.lastGain; GAIN_TIME=o.gainTime||null;
-    document.getElementById("gainContent").innerHTML=gainHtml(GAIN_PICKS,GAIN_TIME); }
-  else if(o.gain){ document.getElementById("gainContent").innerHTML=o.gain; }
+  if(ACCTS[curAcc]&&!(ACCTS[curAcc].gain&&ACCTS[curAcc].gain.length)&&o.lastGain&&o.lastGain.length){
+    ACCTS[curAcc].gain=o.lastGain;
+    ACCTS[curAcc].gainTime=o.gainTime||null;
+  }
   const s=o.settings||{};
   if(Array.isArray(s.ws)&&s.ws.length===3){const w=document.querySelectorAll(".ws");w[0].value=s.ws[0];w[1].value=s.ws[1];w[2].value=s.ws[2];}
   if(s.cry&&ACCTS[curAcc]) COLORS.forEach(c=>{if(s.cry[c]!==undefined)ACCTS[curAcc].crystals[c]=s.cry[c];});
@@ -1241,45 +1271,94 @@ function csvRows(text){
   const delim=(t.includes("\t")&&!t.includes(","))?"\t":",";
   return t.split(/\r?\n/).map(l=>l.split(delim).map(x=>String(x==null?"":x).trim()));
 }
+// 全部雕刻名（长的先匹配，避免干扰抢走干扰信号）
+function effectNames(){
+  return [...ATTACK,...Object.keys(DEFENCE)].sort((a,b)=>b.length-a.length);
+}
+// 等级判定：S/s//品质提升/提升 -> S ； B/b/币/没写等级 -> B
+function gradeOf(before,after){
+  const head=s=>{const t=String(s==null?"":s).replace(/\s/g,"");return t.length>4?t.slice(0,4):t;};
+  const isS=s=>{ if(s==null||s==="") return false;
+    if(String(s).indexOf("品质提升")>=0||String(s).indexOf("提升")>=0) return true;
+    if(String(s).indexOf("\u2191")>=0) return true;
+    const h=head(s); return h.indexOf("S")>=0||h.indexOf("s")>=0; };
+  const isB=s=>{ if(s==null||s==="") return false; const h=head(s);
+    return h.indexOf("B")>=0||h.indexOf("b")>=0||h.indexOf("币")>=0; };
+  if(isS(after)) return "S";
+  if(isB(after)) return "B";
+  if(isS(before)) return "S";
+  if(isB(before)) return "B";
+  return "B";
+}
+// 单元格里找雕刻名 + 等级；找不到返回 null
+function readCell(cell,names){
+  const s=String(cell==null?"":cell).trim();
+  if(!s) return null;
+  for(const n of names){
+    const i=s.indexOf(n);
+    if(i>=0) return [n, gradeOf(s.slice(0,i), s.slice(i+n.length))];
+  }
+  const m=s.match(/^([\u4e00-\u9fa5]{2,6})\s*(S|s|B|b|\u2191|品质提升|提升)$/);
+  if(m) return [m[1], gradeOf("",m[2])];
+  return null;
+}
+// 从左到右、从上到下扫全部单元格，只认含雕刻信息的格子；
+// 行号取该行最前面的数字（没有就按顺序 1、2、3）；颜色优先按表头，没表头就按雕刻出现的列顺序
 function parseSeq(rows2d){
   if(!rows2d||!rows2d.length) return null;
-  let hdr=-1, col={};
-  for(let i=0;i<Math.min(rows2d.length,8);i++){
-    const r=rows2d[i]; if(!r) continue;
-    const map={};
-    r.forEach((v,c)=>{
-      const s=String(v==null?"":v).trim(); if(!s) return;
-      if(/次|轮/.test(s)) map.round=c;
-      else if(s.includes("绿")) map.g=c;
-      else if(s.includes("蓝")) map.b=c;
-      else if(s.includes("红")) map.r=c;
-      else if(s.includes("紫")) map.p=c;
-    });
-    if(map.g!==undefined||map.b!==undefined||map.r!==undefined||map.p!==undefined){hdr=i;col=map;break;}
+  const names=effectNames();
+  const rows=rows2d.map(r=>(r||[]).map(x=>String(x==null?"":x).trim()));
+  let numCol=-1; const colOf={};
+  for(let i=0;i<rows.length&&i<12;i++){
+    const r=rows[i];
+    for(let c=0;c<r.length;c++){
+      const s=r[c]; if(!s) continue;
+      if(numCol<0 && /次|轮|行|序|编号|回合|期/.test(s)) numCol=c;
+      if(colOf["绿色"]===undefined && s.indexOf("绿")>=0) colOf["绿色"]=c;
+      else if(colOf["蓝色"]===undefined && s.indexOf("蓝")>=0) colOf["蓝色"]=c;
+      else if(colOf["红色"]===undefined && s.indexOf("红")>=0) colOf["红色"]=c;
+      else if(colOf["紫色"]===undefined && s.indexOf("紫")>=0) colOf["紫色"]=c;
+    }
+    if(Object.keys(colOf).length>=4) break;
   }
-  if(hdr<0) return null;
-  const BYKEY={"g":"绿色","b":"蓝色","r":"红色","p":"紫色"};
+  if(Object.keys(colOf).length<4){
+    const cols=[];
+    rows.forEach(r=>{ r.forEach((v,c)=>{ if(v && readCell(v,names) && cols.indexOf(c)<0) cols.push(c); }); });
+    cols.sort((a,b)=>a-b);
+    const used=Object.keys(colOf).map(k=>colOf[k]);
+    COLORS.forEach(color=>{
+      if(colOf[color]!==undefined) return;
+      for(const c of cols){ if(used.indexOf(c)<0){ colOf[color]=c; used.push(c); break; } }
+    });
+  }
+  const colorCols={};
+  COLORS.forEach(c=>{ if(colOf[c]!==undefined) colorCols[c]=colOf[c]; });
   const nd={}; let cnt=0;
-  for(let i=hdr+1;i<rows2d.length;i++){
-    const r=rows2d[i]; if(!r) continue;
-    const vals=r.map(v=>String(v==null?"":v).trim()).filter(Boolean);
-    if(!vals.length) continue;
-    let rno=col.round!==undefined?parseInt(r[col.round]):NaN;
-    if(!(rno>0)) rno=cnt+1;
-    const entry={};
-    ["g","b","r","p"].forEach(k=>{
-      if(col[k]===undefined) return;
-      const raw=String(r[col[k]]==null?"":r[col[k]]).trim();
-      if(!raw) return;
-      const m=raw.match(/^(.*?)([↑sSbB])$/);
-      if(!m||!m[1].trim()) return;
-      entry[BYKEY[k]]=[m[1].trim(), (m[2]==="↑"||m[2]==="S"||m[2]==="s")?"S":"B"];
+  rows.forEach(r=>{
+    if(!r.length) return;
+    const entry={}; const carvingCols=[];
+    Object.keys(colorCols).forEach(color=>{
+      const c=colorCols[color];
+      if(c<0||c>=r.length) return;
+      const got=readCell(r[c],names);
+      if(!got) return;
+      entry[color]=got; carvingCols.push(c);
     });
-    if(Object.keys(entry).length){nd[String(rno)]=entry;cnt++;}
-  }
-  return nd;
-}
-function applySeq(nd){
+    if(!Object.keys(entry).length) return;
+    let rno=0;
+    if(numCol>=0&&numCol<r.length) rno=parseInt(r[numCol]);
+    if(!(rno>0)){
+      for(let c=0;c<r.length;c++){
+        if(carvingCols.indexOf(c)>=0) break;
+        const v=parseInt(r[c]);
+        if(v>0){ rno=v; break; }
+      }
+    }
+    if(!(rno>0)) rno=cnt+1;
+    nd[String(rno)]=entry; cnt++;
+  });
+  return Object.keys(nd).length?nd:null;
+}function applySeq(nd){
   if(!nd){toast(lang==="en"?"Header not found (need 次数/绿色/蓝色/红色/紫色 columns)":"未找到表头（需含 次数/绿/蓝/红/紫 列）");return;}
   const ks=Object.keys(nd);
   if(!ks.length){toast(lang==="en"?"No valid rows parsed":"未解析到有效数据行");return;}
@@ -1317,19 +1396,23 @@ fileInput.addEventListener("change",e=>{
 const TOP3=new Set(["坚固装甲","前仆后继","破坏阻滞"]);
 function simulateApp(cv,tv,qv){
   CRYSTAL_SLIDER=cv;B=tv;C=qv;
-  const keys=Object.keys(DATA).map(Number);
-  const rmin=Math.min(...keys),rmax=Math.max(...keys);
+  const keys=Object.keys(DATA).map(Number).sort((a,b)=>a-b);
+  const miss0={"坚固装甲":0,"前仆后继":0,"破坏阻滞":0};
+  if(!keys.length) return {dist:{1:0,2:0,3:0,4:0},used:{"绿色":0,"蓝色":0,"红色":0,"紫色":0},
+    hours:0,topups:0,miss:miss0,avgN:1,samples:0};
+  const rmin=keys[0],rmax=keys[keys.length-1];
   let stock={...DEFAULT_CRYSTALS};
   const used={"绿色":0,"蓝色":0,"红色":0,"紫色":0};
   const miss={"坚固装甲":0,"前仆后继":0,"破坏阻滞":0};
-  let topups=0,hb=0,start=rmin,guard=0; const counts=[];
-  while(start<=rmax&&guard<10000){
-    const d=decideLines(DATA,start,stock); if(!d) break;
-    const set=new Set(d.picks.map(p=>p[1]));
-    const ranked=[...set].sort((a,b)=>stock[a]-stock[b]);
-    const co={}; ranked.forEach((c,i)=>co[c]=LINE_COST[i]);
-    if(ranked.some(c=>stock[c]<co[c])){COLORS.forEach(c=>stock[c]+=TOPUP);topups++;}
-    ranked.forEach(c=>{stock[c]-=co[c];used[c]+=co[c];});
+  let topups=0,hb=0; const counts=[];
+  // 每一行都当作如果从这里开始选，而不是领完一次就跳到后面
+  for(let start=rmin;start<=rmax;start++){
+    const d=decideLines(DATA,start,stock);
+    if(!d) continue;
+    const set=[...new Set(d.picks.map(p=>p[1]))].sort((a,b)=>stock[a]-stock[b]);
+    const co={}; set.forEach((c,i)=>co[c]=LINE_COST[i]);
+    if(set.some(c=>stock[c]<co[c])){COLORS.forEach(c=>stock[c]+=TOPUP);topups++;}
+    set.forEach(c=>{stock[c]-=co[c];used[c]+=co[c];});
     const pickedEff=new Set(d.picks.map(p=>p[2]));
     for(let rr=start;rr<start+d.n;rr++){
       if(!DATA[rr]) continue; let be=null,bq=-1;
@@ -1338,14 +1421,20 @@ function simulateApp(cv,tv,qv){
         if(q>bq){bq=q;be=DATA[rr][c][0];}}});
       if(be&&TOP3.has(be)&&!pickedEff.has(be)) miss[be]++;
     }
-    counts.push(d.n); start+=d.n; hb+=HOURS_PER_RUN;
+    counts.push(d.n);
+    hb+=HOURS_PER_RUN;
     while(hb>=24){hb-=24;COLORS.forEach(c=>stock[c]+=DAILY_GAIN);}
-    guard++;
   }
-  const dist={1:0,2:0,3:0,4:0}; counts.forEach(n=>dist[n]++);
-  return {dist,used,hours:counts.length*HOURS_PER_RUN,topups,miss};
-}
-const ws=document.querySelectorAll(".ws");
+  const dist={1:0,2:0,3:0,4:0}; counts.forEach(n=>dist[n]=dist[n]+1);
+  const samples=counts.length;
+  const total=counts.reduce((a,b)=>a+b,0);
+  const avgN=samples?total/samples:1;
+  const usedAvg={}; COLORS.forEach(c=>usedAvg[c]=used[c]/avgN);
+  const missAvg={}; Object.keys(miss).forEach(k=>missAvg[k]=miss[k]/avgN);
+  // 每行都算会把消耗/时间/兜底/遗漏放大到约平均行数倍，统一除回去
+  return {dist:dist,used:usedAvg,hours:samples*HOURS_PER_RUN/avgN,
+    topups:topups/avgN,miss:missAvg,avgN:avgN,samples:samples};
+}const ws=document.querySelectorAll(".ws");
 let linesMode="auto", customN=2;
 const LSKEY="carving_app_v1";
 function saveState(){
@@ -1376,9 +1465,10 @@ function loadState(){
       EFX_W[n].S=d.EFX_W[n].S!==undefined?d.EFX_W[n].S:EFX_W[n].S;
       EFX_W[n].B=d.EFX_W[n].B!==undefined?d.EFX_W[n].B:EFX_W[n].B;}});
     migratePreset(d); efxNeedSort=true;
-    if(d.lastGain&&d.lastGain.length){ GAIN_PICKS=d.lastGain; GAIN_TIME=d.gainTime||null;
-      document.getElementById("gainContent").innerHTML=gainHtml(GAIN_PICKS,GAIN_TIME); }
-    else if(d.gain) document.getElementById("gainContent").innerHTML=d.gain;
+    if(ACCTS[curAcc]&&!(ACCTS[curAcc].gain&&ACCTS[curAcc].gain.length)&&d.lastGain&&d.lastGain.length){
+      ACCTS[curAcc].gain=d.lastGain;
+      ACCTS[curAcc].gainTime=d.gainTime||null;
+    }
     // 行数自定义 UI 同步
     document.getElementById("customNBox").style.display=(linesMode==="custom"?"block":"none");
     document.getElementById("customN").value=customN;
@@ -1390,10 +1480,11 @@ function renderSim(){
   document.getElementById("wv0").value=cv.toFixed(2);
   document.getElementById("wv1").value=tv.toFixed(2);
   document.getElementById("wv2").value=qv.toFixed(2);
-  const r=simulateApp(cv,tv,qv), MAX=Math.max(1,r.dist[1],r.dist[2],r.dist[3],r.dist[4]);
+  const r=simulateApp(cv,tv,qv);
+  const totalRows=Object.keys(DATA).length; // 纵轴固定刻度：整根柱子高度 = 序列总行数
   let bars="";
   for(let n=1;n<=4;n++){
-    const h=Math.round(r.dist[n]/MAX*120);
+    const h=totalRows?Math.max(2,Math.round(r.dist[n]/totalRows*120)):2;
     bars+=`<div class="pcol"><div class="pnum">${r.dist[n]}</div>
       <div class="pbar" style="height:${h}px"></div><div class="plab">${n}${I18N[lang].line}</div></div>`;
   }
@@ -1401,14 +1492,20 @@ function renderSim(){
   document.getElementById("pchart").style.display=(linesMode==="custom"?"none":"flex");
   const u=r.used,sum=u["绿色"]+u["蓝色"]+u["红色"]+u["紫色"];
   const L=I18N[lang];
+  const f=v=>Number.isInteger(v)?String(v):v.toFixed(1);
   document.getElementById("pinfo").innerHTML=
-    L.cost+": G <b>-"+u["绿色"]+"</b> B <b>-"+u["蓝色"]+"</b> R <b>-"+u["红色"]+"</b> P <b>-"+u["紫色"]+"</b> ("+L.total+" <b>-"+sum+"</b>)<br>"+
-    L.timeW+" <b>"+r.hours+"</b>h ("+(r.hours/24).toFixed(1)+" "+L.days+")　"+
-    L.topups+" <b>"+r.topups+"</b>";
+    L.cost+": G <b>-"+f(u["绿色"])+"</b> B <b>-"+f(u["蓝色"])+"</b> R <b>-"+f(u["红色"])+"</b> P <b>-"+f(u["紫色"])+"</b> ("+L.total+" <b>-"+f(sum)+"</b>)<br>"+
+    L.timeW+" <b>"+f(r.hours)+"</b>h ("+(r.hours/24).toFixed(1)+" "+L.days+")　"+
+    L.topups+" <b>"+f(r.topups)+"</b>";
   document.getElementById("pmiss").innerHTML=
-    `<span>${L.missL} <b>${r.miss["坚固装甲"]}</b>${L.missG} <b>${r.miss["前仆后继"]}</b>${L.missF} <b>${r.miss["破坏阻滞"]}</b>${L.missB}</span>`;
+    `<span>${L.missL} <b>${f(r.miss["坚固装甲"])}</b>${L.missG} <b>${f(r.miss["前仆后继"])}</b>${L.missF} <b>${f(r.miss["破坏阻滞"])}</b>${L.missB}</span>`;
   saveState();
-}
+}document.getElementById("wPreset").addEventListener("click",()=>{
+  const w=document.querySelectorAll(".ws");
+  w[0].value=-0.05; w[1].value=-0.8; w[2].value=1;
+  renderSim(); renderHome(); saveState();
+  toast(I18N[lang].presetApplied||"Preset applied");
+});
 ws.forEach(s=>s.addEventListener("input",()=>{renderSim();renderHome();}));
 document.querySelectorAll(".wv").forEach(inp=>inp.addEventListener("change",()=>{
   const i=+inp.dataset.i, v=Math.max(-1,Math.min(1,parseFloat(inp.value)||0));
@@ -1484,15 +1581,17 @@ function candidatePlans(start,stock){
     }
   }
   plans.sort((a,b)=>b.total-a.total);
-  const top=[]; const seen=new Set();
-  for(const p of plans){
-    if(linesMode==="custom"){ if(top.length>=3) break; top.push(p); continue; }
-    const key=p.total.toFixed(3);
-    if(!seen.has(key)){
-      if(seen.size>=3) break;
-      seen.add(key);
+  // 推荐规则：按显示分数（两位小数）从高到低分组，同分组整组一起给、不拆开，累计到 3 个就停
+  const top=[];
+  let i=0;
+  // 同分组整组一起给，但一组最多 6 个（防止权重全 0 时 24 个同分全铺满屏幕）
+  while(i<plans.length&&top.length<3){
+    const key=Math.round(plans[i].total*100);
+    while(i<plans.length&&Math.round(plans[i].total*100)===key){
+      if(top.length>=6) break;
+      top.push(plans[i]); i++;
     }
-    top.push(p);
+    if(top.length>=6) break;
   }
   return top;
 }
@@ -1504,6 +1603,14 @@ function gainHtml(picks,time){
   const efx=picks.map(x=>colorName(x[0])+" "+efxName(x[1])+" "+x[2]).join(" \u00B7 ");
   return '<div class="seq">'+tiles+'</div><div class="efx"><b>'+efx+'</b></div>'+
     '<div class="gtime">'+I18N[lang].gained+(time?" \u00B7 "+time:"")+'</div>';
+}
+// 待领取（主页左上卡片）按账号渲染
+function renderGain(){
+  const a=ACCTS[curAcc]||{};
+  GAIN_PICKS=a.gain||null; GAIN_TIME=a.gainTime||null;
+  document.getElementById("gainContent").innerHTML=
+    (GAIN_PICKS&&GAIN_PICKS.length)?gainHtml(GAIN_PICKS,GAIN_TIME)
+    :'<span class="gempty">'+I18N[lang].gainEmpty+'</span>';
 }
 function colorTile(c){return `<div class="mini t-${LETTERS[c].toLowerCase()}">${colorName(c)}</div>`;}
 function renderHome(){
@@ -1517,7 +1624,7 @@ function renderHome(){
     const ranked=[...new Set(p.picks.map(x=>x[1]))].sort((a,b)=>stock[a]-stock[b]);
     const co={}; ranked.forEach((c,i)=>co[c]=LINE_COST[i]);
     const tiles=p.picks.map(x=>colorTile(x[1])).join("");
-    const cost=ranked.map(c=>`<span><i class="cdot c-${LETTERS[c].toLowerCase()}"></i>${co[c]}</span>`).join("");
+    const cost=ranked.map(c=>`<span><i class="cimg cimg-${LETTERS[c].toLowerCase()}"></i>${co[c]}</span>`).join("");
     const efx=p.picks.map(x=>colorName(x[1])+" "+efxName(x[2])+" "+x[3]).join(" · ");
     html+=`<button class="opt" data-plan="${idx}">
       <div class="tiles">${tiles}</div>
@@ -1558,6 +1665,7 @@ document.getElementById("confirmBtn").addEventListener("click",()=>{
      <div class="gtime">${I18N[lang].gained} · ${t}</div>`;
   document.getElementById("gainContent").innerHTML=gainAfter;
   GAIN_PICKS=p.picks.map(x=>[x[1],x[2],x[3]]); GAIN_TIME=t;
+  if(ACCTS[curAcc]){ ACCTS[curAcc].gain=GAIN_PICKS; ACCTS[curAcc].gainTime=t; }
   const start=parseInt(document.getElementById("startLine").value)||1;
   const newStart=start+p.n;
   document.getElementById("startLine").value=newStart;
@@ -1572,26 +1680,43 @@ document.getElementById("confirmBtn").addEventListener("click",()=>{
   toast((lang==="en"?"Gained ":"已获得 ")+p.n+" "+I18N[lang].line);
 });
 
-// ==== 更新日志（内容与 App 的 lib/changelog.dart 保持一致，改 App 时同步这里）====
-const CHANGELOG=[{v:"1.1.0",d:"2026-10-10",items:[
-  "界面按确认稿的网页版重做：主页恢复「获得顺序 + 起始行」双卡片并排，推荐方案为列表卡片；底栏改成 5 个图标的操作条（撤销 / 重做 / 导入 / 导出 / 顺序）加 3 页导航，图标与网页同一套路径。",
-  "修复设置-偏好里滑块、按钮不实时刷新（要切换页面再回来才看到改动）的问题。",
-  "修复起始行错乱：输入第 100 行后确认 3 行方案，现在正确变成 103 行并写入历史。",
-  "修复雕刻权重默认值：坚固装甲等曾被误存成 14 这样的原始分，S / B 滑块因此跑到屏幕外看不见；老存档里仍是旧默认值的会自动升级到新表格。",
-  "雕刻权重的 S / B 双滑块现在可以拖动、实时显示数值。",
-  "历史记录、账号切换、新建账号即时刷新，不用退出重进。",
-  "语言切换立即全局生效（设置页、底栏、序列表格一起变）。",
-  "查看雕刻序列改为表格：表头（行 / 绿色 / 蓝色 / 红色 / 紫色）常驻，打开时自动定位到当前查询行附近；雕刻名和 S / B 分列显示，不会再被截断成「坚固...」。",
-  "导出改用系统「保存到」对话框，文件落在你自己选的位置，导入时能找到。",
-  "「顺序」改为弹出菜单（查看当前雕刻序列 / 更改雕刻序列），不再跳到账号页；设置-账号移除序列查看与添加。",
-  "「应用」按钮放到设置页页眉（「设置」两字右侧、分段栏上方），固定不随内容滚动。",
-  "雕刻权重列表改为只按 S 从大到小排序；拖动滑块时列表顺序不会乱跳，点「应用」后按最新 S 重新排序。",
-  "修复设置-账号里切换账号后列表不即时刷新的问题（与偏好页同一个原因）。",
-  "实时提示（获得 N 条等）提高文字对比度，位置不再被底栏遮挡。",
-  "预设调整：四色水晶各 1000；默认只有一个账号，命名为 你的账号 / 你的賬號 / your account；水晶、时间、质量三个权重默认都改为 0。",
-  "雕刻权重改为表格数值：坚固装甲 1 / 0.92、昏沉 0.98 / 0.91、前仆后继 0.9 / 0.84、过热 0.9 / 0.84、破坏阻滞 0.85 / 0.79、投诚 0.85 / 0.79、情报压制 0.75 / 0.45、修补 0.75 / 0.45、活力汲取 0.7 / 0.5、力竭 0.7 / 0.5、战地急救 0.45 / 0.25、保险 0.45 / 0.25、能量涌动 0.35 / 0.21，其余按「其他」0.2 / 0.1。",
-  "软件名改为「海岛奇兵雕刻选择」，设置-关于新增更新日志。"
-]}];
+// ==== 更新日志（内容与 App 的 lib/changelog.dart 一致，改 App 时同步这里）====
+const CHANGELOG=[
+  {v:"1.2.1",d:"2026-10-11",items:[
+      "权重卡片右上角新增「预设 -0.05 / -0.8 / 1」按钮：点一下就把水晶、时间、质量三个权重套用成这组值（因为三个权重都是 0 时分数只跟行数有关，同分会非常多）。",
+      "推荐列表的同分组加上限：一组最多显示 6 个（同分整组一起给的规则不变，只是不会再把几十个同分方案全铺出来）。"
+  ]},
+  {v:"1.2.0",d:"2026-10-11",items:[
+      "待领取（主页左上那张卡）改成每个账号各存一份：切换账号时它会跟着切换（之前存在全局，切了账号还显示上一个账号的）。",
+      "待领取里的四个色块改成按卡片宽度自适应，一行必定放得下四个。",
+      "模拟柱状图改成「每一行都采样」：第 1 行、第 2 行、第 3 行每行都当作如果从这里开始选算一次（1-3、2-4、3-5 这样滑动），样本量约等于序列行数，偶然性更小；纵轴改成固定刻度，整根柱子高度 = 序列总行数。",
+      "每行采样会把消耗/时间/兜底/可能遗漏放大到约「平均行数」倍，这些数字统一除以平均行数（时间回到领取次数  8 小时的量级）。",
+      "表格解析放宽：从左到右、从上到下扫所有单元格，只认含雕刻信息的格子；等级 S/s//品质提升  S，B/b/币/没写等级  B；行号取该行最前面的数字（没有就按顺序 1、2、3）；颜色优先按表头（次数/绿/蓝/红/紫）对应列，没有表头就按雕刻出现的列顺序当 绿、蓝、红、紫；备注、空行、空列、无关文字全部忽略；不认识的雕刻名写成汉字 + 等级也能认。",
+      "推荐方案里的消耗标记（红 5 绿 7 那种）改用水晶图，并强制一行不换行。",
+      "确认按钮改成悬浮在底部图标条上方，选中方案就出现，不用再划到底。",
+      "推荐数量规则改成同分整组一起给、不拆开：累计到 3 个为止（第 1 名 3 个同分只给这 3 个；第 1 名 2 个给这 2 个加第 2 名整组；第 1、2 名各 1 个再给第 3 名，同分继续给）。",
+      "历史记录格式改成：#起始行 - 结束行 + 各雕刻（水晶图）+（建造时间：xx:xx 领取时间：xx:xx）；最新一条还没领下一次时显示「尚未领取」。"
+  ]},
+  {v:"1.1.0",d:"2026-10-10",items:[
+      "界面按确认稿的网页版重做：主页恢复「获得顺序 + 起始行」双卡片并排，推荐方案为列表卡片；底栏改成 5 个图标的操作条（撤销 / 重做 / 导入 / 导出 / 顺序）加 3 页导航，图标与网页同一套路径。",
+      "修复设置-偏好里滑块、按钮不实时刷新（要切换页面再回来才看到改动）的问题。",
+      "修复起始行错乱：输入第 100 行后确认 3 行方案，现在正确变成 103 行并写入历史。",
+      "修复雕刻权重默认值：坚固装甲等曾被误存成 14 这样的原始分，S / B 滑块因此跑到屏幕外看不见；老存档里仍是旧默认值的会自动升级到新表格。",
+      "雕刻权重的 S / B 双滑块现在可以拖动、实时显示数值。",
+      "历史记录、账号切换、新建账号即时刷新，不用退出重进。",
+      "语言切换立即全局生效（设置页、底栏、序列表格一起变）。",
+      "查看雕刻序列改为表格：表头（行 / 绿色 / 蓝色 / 红色 / 紫色）常驻，打开时自动定位到当前查询行附近；雕刻名和 S / B 分列显示，不会再被截断成「坚固...」。",
+      "导出改用系统「保存到」对话框，文件落在你自己选的位置，导入时能找到。",
+      "「顺序」改为弹出菜单（查看当前雕刻序列 / 更改雕刻序列），不再跳到账号页；设置-账号移除序列查看与添加。",
+      "「应用」按钮放到设置页页眉（「设置」两字右侧、分段栏上方），固定不随内容滚动。",
+      "雕刻权重列表改为只按 S 从大到小排序；拖动滑块时列表顺序不会乱跳，点「应用」后按最新 S 重新排序。",
+      "修复设置-账号里切换账号后列表不即时刷新的问题（与偏好页同一个原因）。",
+      "实时提示（获得 N 条等）提高文字对比度，位置不再被底栏遮挡。",
+      "预设调整：四色水晶各 1000；默认只有一个账号，命名为 你的账号 / 你的賬號 / your account；水晶、时间、质量三个权重默认都改为 0。",
+      "雕刻权重改为表格数值：坚固装甲 1 / 0.92、昏沉 0.98 / 0.91、前仆后继 0.9 / 0.84、过热 0.9 / 0.84、破坏阻滞 0.85 / 0.79、投诚 0.85 / 0.79、情报压制 0.75 / 0.45、修补 0.75 / 0.45、活力汲取 0.7 / 0.5、力竭 0.7 / 0.5、战地急救 0.45 / 0.25、保险 0.45 / 0.25、能量涌动 0.35 / 0.21，其余按「其他」0.2 / 0.1。",
+      "软件名改为「海岛奇兵雕刻选择」，设置-关于新增更新日志。"
+  ]}
+];
 function renderLog(){
   const box=document.getElementById("logBox"); if(!box) return;
   let h="";
