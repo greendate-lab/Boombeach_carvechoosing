@@ -4,24 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>海岛奇兵雕刻选择</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- 可选的 xlsx 解析库：defer 加载，绝不阻塞页面（离线时应用照常运行，只是暂不支持 .xlsx 导入） -->
+<script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg:#121821; --card:#1b2430; --card2:#222d3c; --line:#2c3848;
   --tx:#e8edf3; --mut:#8b98a9; --mut2:#61707f;
-  --gold:#e3a84b; --gold-d:#b9822f;
+  --gold:#e3a84b; --gold-d:#b9822f; --gold-tx:#e3a84b;
   --g:#43d17a; --b:#4cc3f5; --r:#ff7043; --p:#9e2f85;
+  --page:#0b0f15; --bar:rgba(20,27,37,.98); --inp:#10161e; --panel:#0d1218;
+  --selbg:linear-gradient(180deg,#26303f,#1d2735);
+  --gs:#43D17A; --gb:#FFD54A;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0}
 html,body{height:100%}
-body{background:#0b0f15;color:var(--tx);
+body{background:var(--page);color:var(--tx);
   font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
   display:flex;justify-content:center}
 .app{width:100%;max-width:430px;height:100dvh;overflow:hidden;display:flex;flex-direction:column;
   background:var(--bg);position:relative;box-shadow:0 0 40px rgba(0,0,0,.5)}
 .topbar{display:flex;align-items:center;gap:10px;padding:14px 16px;
   padding-top:calc(14px + env(safe-area-inset-top));flex:none;
-  background:rgba(18,24,33,.92);border-bottom:1px solid var(--line)}
+  background:var(--bar);border-bottom:1px solid var(--line)}
 .topbar h1{font-size:16px;font-weight:600;flex:1}
 .topbar .sub{font-size:11px;color:var(--mut)}
 .screen{display:none;flex-direction:column;flex:1;min-height:0}
@@ -45,7 +49,11 @@ body{background:#0b0f15;color:var(--tx);
 .opt{display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--line);
   border-radius:13px;padding:12px;margin-bottom:10px;cursor:pointer;transition:.13s;width:100%;text-align:left;color:var(--tx)}
 .opt:active{transform:scale(.99)}
-.opt.sel{border-color:var(--gold);background:linear-gradient(180deg,#26303f,#1d2735)}
+.opt.sel{border-color:var(--gold);background:var(--selbg)}
+.opt.best{border-color:var(--b)}
+.opt.best .radio{border-color:var(--b)}
+.opt.best.sel .radio{border:5px solid var(--gold)}
+.opt .best-tag{font-size:9.5px;color:var(--b);font-weight:700;margin-left:5px}
 .opt .tiles{display:flex;gap:5px;flex-wrap:wrap}
 .opt .mini{width:26px;height:26px;border-radius:7px;font-size:12px;color:#0c1117;
   display:flex;align-items:center;justify-content:center;font-weight:700}
@@ -59,18 +67,18 @@ body{background:#0b0f15;color:var(--tx);
   background:var(--gold);color:#1a1305;display:none;align-items:center;justify-content:center;gap:8px;
   flex:none;box-shadow:0 -8px 18px rgba(0,0,0,.55)}
 .confirm.show{display:flex}
-.opbar{flex:none;display:flex;background:rgba(20,27,37,.98);border-top:1px solid var(--line);
+.opbar{flex:none;display:flex;background:var(--bar);border-top:1px solid var(--line);
   padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
 .opbtn{flex:1;border:none;background:none;color:var(--mut2);display:flex;flex-direction:column;
   align-items:center;gap:2px;padding:4px 0;font-size:9.5px;cursor:pointer}
 .opbtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8}
-.opbtn.on{color:var(--gold)}
-.tabbar{flex:none;display:flex;background:rgba(20,27,37,.98);border-top:1px solid var(--line);
+.opbtn.on{color:var(--gold-tx)}
+.tabbar{flex:none;display:flex;background:var(--bar);border-top:1px solid var(--line);
   padding-bottom:env(safe-area-inset-bottom)}
 .tab{flex:1;border:none;background:none;color:var(--mut2);padding:7px 0 6px;
   display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;cursor:pointer}
 .tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
-.tab.on{color:var(--gold)}
+.tab.on{color:var(--gold-tx)}
 .seg{display:flex;background:var(--card2);border-radius:10px;padding:3px;margin-bottom:14px}
 .seg button{flex:1;border:none;background:none;color:var(--mut);padding:8px 4px;border-radius:8px;
   font-size:12.5px;cursor:pointer}
@@ -84,13 +92,13 @@ body{background:#0b0f15;color:var(--tx);
 .choice small{display:block;color:var(--mut);font-size:11px;margin-top:2px}
 .cinput{display:flex;align-items:center;gap:10px;background:var(--card2);border-radius:11px;padding:10px 12px;margin-bottom:8px}
 .cinput label{font-size:13px;display:flex;align-items:center;gap:8px;flex:1}
-.cinput input{width:90px;background:#10161e;border:1px solid var(--line);border-radius:8px;color:var(--tx);
+.cinput input{width:90px;background:var(--inp);border:1px solid var(--line);border-radius:8px;color:var(--tx);
   font-size:16px;padding:7px 9px;text-align:right;font-variant-numeric:tabular-nums}
 .hday{font-size:11px;color:var(--mut2);margin:14px 2px 7px}
 .hitem{display:block;background:var(--card);border:1px solid var(--line);
   border-radius:11px;padding:11px 12px;margin-bottom:8px}
 .hrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.hrange{font-size:12.5px;font-weight:700;color:var(--gold)}
+.hrange{font-size:12.5px;font-weight:700;color:var(--gold-tx)}
 .hpick{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--tx)}
 .htime{font-size:10.5px;color:var(--mut);margin-top:6px}
 .hitem .n{font-size:11px;color:var(--mut2);width:34px}
@@ -106,7 +114,7 @@ body{background:#0b0f15;color:var(--tx);
   border-radius:12px;margin-bottom:8px;background:var(--card);cursor:pointer}
 .accrow.on{border-color:var(--gold);background:var(--card2)}
 .accrow .av{width:38px;height:38px;border-radius:50%;background:var(--card2);display:flex;align-items:center;
-  justify-content:center;font-weight:700;color:var(--gold);flex:none}
+  justify-content:center;font-weight:700;color:var(--gold-tx);flex:none}
 .accrow.on .av{background:var(--gold);color:#1a1305}
 .accrow .accinfo{flex:1;display:flex;flex-direction:column;min-width:0;text-align:left}
 .accrow .accinfo b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -118,14 +126,14 @@ body{background:#0b0f15;color:var(--tx);
 .acc .av{width:40px;height:40px;border-radius:50%;background:var(--card2);display:flex;align-items:center;
   justify-content:center;font-size:16px;font-weight:700;color:var(--gold);flex:none}
 .wl{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;margin-bottom:2px}
-.wl b{color:var(--gold)}
+.wl b{color:var(--gold-tx)}
 .wl .q{flex:none;width:22px;height:22px;border:1px solid var(--line);border-radius:50%;background:var(--card2);
   color:var(--mut);font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .lnsel{margin-top:12px;padding-top:11px;border-top:1px dashed var(--line)}
 .infobody{padding:4px 2px;font-size:13px;line-height:1.75;color:var(--tx);white-space:pre-line}
 .accrow .del{flex:none;border:none;background:var(--card2);color:#e0645c;border-radius:8px;
   width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.wl .wv{width:76px;background:#10161e;border:1px solid var(--line);border-radius:8px;color:var(--gold);
+.wl .wv{width:76px;background:var(--inp);border:1px solid var(--line);border-radius:8px;color:var(--gold-tx);
   font-size:14px;padding:5px 8px;text-align:right;font-variant-numeric:tabular-nums}
 /* 雕刻权重双滑块 */
 .efxw{display:flex;align-items:center;gap:9px;padding:5px 0;border-bottom:1px solid var(--line)}
@@ -137,13 +145,33 @@ body{background:#0b0f15;color:var(--tx);
   pointer-events:none;margin:0;height:30px}
 .dual input::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;
   cursor:pointer;pointer-events:auto;border:2px solid #0c1117}
-.dual input.es::-webkit-slider-thumb{background:var(--gold)}
-.dual input.eb::-webkit-slider-thumb{background:var(--b)}
+.dual input.es::-webkit-slider-thumb{background:var(--gs)}
+.dual input.eb::-webkit-slider-thumb{background:var(--gb)}
 .dual input::-moz-range-thumb{width:16px;height:16px;border-radius:50%;cursor:pointer;pointer-events:auto;border:2px solid #0c1117}
-.dual input.es::-moz-range-thumb{background:var(--gold)}
-.dual input.eb::-moz-range-thumb{background:var(--b)}
+.dual input.es::-moz-range-thumb{background:var(--gs)}
+.dual input.eb::-moz-range-thumb{background:var(--gb)}
 .efxw-v{width:66px;font-size:10px;color:var(--mut);flex:none;text-align:right;font-variant-numeric:tabular-nums}
+/* 自定义选项：起始行起 4 行 × 每行 4 色 = 16 个按钮 */
+.opt.custcard{display:block;cursor:pointer}
+.custgrid{display:flex;flex-direction:column;gap:5px;margin:8px 0 0}
+.custrow{display:flex;gap:5px}
+.cbtn{flex:1 1 0;min-width:0;background:var(--card2);border:1px solid var(--line);border-radius:8px;
+  color:var(--tx);font-size:10.5px;padding:6px 3px;cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cbtn.on{border-color:var(--gold);background:var(--selbg)}
+.cbtn.dis,.cbtn:disabled{opacity:.32;cursor:not-allowed}
+.cbtn.used{opacity:.4}
+.cbtn .cn.b{color:#7fd4ff;font-weight:700}     /* 每行最优：浅蓝字 */
+.cbtn.on .cn{color:var(--gold-tx);font-weight:700}  /* 已选：金色字 */
+.custcost{margin-top:8px}
 /* 序列菜单/查看 */
+.seqlegend{display:flex;gap:14px;margin:2px 0 8px;font-size:10.5px;color:var(--mut)}
+.seqlegend .lg{display:flex;align-items:center;gap:5px}
+.seqlegend .sw{width:12px;height:12px;border-radius:3px;display:inline-block;border:1px solid var(--line,rgba(255,255,255,.15))}
+.seqlegend .sw.u{background:rgba(227,168,75,.55);background:color-mix(in srgb,var(--gold) 55%,transparent)}
+.seqlegend .sw.q{background:rgba(76,195,245,.60)}
+.seqt tr.hlu{background:rgba(227,168,75,.42);background:color-mix(in srgb,var(--gold) 42%,transparent)}
+.seqt tr.hlq{background:rgba(76,195,245,.45)}
 .modal{position:fixed;inset:0;background:rgba(5,8,12,.74);display:none;align-items:center;justify-content:center;z-index:50}
 .modal.show{display:flex}
 .mcard{width:86%;max-width:340px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
@@ -155,7 +183,7 @@ body{background:#0b0f15;color:var(--tx);
 .mtitle{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .mtitle h3{font-size:14px;margin:0}
 .x{background:none;border:none;color:var(--mut);font-size:22px;padding:2px 8px}
-.seqbody{flex:1;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#0d1218}
+.seqbody{flex:1;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
 .seqt{width:100%;border-collapse:collapse;font-size:12px}
 .seqt th,.seqt td{padding:5px 4px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
 .seqt th{position:sticky;top:0;background:var(--card2);color:var(--mut2)}
@@ -171,7 +199,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
 .pinfo b{color:#e05a4f;font-weight:700}
 .miss{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
 .miss span{font-size:11px;padding:4px 9px;border-radius:14px;background:var(--card2);color:var(--mut)}
-.miss b{color:var(--gold)}
+.miss b{color:var(--gold-tx)}
 .toast{position:absolute;left:50%;bottom:104px;transform:translateX(-50%) translateY(20px);
   background:#0d131b;border:1.2px solid var(--gold);color:#fff;font-weight:700;font-size:13.5px;
   padding:10px 16px;max-width:86%;text-align:center;white-space:normal;
@@ -186,7 +214,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
 .cellw{display:flex;align-items:center;justify-content:center;gap:3px;min-width:0}
 .cellw .enm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .cellw .egr{font-weight:700;flex:none}
-.logv{font-size:12.5px;font-weight:700;color:var(--gold)}
+.logv{font-size:12.5px;font-weight:700;color:var(--gold-tx);flex:none}
 .logd{font-size:11px;color:var(--mut2);margin-left:8px}
 .logi{display:flex;gap:7px;font-size:12px;color:var(--mut);line-height:1.55;margin-top:4px}
 .logi i{flex:none;width:4px;height:4px;border-radius:50%;background:var(--gold);margin-top:6px}
@@ -200,8 +228,100 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
 /* 权重预设按钮 */
 .whead{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .whead h3{margin-bottom:0;flex:1}
-.chip{border:1px solid var(--gold);background:none;color:var(--gold);border-radius:8px;padding:4px 8px;
+.chip{border:1px solid var(--gold);background:none;color:var(--gold-tx);border-radius:8px;padding:4px 8px;
   font-size:10.5px;cursor:pointer;flex:none;white-space:nowrap}
+.chip.blue{border-color:var(--b);color:var(--b)}
+/* ==== 1.5.3 新增：胶囊滑条 / 外观 / 获得顺序 / 序列底栏 / 日志折叠 ==== */
+.eye{cursor:pointer;font-size:15px;user-select:none;line-height:1;flex:none;opacity:.9}
+.eye.off{opacity:.35}
+.pwrow{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.pwrow .lab{flex:none;min-width:44px;font-size:12.5px;display:flex;align-items:center;gap:4px}
+.pwrow .val{width:54px;flex:none;text-align:right;font-size:12.5px;font-weight:700;
+  color:var(--gold-tx);white-space:nowrap;font-variant-numeric:tabular-nums}
+.sl{position:relative;flex:1 1 auto;min-width:0;height:34px;touch-action:none;cursor:pointer}
+.sl .trk{position:absolute;left:0;right:0;top:10px;height:14px;border-radius:999px;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.08);overflow:hidden}
+.sl .fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:999px;
+  background:linear-gradient(180deg,var(--gold),var(--gold-d));
+  background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 72%,#fff),var(--gold) 45%,var(--gold-d));overflow:hidden}
+.sl .knob{position:absolute;left:0;top:50%;transform:translate(-50%,-50%);width:26px;height:18px;border-radius:999px;
+  background:rgba(255,255,255,.18);background:color-mix(in srgb,var(--gold) 52%,rgba(255,255,255,.10));
+  border:1.5px solid rgba(255,255,255,.72);
+  -webkit-backdrop-filter:blur(3px) saturate(1.6);backdrop-filter:blur(3px) saturate(1.6);
+  box-shadow:0 1px 4px rgba(0,0,0,.4),inset 0 1px 2px rgba(255,255,255,.55)}
+.sl.max .trk{box-shadow:0 0 14px var(--gold),0 0 4px var(--gold)}
+.sl.max .knob{box-shadow:0 0 14px var(--gold),0 1px 4px rgba(0,0,0,.4)}
+.sl .stars{position:absolute;inset:0;overflow:hidden}
+.sl .stars i{position:absolute;background:#fff;border-radius:50%;animation:drift linear infinite,tw 2.2s ease-in-out infinite}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-34px)}}
+@keyframes tw{0%,100%{opacity:.45}50%{opacity:1}}
+.sl:not(.max) .stars{display:none}
+.phint{font-size:10.5px;color:var(--gold-tx);line-height:1.65;margin:2px 0 4px}
+.pwrow .q,.whead .q{flex:none;width:17px;height:17px;border:1px solid var(--line);border-radius:50%;
+  background:var(--card2);color:var(--mut);font-size:10.5px;padding:0;cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+.lrow{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.lrow .sp{margin-left:auto}
+.lbtn{border:1.5px solid var(--line);background:none;color:var(--mut);border-radius:9px;
+  padding:7px 16px;font-size:13px;cursor:pointer;flex:none}
+.lbtn.on{background:var(--gold);color:#1a1305;border-color:var(--gold);font-weight:700}
+.lrow .num{width:66px;flex:none;background:var(--inp);border:1px solid var(--line);border-radius:8px;
+  color:var(--tx);font-size:15px;padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums}
+/* 外观 */
+.pal{display:flex;align-items:center;gap:10px;font-size:13px;margin-bottom:10px}
+.pal .nm{flex:1;min-width:0}
+.pal input[type=color]{width:42px;height:30px;flex:none;border:1px solid var(--line);border-radius:8px;
+  background:none;padding:0;cursor:pointer}
+.pal .hex{width:82px;flex:none;background:var(--inp);border:1px solid var(--line);border-radius:8px;
+  color:var(--tx);font-size:12px;padding:6px 8px;text-align:center;font-variant-numeric:tabular-nums;
+  text-transform:uppercase}
+.thbtns{display:flex;gap:8px;margin-top:2px}
+.thbtns button{flex:1;border:1.5px solid var(--line);background:none;color:var(--tx);border-radius:9px;
+  padding:8px 4px;font-size:12.5px;cursor:pointer}
+.thbtns button.on{border-color:var(--gold);color:var(--gold-tx);font-weight:700}
+/* 获得顺序：左色块 + 右文字框 等高 */
+.gainer{display:flex;gap:8px;align-items:stretch}
+/* 获得顺序：每项 = 左方块(一个字) + 右方框(全称 + S/B)，自动换行 */
+.gwrap{display:flex;flex-wrap:wrap;gap:6px}
+.gitem{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:9px;overflow:hidden;max-width:100%}
+.gsq{display:flex;align-items:center;justify-content:center;width:26px;min-height:26px;flex:none;
+  font-weight:700;font-size:13px;color:#101010}
+.gtx{display:flex;align-items:center;padding:0 7px;font-size:11.5px;font-weight:600;
+  background:var(--card2);color:var(--tx);white-space:nowrap}
+.gtime{font-size:11px;color:var(--mut);margin-top:6px}
+.tiles2{display:grid;grid-template-columns:1fr 1fr;gap:5px;width:74px;flex:none}
+.tiles2 .mini{width:100%;height:100%;aspect-ratio:1/1;border-radius:8px;font-size:10.5px;font-weight:700;
+  color:#0c1117;display:flex;align-items:center;justify-content:center}
+.efxbox{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:7px 9px;
+  display:flex;align-items:center;background:var(--card2)}
+.efxbox .efx{margin:0;font-size:11px;line-height:1.6;color:var(--tx)}
+.gr-s,.efx b.gr-s,.efxbox b.gr-s,.hpick b.gr-s{color:var(--gs);font-weight:700}
+.gr-b,.efx b.gr-b,.efxbox b.gr-b,.hpick b.gr-b{color:var(--gb);font-weight:700}
+.cellw .gr-s,.cellw .gr-b{flex:none}
+.dotc{width:9px;height:9px;border-radius:50%;display:inline-block;vertical-align:-1px;margin-right:3px}
+.pcol .pnum{font-size:11px}
+/* 序列底栏 / 所需水晶条 */
+.costbar{display:none;flex:none;background:var(--bar);border-top:1px solid var(--line);
+  padding:7px 14px;font-size:11px;color:var(--mut);align-items:center;gap:8px;flex-wrap:wrap}
+.costbar.show{display:flex}
+.costbar .cimg{margin-right:1px}
+/* 日志折叠 */
+.loghead{display:flex;align-items:center;gap:8px;cursor:pointer;padding:2px 0;user-select:none}
+.logsum{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:11.5px;color:var(--mut)}
+.logar{flex:none;color:var(--mut2);font-size:11px;transition:.15s}
+.loghead.on .logar{transform:rotate(180deg)}
+.logbody{display:none;margin:6px 0 12px;padding-left:2px}
+.logbody.on{display:block}
+.logitem{padding-bottom:10px;border-bottom:1px dashed var(--line);margin-bottom:10px}
+.logitem:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.mo-t{display:block;font-size:13.5px;font-weight:600}
+.mo-s{display:block;color:var(--mut);font-size:11px;margin-top:3px}
+/* 序列底栏：固定在最上层，面板永远遮不住它（App 1.4.3 要求"始终可见"） */
+#seqbar{position:fixed;left:0;right:0;bottom:0;z-index:300;
+  padding-bottom:calc(env(safe-area-inset-bottom) + 2px);
+  box-shadow:0 -8px 20px rgba(0,0,0,.5)}
+#seqView .mcard{max-height:calc(100vh - 150px)}
 </style>
 </head>
 <body>
@@ -209,7 +329,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
 
   <!-- ============ 主页 HOME ============ -->
   <section class="screen active" data-screen="home">
-    <div class="topbar"><h1>海岛奇兵雕刻选择</h1><span class="sub" id="roundSub"></span></div>
+    <div class="topbar"><h1 id="appTitle">海岛奇兵雕刻选择</h1><span class="sub" id="roundSub"></span></div>
     <div class="content">
       <div class="duo">
         <div class="card">
@@ -219,7 +339,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
         <div class="card">
           <h3 data-i18n="lines"></h3>
           <input type="number" id="startLine" min="1" value="12"
-            style="width:100%;background:#10161e;border:1px solid var(--line);border-radius:9px;color:var(--tx);font-size:16px;padding:10px">
+            style="width:100%;background:var(--inp);border:1px solid var(--line);border-radius:9px;color:var(--tx);font-size:16px;padding:10px">
           <div class="efx" id="startHint"></div>
         </div>
       </div>
@@ -227,6 +347,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
       <h3 style="font-size:12px;color:var(--mut);font-weight:600;margin:4px 2px 10px" data-i18n="options"></h3>
       <div id="optList"></div>
     </div>
+    <div class="costbar" id="costBar"></div>
     <button class="confirm" id="confirmBtn">
       <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
       <span data-i18n="confirm"></span></button>
@@ -234,13 +355,13 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
 
   <!-- ============ HISTORY ============ -->
   <section class="screen" data-screen="history">
-    <div class="topbar"><button class="back" data-back>‹</button><h1 data-i18n="history"></h1></div>
+    <div class="topbar"><h1 data-i18n="history"></h1></div>
     <div class="content"><div id="histList"></div></div>
   </section>
 
   <!-- ============ SETTINGS ============ -->
   <section class="screen" data-screen="settings">
-    <div class="topbar"><button class="back" data-back>‹</button><h1 data-i18n="settings"></h1><button class="appl" id="efxApply" data-i18n="apply" style="display:none"></button></div>
+    <div class="topbar"><h1 data-i18n="settings"></h1><button class="appl" id="efxApply" data-i18n="apply" style="display:none"></button></div>
     <div class="content">
       <div class="seg" id="setSeg">
         <button class="on" data-pane="preference" data-i18n="preference"></button>
@@ -251,27 +372,33 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
 
       <div class="pane on" data-pane="preference">
         <div class="card">
-          <div class="whead"><h3 data-i18n="weights"></h3><button class="chip" id="wPreset"></button></div>
-          <div style="margin-bottom:10px">
-            <div class="wl"><span data-i18n="wCrystal"></span><button class="q" data-q="cry">?</button><input class="wv" id="wv0" data-i="0" type="number" min="-1" max="1" step="0.01" value="0"></div>
-            <input type="range" class="ws" min="-1" max="1" step="0.01" value="0"></div>
-          <div style="margin-bottom:10px">
-            <div class="wl"><span data-i18n="wTime"></span><button class="q" data-q="time">?</button><input class="wv" id="wv1" data-i="1" type="number" min="-1" max="1" step="0.01" value="0"></div>
-            <input type="range" class="ws" min="-1" max="1" step="0.01" value="0"></div>
-          <div style="margin-bottom:10px">
-            <div class="wl"><span data-i18n="wQuality"></span><button class="q" data-q="quality">?</button><input class="wv" id="wv2" data-i="2" type="number" min="-1" max="1" step="0.01" value="0"></div>
-            <input type="range" class="ws" min="-1" max="1" step="0.01" value="0"></div>
-          <div class="lnsel">
-            <button class="choice on" data-grp="lines" data-lines="auto"><span data-i18n="lAuto"></span><span class="rd"></span></button>
-            <button class="choice" data-grp="lines" data-lines="custom"><span data-i18n="lFlex"></span><span class="rd"></span></button>
-            <div id="customNBox" style="display:none;margin-top:9px">
-              <div class="cinput"><label><span data-i18n="linesN"></span></label>
-                <input type="number" id="customN" min="1" max="4" value="2" style="width:64px"></div>
-            </div>
+          <input type="range" class="ws" min="-1" max="1" step="0.01" value="0" style="display:none">
+          <input type="range" class="ws" min="-1" max="1" step="0.01" value="0" style="display:none">
+          <input type="range" class="ws" min="-1" max="1" step="0.01" value="0" style="display:none">
+          <input id="wv0" data-i="0" type="hidden"><input id="wv1" data-i="1" type="hidden"><input id="wv2" data-i="2" type="hidden">
+          <div class="whead"><h3 data-i18n="weights"></h3>
+            <span class="eye" id="simEye" title="显示 / 隐藏模拟">👁</span>
+            <button class="chip" id="wPreset"></button></div>
+          <div class="lrow">
+            <button class="lbtn on" data-grp="lines" data-lines="auto"><span data-i18n="lAuto"></span></button>
+            <button class="lbtn" data-grp="lines" data-lines="custom"><span data-i18n="lFlex"></span></button>
+            <span class="sp"></span>
+            <span id="customNBox" style="display:none"><input type="number" id="customN" class="num" min="1" max="4" value="2"></span>
           </div>
+          <div class="pwrow" style="display:none"><span class="lab"><span data-i18n="wCrystal"></span><button class="q" data-q="cry">?</button></span>
+            <div class="sl" id="slC" data-mode="c"><div class="trk"><div class="fill"><div class="stars"></div></div></div><div class="knob"></div></div>
+            <span class="val" id="valC">0.00</span></div>
+          <div class="pwrow"><span class="lab"><span data-i18n="wTime"></span><button class="q" data-q="time">?</button></span>
+            <div class="sl" id="slT" data-mode="t"><div class="trk"><div class="fill"><div class="stars"></div></div></div><div class="knob"></div></div>
+            <span class="val" id="valT">0.00</span></div>
+          <div class="pwrow"><span class="lab"><span data-i18n="wQuality"></span><button class="q" data-q="quality">?</button></span>
+            <div class="sl" id="slQ" data-mode="q"><div class="trk"><div class="fill"><div class="stars"></div></div></div><div class="knob"></div></div>
+            <span class="val" id="valQ">0.00</span></div>
+          <div class="phint" id="qualHint"></div>
         </div>
-        <div class="card">
-          <h3 data-i18n="simTitle"></h3>
+        <div class="card" id="simCard">
+          <div class="whead"><h3 data-i18n="simTitle"></h3>
+            <span style="font-size:10.5px;color:var(--mut2);font-weight:400" data-i18n="probAxis"></span></div>
           <div class="pchart" id="pchart"></div>
           <div class="pinfo" id="pinfo"></div>
           <div class="miss" id="pmiss"></div>
@@ -292,11 +419,33 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
 
         </div>
         <div class="card">
-          <h3 data-i18n="crystals"></h3>
+          <div class="whead"><h3 data-i18n="crystals"></h3>
+            <button class="chip blue" id="algoBtn" data-i18n="algoDebug"></button></div>
           <div class="cinput"><label><i class="cimg cimg-lg cimg-g"></i><span data-i18n="cG"></span></label><input type="number" class="cryst" data-c="绿色" value="1000"></div>
           <div class="cinput"><label><i class="cimg cimg-lg cimg-b"></i><span data-i18n="cB"></span></label><input type="number" class="cryst" data-c="蓝色" value="1000"></div>
           <div class="cinput"><label><i class="cimg cimg-lg cimg-r"></i><span data-i18n="cR"></span></label><input type="number" class="cryst" data-c="红色" value="1000"></div>
           <div class="cinput"><label><i class="cimg cimg-lg cimg-p"></i><span data-i18n="cP"></span></label><input type="number" class="cryst" data-c="紫色" value="1000"></div>
+        </div>
+        <div class="card">
+          <div class="whead"><h3 data-i18n="apprTitle"></h3><button class="chip" id="apprPreset" data-i18n="preset"></button></div>
+          <div id="apprMenu" class="thbtns" style="display:none;margin-bottom:8px">
+            <button data-usep="thDark" data-i18n="thDark"></button>
+            <button data-usep="thLight" data-i18n="thLight"></button>
+            <button data-usep="thReset" data-i18n="thReset"></button>
+          </div>
+          <div class="pal"><span class="nm" data-i18n="thTheme"></span>
+            <input type="color" id="cTheme" value="#e3a84b"><input class="hex" id="hTheme" value="#E3A84B" spellcheck="false"></div>
+          <div class="pal"><span class="nm" data-i18n="thBg"></span>
+            <input type="color" id="cBg" value="#121821"><input class="hex" id="hBg" value="#121821" spellcheck="false"></div>
+          <div class="pal"><span class="nm" data-i18n="thCard"></span>
+            <input type="color" id="cCard" value="#1b2430"><input class="hex" id="hCard" value="#1B2430" spellcheck="false"></div>
+          <div class="pal"><span class="nm" data-i18n="thLine"></span>
+            <input type="color" id="cLine" value="#2c3848"><input class="hex" id="hLine" value="#2C3848" spellcheck="false"></div>
+          <div class="thbtns">
+            <button id="thDark" data-i18n="thDark"></button>
+            <button id="thLight" data-i18n="thLight"></button>
+            <button id="thReset" data-i18n="thReset"></button>
+          </div>
         </div>
       </div>
 
@@ -313,8 +462,8 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
         <div class="card">
           <div class="about-hero">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
-            <div style="font-size:16px;font-weight:700">海岛奇兵雕刻选择</div>
-            <div class="ver">Version 1.2.1</div>
+            <div style="font-size:16px;font-weight:700;text-align:center">海岛奇兵雕刻选择</div>
+            <div class="ver" style="text-align:center">Version 1.5.4</div>
           </div>
           <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
         </div>
@@ -349,6 +498,40 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
       <svg viewBox="0 0 24 24"><path d="M4 6h13M4 12h13M4 18h9"/><path d="M20 4l2 2-2 2M20 14l2 2-2 2"/></svg><span data-i18n="order"></span></button>
   </div>
 
+  <!-- 序列打开时的底栏：导入 / 追加 / 删除 -->
+  <div class="opbar" id="seqbar" style="display:none">
+    <button class="opbtn on" id="sbImport">
+      <svg viewBox="0 0 24 24"><path d="M12 15V4m0 0L8.5 7.5M12 4l3.5 3.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><span data-i18n="seqImport"></span></button>
+    <button class="opbtn" id="sbAppend">
+      <svg viewBox="0 0 24 24"><path d="M4 6h11M4 12h11M4 18h7"/><path d="M17 14v7M13.5 17.5h7"/></svg><span data-i18n="seqAppend"></span></button>
+    <button class="opbtn" id="sbDelete" style="color:#e0645c">
+      <svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M8 7l1 12h6l1-12M10 11v5M14 11v5"/></svg><span data-i18n="seqDelete"></span></button>
+  </div>
+
+  <!-- 预设菜单 -->
+  <div class="modal" id="presetMenu">
+    <div class="mcard">
+      <h3 data-i18n="preset"></h3>
+      <button class="mopt" data-preset="perfect"><span class="mo-t" data-i18n="pPerfect"></span><span class="mo-s" data-i18n="pPerfectSub"></span></button>
+      <button class="mopt" data-preset="time"><span class="mo-t" data-i18n="pTime"></span><span class="mo-s" data-i18n="pTimeSub"></span></button>
+      <button class="mopt" data-preset="value"><span class="mo-t" data-i18n="pValue"></span><span class="mo-s" data-i18n="pValueSub"></span></button>
+      <button class="mopt" data-preset="orig"><span class="mo-t" data-i18n="pOrig"></span><span class="mo-s" data-i18n="pOrigSub"></span></button>
+      <button class="mopt ghost" id="pmClose" data-i18n="close"></button>
+    </div>
+  </div>
+
+  <!-- 算法调试：四色水晶每天增加（可为负） -->
+  <div class="modal" id="algoModal">
+    <div class="mcard">
+      <div class="mtitle"><h3 data-i18n="algoDaily"></h3><button class="x" id="algoClose">×</button></div>
+      <div class="cinput"><label><span class="dotc" style="background:var(--g)"></span><span data-i18n="cG"></span></label><input type="number" class="dailyg" data-c="绿色" value="2"></div>
+      <div class="cinput"><label><span class="dotc" style="background:var(--b)"></span><span data-i18n="cB"></span></label><input type="number" class="dailyg" data-c="蓝色" value="2"></div>
+      <div class="cinput"><label><span class="dotc" style="background:var(--r)"></span><span data-i18n="cR"></span></label><input type="number" class="dailyg" data-c="红色" value="2"></div>
+      <div class="cinput"><label><span class="dotc" style="background:var(--p)"></span><span data-i18n="cP"></span></label><input type="number" class="dailyg" data-c="紫色" value="2"></div>
+      <div class="pinfo" style="font-size:11px;color:var(--mut)" data-i18n="algoHint"></div>
+    </div>
+  </div>
+
   <!-- 导入预设菜单 -->
   <div class="modal" id="importMenu">
     <div class="mcard">
@@ -371,6 +554,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
       <h3 data-i18n="seqTitle"></h3>
       <button class="mopt" id="mViewSeq" data-i18n="viewSeq"></button>
       <button class="mopt" id="mChangeSeq" data-i18n="changeSeq"></button>
+      <button class="mopt" id="mClearSeq" data-i18n="clearSeq" style="color:#e0645c"></button>
       <button class="mopt ghost" id="mClose" data-i18n="close"></button>
     </div>
   </div>
@@ -395,6 +579,10 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
   <div class="toast" id="toast"></div>
 </div>
 <script>
+// ==== 运行时错误收集（验收用：window.onerror 计数，正常应为 0） ====
+window.__errs=[];
+window.onerror=function(m,s,l,c,e){try{window.__errs.push(String(m)+" @"+(s||"")+":"+(l||0));}catch(_){}return false;};
+window.addEventListener("unhandledrejection",function(ev){try{window.__errs.push("promise: "+ev.reason);}catch(_){}});
 const SEQ_MAIN = {
 "1": {"绿色": ["炼金技术", "S"], "蓝色": ["炼金技术", "S"], "红色": ["战地急救", "S"], "紫色": ["炼金技术", "S"]},
 "2": {"绿色": ["炼金技术", "B"], "蓝色": ["情报压制", "S"], "红色": ["前仆后继", "S"], "紫色": ["活力汲取", "S"]},
@@ -712,6 +900,10 @@ const DEFENCE={"投诚":{S:11,B:8},"过热":{S:10,B:5},"昏沉":{S:9,B:4},"力�
 const DEFENCE_NAMES=["过载","力竭","硬化","昏沉","修补","干扰","投诚","接地","加固","保险","过热","辅助"];
 
 let CRYSTAL_SLIDER=0, B=0, C=0, PREFERENCE="attack";
+let customPicks=[];   // 自定义选项：[[行,颜色,雕刻,等级], ...] 从第一行起连续
+const CUSTOM_TXT={title:{en:"Custom",tc:"自訂",sc:"自定义"},
+                  hint:{en:"Row 1 is required; later rows unlock in order",tc:"第一行必選，後面按順序解鎖",sc:"第一行必选，后面按顺序解锁"}};
+let selCustom=false;  // 当前是否选中「自定义」
 const PREF_BOOST=1.2, PREF_PENALTY=0.8;
 const LINE_COST=[5,7,15,30];
 const DEFAULT_CRYSTALS={"绿色":1000,"蓝色":1000,"红色":1000,"紫色":1000};
@@ -831,12 +1023,26 @@ function bestForN(data,start,n,cry){
   const rounds=[]; for(let r=start;r<start+n;r++) if(data[r]) rounds.push(r);
   if(rounds.length<n) return null;
   const Q2=q2of(data,rounds);
+  // 质量 +∞ = 硬约束：每一行拾取的雕刻必须正好是该行权重最高者，否则这个方案不成立
+  const hardInf = (typeof QUALITY_INF!=="undefined" && QUALITY_INF) || C>=998;
+  const rowMax={};
+  if(hardInf){
+    rounds.forEach(rr=>{ let m=-1e9;
+      COLORS.forEach(c=>{ const cell=data[rr][c];
+        if(cell&&cell.length>=2){ const q=applyPreference(qualityNorm(cell[0],cell[1]),cell[0]); if(q>m) m=q; } });
+      rowMax[rr]=m; });
+  }
   let best=null;
   for(const picked of perms(COLORS,n)){
     const picks=[]; let ok=true;
     rounds.forEach((rr,i)=>{
       const cell=data[rr][picked[i]];
-      if(!cell||cell.length<2) ok=false; else picks.push([rr,picked[i],cell[0],cell[1]]);
+      if(!cell||cell.length<2){ ok=false; return; }
+      if(hardInf){
+        const q=applyPreference(qualityNorm(cell[0],cell[1]),cell[0]);
+        if(q<rowMax[rr]-1e-9){ ok=false; return; }   // 这一行会漏掉最高权重 → 不接受
+      }
+      picks.push([rr,picked[i],cell[0],cell[1]]);
     });
     if(!ok) continue;
     const t=comboTotal(picks,n,Q2,cry);
@@ -881,7 +1087,7 @@ document.querySelectorAll("[data-back]").forEach(b=>b.addEventListener("click",(
 const I18N={
  en:{gain:"Curve to Gain",gainEmpty:"Nothing gained yet",lines:"Lines (start)",
    options:"Recommended · top by score",confirm:"Confirm",undoTitle:"Undo / Redo",
-   undo:"Undo",redo:"Redo",import:"Import",export:"Export",order:"Order",
+   undo:"Undo",redo:"Redo",import:"Import",export:"Export",order:"Sequence",
    home:"Home",history:"History",settings:"Settings",
    preference:"Preference",language:"Language",about:"About",account:"Account",
    weights:"Weights",wCrystal:"Crystal",wTime:"Time",wQuality:"Quality",
@@ -890,14 +1096,27 @@ const I18N={
    apply:"Apply",importPreset:"Import preset",importBackup:"Backup (.json)",importSeq:"Sequence (.csv/.xlsx)",
    crystals:"Crystals",cG:"Green",cB:"Blue",cR:"Red",cP:"Purple",
    langTitle:"Display language",aboutText:"Personal carving assistant. Offline-first, data stays on device.",
-   accTitle:"Accounts (up to 10)",newAcc:"New account",accMain:"Main account",accMainSub:"main@local",
+   accTitle:"Accounts",newAcc:"New account",accMain:"Main account",accMainSub:"main@local",
    accAlt:"Alt account",accAltSub:"alt@local",logout:"Log out current account",
-   changelog:"Changelog",preset:"Preset",presetApplied:"Preset applied",buildTime:"Built",claimTime:"Claimed",notClaimed:"not claimed yet",missL:"May miss",missG:"solid",missF:"vanguard",missB:"block",
+   changelog:"Changelog",preset:"Preset",presetApplied:"Preset applied",clearSeq:"Clear sequence",clearSeqAsk:"Clear the sculpture sequence of the current account? (Only the sequence is cleared; history, crystals and the account are kept.)",clearSeqAsk2:"Confirm again: this cannot be undone. Exporting a backup first is recommended. Really clear it?",clearSeqDone:"Sequence cleared",buildTime:"Built",claimTime:"Claimed",notClaimed:"not claimed yet",missL:"May miss",missG:"solid",missF:"vanguard",missB:"block",
    score:"score",line:" lines",roundP:"Round ",roundTail:" lines",choose:"Selected",gained:"Gained",
-   optionsTitle:"Recommended · top by score",noPlan:"No plan available",cost:"Cost",total:"total",timeW:"Time",days:"days",topups:"topups"},
+   optionsTitle:"Recommended · top by score",noPlan:"No plan available",cost:"Cost",total:"total",timeW:"Time",days:"days",topups:"topups",
+   probAxis:"Y axis = probability (% of all start rows)",exhausted:"Crystals run out",yes:"Yes",no:"No",
+   missMax:"highest weight",miss2nd:"2nd highest",miss3rd:"3rd highest",missUnit:"",
+   algoDebug:"Algorithm debug",algoDaily:"Algorithm debug · daily gain",algoHint:"Negative allowed (e.g. -1 = one less per day)",
+   apprTitle:"Appearance",thTheme:"Theme colour (default amber gold)",thBg:"Background colour",thCard:"Card colour",thLine:"Card border colour",
+   thDark:"Dark",thLight:"Light",thReset:"Reset",thApplied:"Appearance applied",
+   pPerfect:"Perfect quality",pPerfectSub:"Time -0.75 · Quality +∞",
+   pTime:"Limited time",pTimeSub:"Time -1.00 · Quality 0.60",
+   pValue:"Best value",pValueSub:"Time -0.75 · Quality 0.90 · Lines 2",
+   pOrig:"Original preset",pOrigSub:"Crystal -0.05 · Time -0.80 · Quality 1.00",
+   qualHint:"Quality maxed: rather than fewer lines, never miss the carving with your highest weight (the top three below). Ties are all listed; S wins on conflict.",
+   costNeed:"Crystals needed",best:"best",tieBest:"tied best",
+   seqImport:"Import",seqAppend:"Append",seqDelete:"Delete",seqAppendDone:"Appended rows: ",seqAppendNone:"No new rows",seqReplaced:"Sequence replaced",
+   showSim:"Show / hide simulation",renameAsk:"New name for this account",newAccName:"New account name"},
  sc:{gain:"获得顺序",gainEmpty:"尚未获得任何曲线",lines:"起始行",
    options:"推荐方案 · 按得分",confirm:"确认",undoTitle:"撤销 / 重做",
-   undo:"撤销",redo:"重做",import:"导入",export:"导出",order:"顺序",
+   undo:"撤销",redo:"重做",import:"导入",export:"导出",order:"序列",
    home:"主页",history:"历史",settings:"设置",
    preference:"偏好",language:"语言",about:"关于",account:"账号",
    weights:"权重",wCrystal:"水晶",wTime:"时间",wQuality:"质量",
@@ -906,14 +1125,27 @@ const I18N={
    apply:"应用",importPreset:"导入预设",importBackup:"备份（.json）",importSeq:"序列（.csv/.xlsx）",
    crystals:"水晶存量",cG:"绿色",cB:"蓝色",cR:"红色",cP:"紫色",
    langTitle:"显示语言",aboutText:"个人雕刻选择辅助工具。离线优先，数据保存在本机。",
-   accTitle:"账号（最多 10 个）",newAcc:"新建账号",accMain:"主账号",accMainSub:"main@local",
+   accTitle:"账号",newAcc:"新建账号",accMain:"主账号",accMainSub:"main@local",
    accAlt:"备用账号",accAltSub:"alt@local",logout:"退出当前账号",
-   changelog:"更新日志",preset:"预设",presetApplied:"已套用预设",buildTime:"建造时间",claimTime:"领取时间",notClaimed:"尚未领取",missL:"可能遗漏",missG:"个坚固",missF:"个前仆",missB:"个破坏",
+   changelog:"更新日志",preset:"预设",presetApplied:"已套用预设",clearSeq:"清空雕刻序列",clearSeqAsk:"要清空当前账号的雕刻序列吗？（只清空序列，历史记录、水晶、账号都会保留）",clearSeqAsk2:"再次确认：清空后无法恢复，建议先「导出」备份。确定要清空吗？",clearSeqDone:"雕刻序列已清空",buildTime:"建造时间",claimTime:"领取时间",notClaimed:"尚未领取",missL:"可能遗漏",missG:"个坚固",missF:"个前仆",missB:"个破坏",
    score:"得分",line:"条",roundP:"第 ",roundTail:" 行",choose:"已选",gained:"获得",
-   optionsTitle:"推荐方案 · 按得分",noPlan:"无可选方案",cost:"消耗",total:"合计",timeW:"时间",days:"天",topups:"兜底"},
+   optionsTitle:"推荐方案 · 按得分",noPlan:"无可选方案",cost:"消耗",total:"合计",timeW:"时间",days:"天",topups:"兜底",
+   probAxis:"纵轴 = 概率（占全部起始行的百分比）",exhausted:"是否耗尽水晶",yes:"是",no:"否",
+   missMax:"权重最高",miss2nd:"第二",miss3rd:"第三",missUnit:"个",
+   algoDebug:"算法调试",algoDaily:"算法调试 · 每天增加",algoHint:"可以是负数（例：-1 = 每天少 1 个）",
+   apprTitle:"外观",thTheme:"主题颜色（默认琥珀金）",thBg:"背景颜色",thCard:"方框颜色",thLine:"方框边框颜色",
+   thDark:"深色",thLight:"浅色",thReset:"恢复默认",thApplied:"已应用外观",
+   pPerfect:"完美质量",pPerfectSub:"时间 -0.75 · 质量 +∞",
+   pTime:"时间有限",pTimeSub:"时间 -1.00 · 质量 0.60",
+   pValue:"最佳性价比",pValueSub:"时间 -0.75 · 质量 0.90 · 行数 2",
+   pOrig:"原预设",pOrigSub:"水晶 -0.05 · 时间 -0.80 · 质量 1.00",
+   qualHint:"质量拉满：宁可行数少一些，也不漏掉权重最高的雕刻（跟随下方雕刻权重取前三）。并列都列出；冲突时优先 S。",
+   costNeed:"所需水晶",best:"最优",tieBest:"并列最佳",
+   seqImport:"导入",seqAppend:"追加",seqDelete:"删除",seqAppendDone:"已追加行数：",seqAppendNone:"没有新增行",seqReplaced:"序列已替换",
+   showSim:"显示 / 隐藏模拟",renameAsk:"为该账号输入新名称",newAccName:"新账号名称"},
  tc:{gain:"獲得順序",gainEmpty:"尚未獲得任何曲線",lines:"起始行",
    options:"推薦方案 · 按得分",confirm:"確認",undoTitle:"撤銷 / 重做",
-   undo:"撤銷",redo:"重做",import:"導入",export:"匯出",order:"順序",
+   undo:"撤銷",redo:"重做",import:"導入",export:"匯出",order:"序列",
    home:"主頁",history:"歷史",settings:"設定",
    preference:"偏好",language:"語言",about:"關於",account:"帳號",
    weights:"權重",wCrystal:"水晶",wTime:"時間",wQuality:"質量",
@@ -922,11 +1154,24 @@ const I18N={
    apply:"應用",importPreset:"導入預設",importBackup:"備份（.json）",importSeq:"序列（.csv/.xlsx）",
    crystals:"水晶存量",cG:"綠色",cB:"藍色",cR:"紅色",cP:"紫色",
    langTitle:"顯示語言",aboutText:"個人雕刻選擇輔助工具。離線優先，資料保存在本機。",
-   accTitle:"帳號（最多 10 個）",newAcc:"新建帳號",accMain:"主帳號",accMainSub:"main@local",
+   accTitle:"帳號",newAcc:"新建帳號",accMain:"主帳號",accMainSub:"main@local",
    accAlt:"備用帳號",accAltSub:"alt@local",logout:"退出當前帳號",
-   changelog:"更新日誌",preset:"預設",presetApplied:"已套用預設",buildTime:"建造時間",claimTime:"領取時間",notClaimed:"尚未領取",missL:"可能遺漏",missG:"個堅固",missF:"個前仆",missB:"個破壞",
+   changelog:"更新日誌",preset:"預設",presetApplied:"已套用預設",clearSeq:"清空雕刻序列",clearSeqAsk:"要清空當前帳號的雕刻序列嗎？（只清空序列，歷史記錄、水晶、帳號都會保留）",clearSeqAsk2:"再次確認：清空後無法恢復，建議先「匯出」備份。確定要清空嗎？",clearSeqDone:"雕刻序列已清空",buildTime:"建造時間",claimTime:"領取時間",notClaimed:"尚未領取",missL:"可能遺漏",missG:"個堅固",missF:"個前仆",missB:"個破壞",
    score:"得分",line:"條",roundP:"第 ",roundTail:" 行",choose:"已選",gained:"獲得",
-   optionsTitle:"推薦方案 · 按得分",noPlan:"無可選方案",cost:"消耗",total:"合計",timeW:"時間",days:"天",topups:"兜底"}
+   optionsTitle:"推薦方案 · 按得分",noPlan:"無可選方案",cost:"消耗",total:"合計",timeW:"時間",days:"天",topups:"兜底",
+   probAxis:"縱軸 = 機率（佔全部起始行的百分比）",exhausted:"是否耗盡水晶",yes:"是",no:"否",
+   missMax:"權重最高",miss2nd:"第二",miss3rd:"第三",missUnit:"個",
+   algoDebug:"演算法除錯",algoDaily:"演算法除錯 · 每天增加",algoHint:"可以是負數（例：-1 = 每天少 1 個）",
+   apprTitle:"外觀",thTheme:"主題顏色（預設琥珀金）",thBg:"背景顏色",thCard:"方框顏色",thLine:"方框邊框顏色",
+   thDark:"深色",thLight:"淺色",thReset:"恢復預設",thApplied:"已套用外觀",
+   pPerfect:"完美質量",pPerfectSub:"時間 -0.75 · 質量 +∞",
+   pTime:"時間有限",pTimeSub:"時間 -1.00 · 質量 0.60",
+   pValue:"最佳性價比",pValueSub:"時間 -0.75 · 質量 0.90 · 行數 2",
+   pOrig:"原預設",pOrigSub:"水晶 -0.05 · 時間 -0.80 · 質量 1.00",
+   qualHint:"質量拉滿：寧可行數少一些，也不漏掉權重最高的雕刻（跟隨下方雕刻權重取前三）。並列都列出；衝突時優先 S。",
+   costNeed:"所需水晶",best:"最優",tieBest:"並列最佳",
+   seqImport:"導入",seqAppend:"追加",seqDelete:"刪除",seqAppendDone:"已追加行數：",seqAppendNone:"沒有新增行",seqReplaced:"序列已替換",
+   showSim:"顯示 / 隱藏模擬",renameAsk:"為該帳號輸入新名稱",newAccName:"新帳號名稱"}
 };
 let lang="sc";
 function applyLang(){
@@ -937,8 +1182,12 @@ function applyLang(){
   document.querySelectorAll(".choice[data-grp=lang]").forEach(x=>
     x.classList.toggle("on",x.dataset.lang===lang));
   const wp=document.getElementById("wPreset");
-  if(wp) wp.textContent=(I18N[lang].preset||"Preset")+" -0.05 / -0.8 / 1";
-  renderSim(); renderRound(); renderHome(); renderHistory(); renderEfxW();
+  if(wp) wp.textContent=I18N[lang].preset||"Preset";
+  const qh=document.getElementById("qualHint");
+  if(qh) qh.textContent=I18N[lang].qualHint||"";
+  const se=document.getElementById("simEye");
+  if(se) se.title=I18N[lang].showSim||"";
+  syncAppName(); renderSim(); renderRound(); renderHome(); renderHistory(); renderEfxW(); renderLog();
 }
 document.querySelectorAll(".choice[data-lang]").forEach(c=>
   c.addEventListener("click",()=>{lang=c.dataset.lang;applyLang();}));
@@ -960,7 +1209,17 @@ const TC_EFX={"坚固装甲":"堅固裝甲","前仆后继":"前仆後繼","破�
 "加固":"加固","保险":"保險"};
 const TC_CH={"绿色":"綠","蓝色":"藍","红色":"紅","紫色":"紫"};
 function colorName(c){return lang==="en"?LETTERS[c]:lang==="tc"?TC_CH[c]:CH[c];}
+// 颜色全称（获得顺序卡片用）：绿/蓝/红/紫 的完整写法
+const COLOR_FULL={sc:{"绿色":"绿色","蓝色":"蓝色","红色":"红色","紫色":"紫色"},
+  tc:{"绿色":"綠色","蓝色":"藍色","红色":"紅色","紫色":"紫色"},
+  en:{"绿色":"Green","蓝色":"Blue","红色":"Red","紫色":"Purple"}};
+function colorFull(c){ return (COLOR_FULL[lang]||COLOR_FULL.sc)[c]||c; }
+// 等级固定配色：S = 绿 #43D17A，B = 黄 #FFD54A
+function gradeTag(g){ return '<b class="gr-'+(String(g)==="S"?"s":"b")+'">'+escapeHtml(g)+'</b>'; }
 function efxName(n){return lang==="en"?(EN_EFX[n]||n):lang==="tc"?(TC_EFX[n]||n):n;}
+// 序列里用「两个字」（干扰信号 -> 信号），英文/繁中仍用本地化全名
+function efx2(n){ var s=String(n==null?"":n); if(lang!=="sc") return efxName(s);
+  s=s.replace(/^干扰/,""); return s.length>2?s.slice(0,2):s; }
 // 默认只有一个账号（名字跟随语言），四色各 1000，序列与历史为空  与 App 出厂预设一致。
 // 需要内置示例序列时，控制台执行：ACCTS.main.seq=SEQ_MAIN; DATA=ACCTS.main.seq; renderHome();
 let ACCTS={
@@ -997,7 +1256,7 @@ function renderHistory(){
       const picks=it[2]||[];
       const k=picks.length;
       const range=(k<=1)?("#"+(k===0?it[0]:(it[0]-1))):("#"+(it[0]-k)+" - "+(it[0]-1));
-      const items=picks.map(c=>'<span class="hpick"><i class="cimg cimg-'+LETTERS[c[0]].toLowerCase()+'"></i>'+efxName(c[1])+" "+c[2]+'</span>').join("");
+      const items=picks.map(c=>'<span class="hpick"><i class="cimg cimg-'+LETTERS[c[0]].toLowerCase()+'"></i>'+escapeHtml(efxName(c[1]))+" "+gradeTag(c[2])+'</span>').join("");
       const times=(claim==null)?("（"+L.buildTime+"："+it[1]+"　"+L.notClaimed+"）")
                               :("（"+L.buildTime+"："+it[1]+"　"+L.claimTime+"："+claim+"）");
       html+='<div class="hitem"><div class="hrow"><span class="hrange">'+range+'</span>'+items+'</div>'+
@@ -1005,7 +1264,13 @@ function renderHistory(){
     });
   });
   box.innerHTML=html;
-}function renderRound(){
+}// 软件名跟随语言（App 1.4.3：简中/繁中/English）
+function syncAppName(){
+  var el=document.getElementById("appTitle"); if(!el) return;
+  var n=(I18N[lang]&&I18N[lang].appName)||(lang==="en"?"Boom Beach Carving Picker":(lang==="tc"?"海島奇兵雕刻選擇":"海岛奇兵雕刻选择"));
+  el.textContent=n;
+}
+function renderRound(){
   const start=parseInt(document.getElementById("startLine").value)||1;
   const L=I18N[lang];
   document.getElementById("roundSub").textContent=L.roundP+start+L.roundTail;
@@ -1020,7 +1285,7 @@ function applyAccount(){
   document.getElementById("startLine").value=a.start;
   document.querySelectorAll(".accrow[data-acc]").forEach(x=>
     x.classList.toggle("on",x.dataset.acc===curAcc));
-  renderRound(); renderHistory(); renderHome(); renderGain();
+  syncAppName(); renderRound(); renderHistory(); renderHome(); renderGain();
 }
 function escapeHtml(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function renderAccList(){
@@ -1033,9 +1298,9 @@ function renderAccList(){
       <span class="av">${escapeHtml((a.name||k).charAt(0).toUpperCase())}</span>
       <span class="accinfo"><b>${escapeHtml(a.name)}</b><small>${escapeHtml(sub)}</small></span>
       <button class="ren" data-rename="${k}" title="${lang==="en"?"Rename":"重命名"}">
-        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg></button>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg></button>
       <button class="del" data-del="${k}" title="${lang==="en"?"Delete":"删除"}">
-        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 7h14M10 7V5h4v2M8 7l1 12h6l1-12M10 11v5M14 11v5"/></svg></button>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 7h14M10 7V5h4v2M8 7l1 12h6l1-12M10 11v5M14 11v5"/></svg></button>
       <span class="rd"></span></div>`;
   }).join("")||'<div class="gempty">'+(lang==="en"?"No accounts":"无账号")+'</div>';
 }
@@ -1060,10 +1325,10 @@ document.addEventListener("click",e=>{
     toast((lang==="en"?"Switched to ":"已切换账号：")+ACCTS[curAcc].name);return;}
   const na=e.target.closest("#newAcc");
   if(na){
-    if(Object.keys(ACCTS).length>=10){toast(lang==="en"?"Account limit reached (10)":"已达账号上限（10 个）");return;}
-    const nn=prompt(lang==="en"?"New account name":"新账号名称","账号"+(Object.keys(ACCTS).length+1));
+    const nn=prompt(I18N[lang].newAccName||"New account name","账号"+(Object.keys(ACCTS).length+1));
     if(nn&&nn.trim()){
-      const key="acc"+(Object.keys(ACCTS).length+1);
+      let n=1; while(ACCTS["acc"+n]) n++;              // 账号数量不限
+      const key="acc"+n;
       ACCTS[key]={name:nn.trim(),crystals:{...DEFAULT_CRYSTALS},start:1,seq:{},hist:[]};
       curAcc=key; renderAccList(); applyAccount(); saveState();
       toast((lang==="en"?"Account created: ":"已创建账号：")+ACCTS[key].name);
@@ -1138,16 +1403,30 @@ function renderSeqView(){
   document.getElementById("seqViewTitle").textContent=
     (lang==="en"?"Sequence":"雕刻序列")+" \u00B7 "+a.name+" ("+Object.keys(DATA).length+" "+(lang==="en"?"rows":"行")+")";
   const keys=Object.keys(DATA).map(Number).sort((x,y)=>x-y);
-  let html='<table class="seqt"><thead><tr><th>'+(lang==="en"?"#":"行")+
+  // 高亮范围：未领取（金色）= 本次已建造未领取的行；本次查询（蓝色）= 起始行及其后 3 行，共 4 行
+  const q0=parseInt(document.getElementById("startLine").value)||1, q1=q0+3;
+  const un=(typeof GAIN_PICKS!=="undefined"&&GAIN_PICKS?GAIN_PICKS:[])
+    .map(p=>+(p&&(p.row!==undefined?p.row:(p.start!==undefined?p.start:(p.n!==undefined?p.n:0))))).filter(v=>v>0);
+  // 未领取 = 上一轮已建造、还没领取的那几行（= 起始行之前的 4 行）；有明确行号时优先用行号
+  const uFrom=un.length?Math.min.apply(null,un):(q0-4>0?q0-4:null);
+  const uTo=un.length?Math.max.apply(null,un):(q0-4>0?q0-1:null);
+  let html='<div class="seqlegend"><span class="lg"><i class="sw u"></i>'+
+    (lang==="en"?"built, not claimed":(lang==="tc"?"已建造未領取":"已建造未领取"))+
+    '</span><span class="lg"><i class="sw q"></i>'+
+    (lang==="en"?"current query":(lang==="tc"?"本次查詢":"本次查询"))+'</span></div>';
+  html+='<table class="seqt"><thead><tr><th>'+(lang==="en"?"#":"行")+
     '</th><th class="cg">'+colorName("绿色")+'</th><th class="cb">'+colorName("蓝色")+
     '</th><th class="cr">'+colorName("红色")+'</th><th class="cp">'+colorName("紫色")+'</th></tr></thead><tbody>';
   keys.forEach(k=>{
     const d=DATA[k]||{};
-    html+='<tr><td>'+k+'</td>';
+    let cls="";
+    if(uFrom!==null&&k>=uFrom&&k<=uTo) cls="hlu";
+    if(k>=q0&&k<=q1) cls="hlq";
+    html+='<tr'+(cls?' class="'+cls+'"':'')+'><td>'+k+'</td>';
     COLORS.forEach(c=>{
       const v=d[c];
       if(v&&v[0]){
-        html+='<td><div class="cellw"><span class="enm">'+efxName(v[0])+'</span><b class="egr">'+v[1]+'</b></div></td>';
+        html+='<td><div class="cellw"><span class="enm">'+escapeHtml(efx2(v[0]))+'</span>'+gradeTag(v[1])+'</div></td>';
       }else{
         html+='<td></td>';
       }
@@ -1158,7 +1437,20 @@ function renderSeqView(){
   document.getElementById("seqViewBody").innerHTML=
     (keys.length?html:'<div class="gempty">'+(lang==="en"?"Empty sequence":"空序列，可用「更改雕刻序列」导入 CSV/XLSX")+'</div>');
 }
-// 打开序列表格后，自动定位到当前查询行（当前行出现在第 5 行位置，上方 4 行可见）
+// 打开序列表格后，自动定位到「已建造、还没领取」的第一行
+function scrollSeqToUnclaimed(){
+  const body=document.getElementById("seqViewBody");
+  const trs=body.querySelectorAll("tbody tr");
+  if(!trs.length) return;
+  const keys=Object.keys(DATA).map(Number).sort((x,y)=>x-y);
+  const un=(typeof GAIN_PICKS!=="undefined"&&GAIN_PICKS?GAIN_PICKS:[])
+    .map(p=>+(p&&(p.row!==undefined?p.row:(p.start!==undefined?p.start:p.n)))).filter(n=>n>0);
+  const anchor=un.length?Math.min.apply(null,un):(parseInt(document.getElementById("startLine").value)||1);
+  let idx=keys.findIndex(k=>k>=anchor);
+  if(idx<0) idx=keys.length-1;
+  const h=trs[0].offsetHeight||26;
+  body.scrollTop=Math.max(0,idx-1)*h;
+}
 function scrollSeqToCurrent(){
   const body=document.getElementById("seqViewBody");
   const trs=body.querySelectorAll("tbody tr");
@@ -1172,7 +1464,7 @@ function scrollSeqToCurrent(){
 }
 const importMenu=document.getElementById("importMenu");
 document.getElementById("mImportBackup").addEventListener("click",()=>{importMenu.classList.remove("show");fileInput.click();});
-document.getElementById("mImportSeq").addEventListener("click",()=>{importMenu.classList.remove("show");fileInput.click();});
+document.getElementById("mImportSeq").addEventListener("click",()=>{importMenu.classList.remove("show");importMode="replace";fileInput.click();});
 document.getElementById("mImportClose").addEventListener("click",()=>importMenu.classList.remove("show"));
 importMenu.addEventListener("click",e=>{if(e.target===importMenu)importMenu.classList.remove("show");});
 const infoModal=document.getElementById("infoModal");
@@ -1197,16 +1489,60 @@ document.querySelectorAll(".q").forEach(b=>b.addEventListener("click",()=>{
 }));
 document.getElementById("infoClose").addEventListener("click",()=>infoModal.classList.remove("show"));
 infoModal.addEventListener("click",e=>{if(e.target===infoModal)infoModal.classList.remove("show");});
+// 外观【预设】按钮（事件委托，任何时机都有效）
+document.addEventListener("click",function(e){
+  if(e.target.closest("#apprPreset")){
+    var m=document.getElementById("apprMenu");
+    if(m) m.style.display=(m.style.display==="none"?"flex":"none");
+    return;
+  }
+  var u=e.target.closest("#apprMenu [data-usep]");
+  if(u){ var tgt=document.getElementById(u.dataset.usep); if(tgt) tgt.click();
+    var m2=document.getElementById("apprMenu"); if(m2) m2.style.display="none"; }
+});
 const seqMenu=document.getElementById("seqMenu"),seqView=document.getElementById("seqView");
-document.getElementById("orderBtn").addEventListener("click",()=>seqMenu.classList.add("show"));
+const opbar=document.getElementById("opbar"), seqbar=document.getElementById("seqbar");
+let importMode="replace";
+// 序列打开时底栏切换：撤销/重做/导入/导出/顺序  ⇄  导入/追加/删除
+function seqBarMode(on){
+  if(!opbar||!seqbar) return;
+  const tb=document.querySelector(".tabbar");
+  opbar.style.display=on?"none":"flex";
+  if(tb) tb.style.display=on?"none":"flex";
+  seqbar.style.display=on?"flex":"none";
+}
+// 打开序列面板：渲染 → 显示 → 底栏换 导入/追加/删除 → 滚到「未领取第一行」
+function openSeqPanel(){
+  renderSeqView();
+  seqView.classList.add("show");
+  seqBarMode(true);
+  scrollSeqToUnclaimed();
+}
+document.getElementById("orderBtn").addEventListener("click",()=>{ openSeqPanel(); });
 document.getElementById("mViewSeq").addEventListener("click",()=>{
   seqMenu.classList.remove("show"); renderSeqView(); seqView.classList.add("show");
-  scrollSeqToCurrent();
+  seqBarMode(true); scrollSeqToUnclaimed();
 });
-document.getElementById("mChangeSeq").addEventListener("click",()=>{seqMenu.classList.remove("show");fileInput.click();});
+document.getElementById("mChangeSeq").addEventListener("click",()=>{seqMenu.classList.remove("show");importMode="replace";fileInput.click();});
+function clearSeq(){
+  if(!confirm(I18N[lang].clearSeqAsk)) return;
+  if(!confirm(I18N[lang].clearSeqAsk2)) return;
+  const a=ACCTS[curAcc];
+  a.seq={}; DATA=a.seq;
+  renderSim(); renderHome(); renderRound(); renderHistory(); saveState();
+  renderSeqView();
+  toast(I18N[lang].clearSeqDone);
+}
+document.getElementById("mClearSeq").addEventListener("click",()=>{ seqMenu.classList.remove("show"); clearSeq(); });
 document.getElementById("mClose").addEventListener("click",()=>seqMenu.classList.remove("show"));
-document.getElementById("svClose").addEventListener("click",()=>seqView.classList.remove("show"));
-[seqMenu,seqView].forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("show");}));
+document.getElementById("svClose").addEventListener("click",()=>{ seqView.classList.remove("show"); seqBarMode(false); });
+[seqMenu,seqView].forEach(m=>m.addEventListener("click",e=>{
+  if(e.target===m){ m.classList.remove("show"); if(m===seqView) seqBarMode(false); }}));
+if(seqbar){
+  document.getElementById("sbImport").addEventListener("click",()=>{ importMode="replace"; fileInput.click(); });
+  document.getElementById("sbAppend").addEventListener("click",()=>{ importMode="append"; fileInput.click(); });
+  document.getElementById("sbDelete").addEventListener("click",()=>clearSeq());
+}
 function stamp(){const d=new Date();return ""+d.getFullYear()+("0"+(d.getMonth()+1)).slice(-2)+("0"+d.getDate()).slice(-2);}
 function backupJSON(){
   const cry={}; document.querySelectorAll(".cryst").forEach(i=>cry[i.dataset.c]=+i.value||0);
@@ -1220,7 +1556,8 @@ function backupJSON(){
   if(accounts[curAcc]) Object.keys(cry).forEach(c=>{accounts[curAcc].crystals[c]=cry[c];});
   return {app:"carving_app",kind:"backup",version:1,exported:stamp(),presetVersion:PRESET_VERSION,
     curAcc,accounts,lastGain:GAIN_PICKS,gainTime:GAIN_TIME,
-    settings:{cry,ws:[+w[0].value,+w[1].value,+w[2].value],PREFERENCE,linesMode,customN,EFX_W,lang}};
+    settings:{cry,ws:[+w[0].value,+w[1].value,+w[2].value],qinf:QUALITY_INF,PREFERENCE,linesMode,customN,EFX_W,lang,
+      theme:THEME,themePreset,daily:DAILY_GAIN_C}};
 }
 document.getElementById("exportBtn").addEventListener("click",()=>{
   try{
@@ -1257,11 +1594,14 @@ function importBackup(o){
     EFX_W[n].S=s.EFX_W[n].S!==undefined?s.EFX_W[n].S:EFX_W[n].S;
     EFX_W[n].B=s.EFX_W[n].B!==undefined?s.EFX_W[n].B:EFX_W[n].B;}});
   if(s.lang&&I18N[s.lang]) lang=s.lang;
-  document.getElementById("customNBox").style.display=(linesMode==="custom"?"block":"none");
-  document.getElementById("customN").value=customN;
+  if(s.theme&&s.theme.gold){ THEME={...DEFAULT_THEME,...s.theme}; themePreset=s.themePreset||""; }
+  if(s.daily) COLORS.forEach(c=>{ if(s.daily[c]!==undefined&&isFinite(+s.daily[c])) DAILY_GAIN_C[c]=+s.daily[c]; });
   document.querySelectorAll(".choice[data-grp=strat]").forEach(x=>x.classList.toggle("on",x.dataset.pref===PREFERENCE));
-  document.querySelectorAll(".choice[data-grp=lines]").forEach(x=>x.classList.toggle("on",x.dataset.lines===linesMode));
   migratePreset(o); efxNeedSort=true;
+  syncWFromWs();
+  if(s.qinf!==undefined){ QUALITY_INF=!!s.qinf; if(!QUALITY_INF&&Array.isArray(s.ws)) W.qual=Math.max(-1,Math.min(1,+s.ws[2]||0)); }
+  syncSliderPositions(); syncLinesUI();
+  applyTheme(); syncThemeUI(); syncAlgoUI();
   applyAccount(); renderSim(); applyLang(); setUru();
   return true;
 }
@@ -1362,9 +1702,16 @@ function parseSeq(rows2d){
   if(!nd){toast(lang==="en"?"Header not found (need 次数/绿色/蓝色/红色/紫色 columns)":"未找到表头（需含 次数/绿/蓝/红/紫 列）");return;}
   const ks=Object.keys(nd);
   if(!ks.length){toast(lang==="en"?"No valid rows parsed":"未解析到有效数据行");return;}
+  if(importMode==="append"){                      // 追加：保留已有行，只补新行
+    let added=0;
+    ks.forEach(k=>{ if(!DATA[k]) added++; DATA[k]=nd[k]; });
+    renderSim();renderHome();renderRound();renderSeqView();saveState();
+    toast(added?(I18N[lang].seqAppendDone+added):I18N[lang].seqAppendNone);
+    return;
+  }
   Object.keys(DATA).forEach(k=>delete DATA[k]);
   ks.forEach(k=>DATA[k]=nd[k]);
-  renderSim();renderHome();renderRound();saveState();
+  renderSim();renderHome();renderRound();renderSeqView();saveState();
   toast((lang==="en"?"Sequence imported: ":"序列已导入：")+ks.length+" "+(lang==="en"?"rows":"行"));
 }
 fileInput.addEventListener("change",e=>{
@@ -1393,17 +1740,24 @@ fileInput.addEventListener("change",e=>{
     rd.readAsArrayBuffer(f);
   }else toast(lang==="en"?"Unsupported file type":"不支持的文件类型（支持 .json/.csv/.xlsx）");});
 // ================= Preference 实时模拟 =================
-const TOP3=new Set(["坚固装甲","前仆后继","破坏阻滞"]);
+// 「算法调试」四色每天增加（可正可负），默认各 +2
+const DAILY_GAIN_C={"绿色":DAILY_GAIN,"蓝色":DAILY_GAIN,"红色":DAILY_GAIN,"紫色":DAILY_GAIN};
+// 可能遗漏：按用户当前「雕刻权重」取前三名
+function missTop3(){
+  return [...ATTACK,...Object.keys(DEFENCE)]
+    .sort((a,b)=>(EFX_W[b].S-EFX_W[a].S)||(EFX_W[b].B-EFX_W[a].B)).slice(0,3);
+}
+function missZero(){ const m={}; missTop3().forEach(n=>m[n]=0); return m; }
 function simulateApp(cv,tv,qv){
   CRYSTAL_SLIDER=cv;B=tv;C=qv;
   const keys=Object.keys(DATA).map(Number).sort((a,b)=>a-b);
-  const miss0={"坚固装甲":0,"前仆后继":0,"破坏阻滞":0};
+  const M3=missTop3(), miss0=missZero();
   if(!keys.length) return {dist:{1:0,2:0,3:0,4:0},used:{"绿色":0,"蓝色":0,"红色":0,"紫色":0},
-    hours:0,topups:0,miss:miss0,avgN:1,samples:0};
+    hours:0,topups:0,miss:miss0,avgN:1,samples:0,m3:M3};
   const rmin=keys[0],rmax=keys[keys.length-1];
   let stock={...DEFAULT_CRYSTALS};
   const used={"绿色":0,"蓝色":0,"红色":0,"紫色":0};
-  const miss={"坚固装甲":0,"前仆后继":0,"破坏阻滞":0};
+  const miss=missZero();
   let topups=0,hb=0; const counts=[];
   // 每一行都当作如果从这里开始选，而不是领完一次就跳到后面
   for(let start=rmin;start<=rmax;start++){
@@ -1419,11 +1773,11 @@ function simulateApp(cv,tv,qv){
       COLORS.forEach(c=>{ if(DATA[rr][c]&&DATA[rr][c].length>=2){
         const q=applyPreference(qualityNorm(DATA[rr][c][0],DATA[rr][c][1]),DATA[rr][c][0]);
         if(q>bq){bq=q;be=DATA[rr][c][0];}}});
-      if(be&&TOP3.has(be)&&!pickedEff.has(be)) miss[be]++;
+      if(be&&M3.indexOf(be)>=0&&!pickedEff.has(be)) miss[be]++;
     }
     counts.push(d.n);
     hb+=HOURS_PER_RUN;
-    while(hb>=24){hb-=24;COLORS.forEach(c=>stock[c]+=DAILY_GAIN);}
+    while(hb>=24){hb-=24;COLORS.forEach(c=>stock[c]+=(+DAILY_GAIN_C[c]||0));}
   }
   const dist={1:0,2:0,3:0,4:0}; counts.forEach(n=>dist[n]=dist[n]+1);
   const samples=counts.length;
@@ -1433,18 +1787,35 @@ function simulateApp(cv,tv,qv){
   const missAvg={}; Object.keys(miss).forEach(k=>missAvg[k]=miss[k]/avgN);
   // 每行都算会把消耗/时间/兜底/遗漏放大到约平均行数倍，统一除回去
   return {dist:dist,used:usedAvg,hours:samples*HOURS_PER_RUN/avgN,
-    topups:topups/avgN,miss:missAvg,avgN:avgN,samples:samples};
-}const ws=document.querySelectorAll(".ws");
+    topups:topups/avgN,miss:missAvg,avgN:avgN,samples:samples,m3:M3};
+}
+// ================= 权重状态（胶囊滑条驱动，.ws 隐藏 input 保持旧存档兼容） =================
+let W={cry:0,time:0,qual:0}, QUALITY_INF=false;
+const INF_Q=999;              // 质量 +∞：以极大权重实现（数值上等价于无穷）
+function syncWsFromW(){
+  const w=document.querySelectorAll(".ws"); if(w.length<3) return;
+  w[0].value=W.cry; w[1].value=W.time; w[2].value=QUALITY_INF?1:Math.max(-1,Math.min(1,W.qual));
+}
+function syncWFromWs(){
+  const w=document.querySelectorAll(".ws"); if(w.length<3) return;
+  W.cry=+w[0].value||0; W.time=+w[1].value||0;
+  const q=+w[2].value||0;
+  if(q>=1){ QUALITY_INF=true; W.qual=1; } else { QUALITY_INF=false; W.qual=q; }
+}
+function qualOf(t){ return t>=0.995 ? null : +(t*1.01).toFixed(4); }   // null = +∞
+function posOfQual(q){ return Math.max(0,Math.min(0.99,(+q||0)/1.01)); }const ws=document.querySelectorAll(".ws");
 let linesMode="auto", customN=2;
 const LSKEY="carving_app_v1";
 function saveState(){
   try{
+    syncWsFromW();
     const w=document.querySelectorAll(".ws");
     const cry={}; document.querySelectorAll(".cryst").forEach(i=>cry[i.dataset.c]=+i.value||0);
     if(ACCTS[curAcc]) ACCTS[curAcc].start=parseInt(document.getElementById("startLine").value)||1;
     localStorage.setItem(LSKEY, JSON.stringify({ACCTS,curAcc,lang,PREFERENCE,
       presetVersion:PRESET_VERSION,
-      ws:[+w[0].value,+w[1].value,+w[2].value],cry,linesMode,customN,EFX_W,
+      ws:[+w[0].value,+w[1].value,+w[2].value],cry,linesMode,customN,EFX_W,qinf:QUALITY_INF,
+      theme:THEME,themePreset,daily:DAILY_GAIN_C,
       gain:document.getElementById("gainContent").innerHTML,lastGain:GAIN_PICKS,gainTime:GAIN_TIME,lastOpen:Date.now()}));
   }catch(e){}
 }
@@ -1465,27 +1836,35 @@ function loadState(){
       EFX_W[n].S=d.EFX_W[n].S!==undefined?d.EFX_W[n].S:EFX_W[n].S;
       EFX_W[n].B=d.EFX_W[n].B!==undefined?d.EFX_W[n].B:EFX_W[n].B;}});
     migratePreset(d); efxNeedSort=true;
+    syncWFromWs();                                     // 滑条状态由 .ws 推导（老存档兼容）
+    if(d.qinf!==undefined){                            // 质量 1.00（有限）与 +∞ 的区分标记
+      QUALITY_INF=!!d.qinf;
+      if(!QUALITY_INF&&d.ws) W.qual=Math.max(-1,Math.min(1,+d.ws[2]||0));
+    }
+    if(d.theme&&d.theme.gold){ THEME={...DEFAULT_THEME,...d.theme}; themePreset=d.themePreset||""; }
+    if(d.daily) COLORS.forEach(c=>{ if(d.daily[c]!==undefined&&isFinite(+d.daily[c])) DAILY_GAIN_C[c]=+d.daily[c]; });
     if(ACCTS[curAcc]&&!(ACCTS[curAcc].gain&&ACCTS[curAcc].gain.length)&&d.lastGain&&d.lastGain.length){
       ACCTS[curAcc].gain=d.lastGain;
       ACCTS[curAcc].gainTime=d.gainTime||null;
     }
     // 行数自定义 UI 同步
-    document.getElementById("customNBox").style.display=(linesMode==="custom"?"block":"none");
-    document.getElementById("customN").value=customN;
+    syncLinesUI();
 
   }catch(e){}
 }
 function renderSim(){
-  const cv=+ws[0].value,tv=+ws[1].value,qv=+ws[2].value;
+  syncWsFromW();
+  const cv=W.cry, tv=W.time, qv=QUALITY_INF?INF_Q:W.qual;
   document.getElementById("wv0").value=cv.toFixed(2);
   document.getElementById("wv1").value=tv.toFixed(2);
-  document.getElementById("wv2").value=qv.toFixed(2);
+  document.getElementById("wv2").value=(QUALITY_INF?1:W.qual).toFixed(2);
   const r=simulateApp(cv,tv,qv);
-  const totalRows=Object.keys(DATA).length; // 纵轴固定刻度：整根柱子高度 = 序列总行数
+  const samples=r.samples||0;          // 柱子数字 = 概率%（占全部起始行）
   let bars="";
   for(let n=1;n<=4;n++){
-    const h=totalRows?Math.max(2,Math.round(r.dist[n]/totalRows*120)):2;
-    bars+=`<div class="pcol"><div class="pnum">${r.dist[n]}</div>
+    const pct=samples?Math.round(r.dist[n]/samples*100):0;
+    const h=samples?Math.max(2,Math.round(r.dist[n]/samples*120)):2;
+    bars+=`<div class="pcol"><div class="pnum">${pct}%</div>
       <div class="pbar" style="height:${h}px"></div><div class="plab">${n}${I18N[lang].line}</div></div>`;
   }
   document.getElementById("pchart").innerHTML=bars;
@@ -1493,28 +1872,241 @@ function renderSim(){
   const u=r.used,sum=u["绿色"]+u["蓝色"]+u["红色"]+u["紫色"];
   const L=I18N[lang];
   const f=v=>Number.isInteger(v)?String(v):v.toFixed(1);
+  const dot=c=>`<span class="dotc" style="background:var(--${LETTERS[c].toLowerCase()})"></span>`;
   document.getElementById("pinfo").innerHTML=
-    L.cost+": G <b>-"+f(u["绿色"])+"</b> B <b>-"+f(u["蓝色"])+"</b> R <b>-"+f(u["红色"])+"</b> P <b>-"+f(u["紫色"])+"</b> ("+L.total+" <b>-"+f(sum)+"</b>)<br>"+
-    L.timeW+" <b>"+f(r.hours)+"</b>h ("+(r.hours/24).toFixed(1)+" "+L.days+")　"+
-    L.topups+" <b>"+f(r.topups)+"</b>";
+    L.cost+"："+COLORS.map(c=>dot(c)+colorFull(c)+" <b>-"+f(u[c])+"</b>").join("　")+
+    "　（"+L.total+" <b>-"+f(sum)+"</b>）<br>"+
+    L.timeW+" <b>"+f(r.hours)+"</b>h（"+(r.hours/24).toFixed(1)+" "+L.days+"）　"+
+    L.exhausted+"：<b>"+(r.topups>0?L.yes:L.no)+"</b>";
+  const ranks=[L.missMax,L.miss2nd,L.miss3rd];
   document.getElementById("pmiss").innerHTML=
-    `<span>${L.missL} <b>${f(r.miss["坚固装甲"])}</b>${L.missG} <b>${f(r.miss["前仆后继"])}</b>${L.missF} <b>${f(r.miss["破坏阻滞"])}</b>${L.missB}</span>`;
+    L.missL+"："+(r.m3||[]).map((n,i)=>`<span><b>${f(r.miss[n]||0)}</b>${L.missUnit}〔${efxName(n)}·${ranks[i]||""}〕</span>`).join("");
   saveState();
-}document.getElementById("wPreset").addEventListener("click",()=>{
-  const w=document.querySelectorAll(".ws");
-  w[0].value=-0.05; w[1].value=-0.8; w[2].value=1;
-  renderSim(); renderHome(); saveState();
+}
+// ================= 预设菜单（四项：完美质量 / 时间有限 / 最佳性价比 / 原预设） =================
+const PRESETS={
+  perfect:{cry:0,    time:-0.75, qual:null, n:null},
+  time:   {cry:0,    time:-1,    qual:0.6,  n:null},
+  value:  {cry:0,    time:-0.75, qual:0.9,  n:2},
+  orig:   {cry:-0.05,time:-0.8,  qual:1,    n:null}
+};
+function applyPreset(k){
+  const p=PRESETS[k]; if(!p) return;
+  W.cry=p.cry; W.time=p.time; QUALITY_INF=(p.qual===null); W.qual=(p.qual===null)?1:p.qual;
+  syncWsFromW();
+  setSliderPos("slC",(W.cry+1)/2);
+  setSliderPos("slT",(W.time+1)/2);
+  setSliderPos("slQ",QUALITY_INF?1:posOfQual(W.qual));
+  linesMode=p.n?"custom":"auto"; if(p.n) customN=p.n;
+  syncLinesUI(); renderSim(); renderHome(); saveState();
   toast(I18N[lang].presetApplied||"Preset applied");
-});
-ws.forEach(s=>s.addEventListener("input",()=>{renderSim();renderHome();}));
-document.querySelectorAll(".wv").forEach(inp=>inp.addEventListener("change",()=>{
-  const i=+inp.dataset.i, v=Math.max(-1,Math.min(1,parseFloat(inp.value)||0));
-  ws[i].value=v; renderSim(); renderHome();
+}
+const presetMenu=document.getElementById("presetMenu");
+if(presetMenu){
+  document.getElementById("wPreset").addEventListener("click",()=>presetMenu.classList.add("show"));
+  document.getElementById("pmClose").addEventListener("click",()=>presetMenu.classList.remove("show"));
+  presetMenu.addEventListener("click",e=>{ if(e.target===presetMenu) presetMenu.classList.remove("show"); });
+  presetMenu.querySelectorAll("[data-preset]").forEach(b=>b.addEventListener("click",()=>{
+    presetMenu.classList.remove("show"); applyPreset(b.dataset.preset);
+  }));
+}
+// ================= 胶囊滑条：14px 轨道 + 26×18 半透明毛玻璃把手 =================
+function setSliderPos(id,t){ const el=document.getElementById(id); if(el&&el._paint) el._paint(t); }
+function syncSliderPositions(){
+  setSliderPos("slC",(W.cry+1)/2);
+  setSliderPos("slT",(W.time+1)/2);
+  setSliderPos("slQ",QUALITY_INF?1:posOfQual(W.qual));
+}
+function initSliders(){
+  [["slC","c"],["slT","t"],["slQ","q"]].forEach(function(pair){
+    const id=pair[0], mode=pair[1], el=document.getElementById(id); if(!el) return;
+    const trk=el.querySelector(".trk"), fill=el.querySelector(".fill"),
+          knob=el.querySelector(".knob"), layer=el.querySelector(".stars");
+    if(layer) for(let i=0;i<70;i++){
+      const s=document.createElement("i"), r=0.5+Math.random()*0.9;
+      s.style.width=r+"px"; s.style.height=r+"px";
+      s.style.left=(Math.random()*100)+"%"; s.style.top=(Math.random()*100)+"%";
+      s.style.opacity=(0.3+Math.random()*0.7).toFixed(2);
+      s.style.animationDuration=(3+Math.random()*4).toFixed(1)+"s,"+(1.4+Math.random()*1.6).toFixed(1)+"s";
+      s.style.animationDelay=(-Math.random()*6).toFixed(1)+"s,"+(-Math.random()*2).toFixed(1)+"s";
+      layer.appendChild(s);
+    }
+    let raf=0;
+    function paint(t){
+      t=Math.max(0,Math.min(1,t));
+      const pct=(t*100)+"%";
+      fill.style.width=pct; knob.style.left=pct; el._t=t;
+      if(mode==="q"){
+        if(t>=0.995){ el.classList.add("max"); QUALITY_INF=true; W.qual=1;
+          document.getElementById("valQ").textContent="+∞"; }
+        else { el.classList.remove("max"); QUALITY_INF=false; W.qual=qualOf(t);
+          document.getElementById("valQ").textContent=W.qual.toFixed(2); }
+      }else if(mode==="t"){
+        W.time=+(-1+2*t).toFixed(4); document.getElementById("valT").textContent=W.time.toFixed(2);
+      }else{
+        W.cry=+(-1+2*t).toFixed(4); document.getElementById("valC").textContent=W.cry.toFixed(2);
+      }
+      if(!raf) raf=requestAnimationFrame(function(){ raf=0; syncWsFromW(); renderSim(); renderHome(); });
+    }
+    el._paint=paint;
+    function fromEvent(e){ const b=trk.getBoundingClientRect(); paint((e.clientX-b.left)/Math.max(1,b.width)); }
+    el.addEventListener("pointerdown",e=>{ try{el.setPointerCapture(e.pointerId);}catch(_){}
+      fromEvent(e); e.preventDefault(); });
+    el.addEventListener("pointermove",e=>{ if(el.hasPointerCapture&&el.hasPointerCapture(e.pointerId)) fromEvent(e); });
+    el.addEventListener("pointerup",e=>{ try{el.releasePointerCapture(e.pointerId);}catch(_){} });
+    el.addEventListener("pointercancel",e=>{ try{el.releasePointerCapture(e.pointerId);}catch(_){} });
+  });
+}
+// 行数：自动 / 自定义（自定义才显示数字框）
+function syncLinesUI(){
+  document.querySelectorAll('.lbtn[data-grp="lines"]').forEach(b=>
+    b.classList.toggle("on",b.dataset.lines===linesMode));
+  const nb=document.getElementById("customNBox");
+  if(nb) nb.style.display=(linesMode==="custom"?"block":"none");
+  const cn=document.getElementById("customN");
+  if(cn) cn.value=customN;
+}
+document.querySelectorAll('.lbtn[data-grp="lines"]').forEach(b=>b.addEventListener("click",()=>{
+  linesMode=b.dataset.lines; syncLinesUI(); renderSim(); renderHome(); saveState();
 }));
 document.getElementById("customN").addEventListener("input",()=>{
   customN=Math.max(1,Math.min(4,parseInt(document.getElementById("customN").value)||2));
   renderSim();renderHome();
 });
+// ================= 小眼睛：显示 / 隐藏「模拟」卡片 =================
+const simEye=document.getElementById("simEye");
+if(simEye) simEye.addEventListener("click",()=>{
+  const c=document.getElementById("simCard"); if(!c) return;
+  const hide=(c.style.display!=="none");
+  c.style.display=hide?"none":"";
+  simEye.classList.toggle("off",hide);
+});
+// ================= 算法调试：四色每天增加（可为负） =================
+const algoModal=document.getElementById("algoModal");
+function syncAlgoUI(){
+  document.querySelectorAll(".dailyg").forEach(i=>{
+    i.value=(DAILY_GAIN_C[i.dataset.c]!==undefined?DAILY_GAIN_C[i.dataset.c]:DAILY_GAIN); });
+}
+if(algoModal){
+  document.getElementById("algoBtn").addEventListener("click",()=>{ syncAlgoUI(); algoModal.classList.add("show"); });
+  document.getElementById("algoClose").addEventListener("click",()=>algoModal.classList.remove("show"));
+  algoModal.addEventListener("click",e=>{ if(e.target===algoModal) algoModal.classList.remove("show"); });
+  algoModal.querySelectorAll(".dailyg").forEach(i=>i.addEventListener("change",()=>{
+    const v=parseFloat(i.value); DAILY_GAIN_C[i.dataset.c]=isFinite(v)?v:0;
+    syncAlgoUI(); renderSim(); renderHome(); saveState();
+  }));
+}
+// ================= 外观：主题色 / 背景 / 方框 / 方框边框 + 深色·浅色·恢复默认 =================
+const DEFAULT_THEME={gold:"#e3a84b",bg:"#121821",card:"#1b2430",line:"#2c3848"};
+let THEME={...DEFAULT_THEME}, themePreset="dark";
+const PRESET_THEMES={
+  dark:{gold:"#e3a84b",bg:"#121821",card:"#1b2430",line:"#2c3848"},
+  light:{gold:"#c08a2e",bg:"#f2f4f7",card:"#ffffff",line:"#dde3eb"}
+};
+function hex2rgb(h){ const m=String(h||"").replace("#","").trim();
+  if(m.length===3) return {r:parseInt(m[0]+m[0],16)||0,g:parseInt(m[1]+m[1],16)||0,b:parseInt(m[2]+m[2],16)||0};
+  return {r:parseInt(m.slice(0,2),16)||0,g:parseInt(m.slice(2,4),16)||0,b:parseInt(m.slice(4,6),16)||0}; }
+function rgb2hex(r,g,b){ const f=v=>("0"+Math.max(0,Math.min(255,Math.round(v))).toString(16)).slice(-2);
+  return "#"+f(r)+f(g)+f(b); }
+function mixHex(a,b,t){ const A=hex2rgb(a),B=hex2rgb(b);
+  return rgb2hex(A.r+(B.r-A.r)*t,A.g+(B.g-A.g)*t,A.b+(B.b-A.b)*t); }
+function hexA(h,a){ const c=hex2rgb(h); return "rgba("+c.r+","+c.g+","+c.b+","+a+")"; }
+function lumOf(h){ const c=hex2rgb(h);
+  const f=v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);};
+  return 0.2126*f(c.r)+0.7152*f(c.g)+0.0722*f(c.b); }
+// 主题色文字「亮度下限保护」：背景偏暗就保证足够亮，背景偏亮就保证足够暗
+function themeText(gold,bg){
+  const dark=lumOf(bg)<0.4, target=dark?"#ffffff":"#000000";
+  let c=String(gold).toLowerCase();
+  for(let i=0;i<30;i++){
+    const L=lumOf(c);
+    if(dark? L>=0.22 : L<=0.18) break;
+    c=mixHex(c,target,0.07);
+  }
+  return c;
+}
+function isHex(s){ return /^#?[0-9a-fA-F]{6}$/.test(String(s||"").trim())||/^#?[0-9a-fA-F]{3}$/.test(String(s||"").trim()); }
+function normHex(s){ s=String(s||"").trim(); if(s.charAt(0)!=="#") s="#"+s;
+  if(s.length===4) s="#"+s[1]+s[1]+s[2]+s[2]+s[3]+s[3];
+  return s.toLowerCase(); }
+function applyTheme(){
+  const r=document.documentElement.style, light=lumOf(THEME.bg)>=0.6;
+  r.setProperty("--gold",THEME.gold);
+  r.setProperty("--gold-d",mixHex(THEME.gold,"#000000",0.22));
+  r.setProperty("--gold-tx",themeText(THEME.gold,THEME.bg));
+  r.setProperty("--bg",THEME.bg);
+  r.setProperty("--card",THEME.card);
+  r.setProperty("--card2",light?mixHex(THEME.card,"#000000",0.05):mixHex(THEME.card,"#ffffff",0.07));
+  r.setProperty("--line",THEME.line);
+  r.setProperty("--page",light?mixHex(THEME.bg,"#000000",0.06):mixHex(THEME.bg,"#000000",0.35));
+  r.setProperty("--bar",hexA(THEME.bg,0.94));
+  r.setProperty("--inp",light?mixHex(THEME.card,"#000000",0.05):mixHex(THEME.card,"#000000",0.4));
+  r.setProperty("--panel",light?mixHex(THEME.card,"#000000",0.03):mixHex(THEME.card,"#000000",0.45));
+  r.setProperty("--selbg","linear-gradient(180deg,"+mixHex(THEME.card,light?"#000000":"#ffffff",0.12)+
+    ","+mixHex(THEME.card,light?"#000000":"#ffffff",0.04)+")");
+  r.setProperty("--tx",light?"#1a2430":"#e8edf3");
+  r.setProperty("--mut",light?"#5d6b7c":"#8b98a9");
+  r.setProperty("--mut2",light?"#8794a5":"#61707f");
+}
+const THFIELDS=[["cTheme","hTheme","gold"],["cBg","hBg","bg"],["cCard","hCard","card"],["cLine","hLine","line"]];
+function syncThemeUI(){
+  THFIELDS.forEach(f=>{
+    const c=document.getElementById(f[0]), h=document.getElementById(f[1]);
+    if(c) c.value=String(THEME[f[2]]).toLowerCase();
+    if(h&&document.activeElement!==h) h.value=String(THEME[f[2]]).toUpperCase();
+  });
+  // 外观【预设】按钮：展开/收起三项，点任意项直接触发原有预设逻辑
+(function(){
+  var pb=document.getElementById("apprPreset"), pm=document.getElementById("apprMenu");
+  if(!pb||!pm) return;
+  pb.addEventListener("click",function(){ pm.style.display = (pm.style.display==="none"?"flex":"none"); });
+  pm.querySelectorAll("[data-usep]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var t=document.getElementById(b.dataset.usep);
+      if(t) t.click();
+      pm.style.display="none";
+    });
+  });
+})();
+const bt=document.getElementById("thDark"), bl=document.getElementById("thLight"), br=document.getElementById("thReset");
+  if(bt) bt.classList.toggle("on",themePreset==="dark");
+  if(bl) bl.classList.toggle("on",themePreset==="light");
+  if(br) br.classList.toggle("on",themePreset==="");
+}
+function setThemeColor(k,v){ THEME[k]=v; themePreset=""; applyTheme(); syncThemeUI(); saveState(); }
+function applyThemePreset(name){
+  const p=PRESET_THEMES[name]; if(!p) return;
+  THEME={gold:p.gold,bg:p.bg,card:p.card,line:p.line};
+  themePreset=name; applyTheme(); syncThemeUI(); saveState();
+  toast(I18N[lang].thApplied||"Appearance applied");
+}
+function initThemeUI(){
+  THFIELDS.forEach(f=>{
+    const c=document.getElementById(f[0]), h=document.getElementById(f[1]), k=f[2];
+    if(c) c.addEventListener("input",()=>setThemeColor(k,c.value));
+    if(h) h.addEventListener("change",()=>{ if(isHex(h.value)) setThemeColor(k,normHex(h.value)); else syncThemeUI(); });
+  });
+  // 外观【预设】按钮：展开/收起三项，点任意项直接触发原有预设逻辑
+(function(){
+  var pb=document.getElementById("apprPreset"), pm=document.getElementById("apprMenu");
+  if(!pb||!pm) return;
+  pb.addEventListener("click",function(){ pm.style.display = (pm.style.display==="none"?"flex":"none"); });
+  pm.querySelectorAll("[data-usep]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var t=document.getElementById(b.dataset.usep);
+      if(t) t.click();
+      pm.style.display="none";
+    });
+  });
+})();
+const bt=document.getElementById("thDark"), bl=document.getElementById("thLight"), br=document.getElementById("thReset");
+  if(bt) bt.addEventListener("click",()=>applyThemePreset("dark"));
+  if(bl) bl.addEventListener("click",()=>applyThemePreset("light"));
+  if(br) br.addEventListener("click",()=>{
+    THEME={...DEFAULT_THEME}; themePreset="dark"; applyTheme(); syncThemeUI(); saveState();
+    toast(I18N[lang].thApplied||"Appearance applied");
+  });
+}
 
 // ================= 雕刻权重赋值 =================
 let efxPane="atk";
@@ -1599,10 +2191,14 @@ let GAIN_PICKS=null, GAIN_TIME=null;
 // 与 App 一致的获得顺序卡片：lastGain=[[色,雕刻,等级]...] + 时间
 function gainHtml(picks,time){
   if(!picks||!picks.length) return "";
-  const tiles=picks.map(x=>colorTile(x[0])).join("");
-  const efx=picks.map(x=>colorName(x[0])+" "+efxName(x[1])+" "+x[2]).join(" \u00B7 ");
-  return '<div class="seq">'+tiles+'</div><div class="efx"><b>'+efx+'</b></div>'+
-    '<div class="gtime">'+I18N[lang].gained+(time?" \u00B7 "+time:"")+'</div>';
+  const tiles=picks.map(x=>`<div class="mini t-${LETTERS[x[0]].toLowerCase()}">${escapeHtml(colorName(x[0]))}</div>`).join("");
+  const efx=picks.map(x=>escapeHtml(colorFull(x[0]))+" "+escapeHtml(efxName(x[1]))+" "+gradeTag(x[2])).join(" \u00B7 ");
+  return '<div class="gwrap">'+picks.map(function(x){
+      var cls="t-"+LETTERS[x[0]].toLowerCase();
+      return '<span class="gitem"><span class="gsq '+cls+'">'+escapeHtml(colorName(x[0]))+'</span>'+
+             '<span class="gtx">'+escapeHtml(efxName(x[1]))+' '+gradeTag(x[2])+'</span></span>';
+    }).join("")+'</div>'+
+    '<div class="gtime">'+I18N[lang].buildTime+(time?" \u00B7 "+time:"")+'</div>';
 }
 // 待领取（主页左上卡片）按账号渲染
 function renderGain(){
@@ -1613,35 +2209,116 @@ function renderGain(){
     :'<span class="gempty">'+I18N[lang].gainEmpty+'</span>';
 }
 function colorTile(c){return `<div class="mini t-${LETTERS[c].toLowerCase()}">${colorName(c)}</div>`;}
+function planKey(p){ return p.n+"|"+p.picks.map(x=>x[0]+x[1]).join(","); }
+// 所需水晶（与推荐方案里的消耗标记完全同格式）
+function planCost(p,stock){
+  const ranked=[...new Set(p.picks.map(x=>x[1]))].sort((a,b)=>stock[a]-stock[b]);
+  const co={}; ranked.forEach((c,i)=>co[c]=LINE_COST[i]);
+  return {ranked,co,html:ranked.map(c=>`<span><i class="cimg cimg-${LETTERS[c].toLowerCase()}"></i>${co[c]}</span>`).join("")};
+}
+function setSelectedPlan(p){
+  selectedPlan=p||null;
+  const bar=document.getElementById("costBar"), btn=document.getElementById("confirmBtn");
+  if(!bar||!btn) return;
+  if(!selectedPlan){ bar.classList.remove("show"); bar.innerHTML=""; btn.classList.remove("show"); return; }
+  const stk=curStock(), c=planCost(selectedPlan,stk);
+  bar.innerHTML='<b style="color:var(--gold-tx)">'+I18N[lang].costNeed+'</b>'+
+    '<span style="color:var(--tx)">'+selectedPlan.n+I18N[lang].line+'</span>'+c.html;
+  bar.classList.add("show"); btn.classList.add("show");
+}
 function renderHome(){
   const L=I18N[lang];
   const start=parseInt(document.getElementById("startLine").value)||1;
   const stock=curStock();
   renderRound();
   const plans=candidatePlans(start,stock);
-  let html="";
+  const keys=plans.map(p=>Math.round(p.total*100));
+  const bestVal=keys.length?Math.max(...keys):0;
+  const bestCount=keys.filter(k=>k===bestVal).length;
+  const keep=selectedPlan?planKey(selectedPlan):null;
+  let sel=-1, html="";
   plans.forEach((p,idx)=>{
-    const ranked=[...new Set(p.picks.map(x=>x[1]))].sort((a,b)=>stock[a]-stock[b]);
-    const co={}; ranked.forEach((c,i)=>co[c]=LINE_COST[i]);
+    const c=planCost(p,stock);
     const tiles=p.picks.map(x=>colorTile(x[1])).join("");
-    const cost=ranked.map(c=>`<span><i class="cimg cimg-${LETTERS[c].toLowerCase()}"></i>${co[c]}</span>`).join("");
     const efx=p.picks.map(x=>colorName(x[1])+" "+efxName(x[2])+" "+x[3]).join(" · ");
-    html+=`<button class="opt" data-plan="${idx}">
+    const isBest=Math.round(p.total*100)===bestVal;   // 并列最佳都标蓝
+    if(keep&&planKey(p)===keep) sel=idx;
+    html+=`<button class="opt${isBest?" best":""}" data-plan="${idx}">
       <div class="tiles">${tiles}</div>
-      <div class="meta"><div class="t">${p.n}${L.line} · ${L.score} ${p.total.toFixed(2)}</div>
-        <div class="cost">${cost}</div>
+      <div class="meta"><div class="t">${p.n}${L.line} · ${L.score} ${p.total.toFixed(2)}${isBest?'<span class="best-tag">'+(bestCount>1?L.tieBest:L.best)+'</span>':''}</div>
+        <div class="cost">${c.html}</div>
         <div class="efx"><b>${efx}</b></div></div>
       <div class="radio"></div></button>`;
   });
+  // ===== 第 4 个选项：自定义（起始行起 4 行 × 每行 4 色 = 16 个按钮）=====
+  const cRows=[start,start+1,start+2,start+3];
+  const tidyCustom=()=>{ const k=[]; for(const rr of cRows){ const F=customPicks.find(p=>p[0]===rr); if(!F) break; k.push(F); } customPicks=k; };
+  customPicks=(customPicks||[]).filter(p=>p&&p[0]>=start&&p[0]<=start+3); tidyCustom();
+  const rowBest=(r)=>{ let best=-1e9,out=[];
+    COLORS.forEach(c=>{ const cell=(DATA[r]||{})[c]; if(!cell||!cell[0]) return;
+      const w=((EFX_W[cell[0]]||{})[cell[1]])||0;
+      if(w>best+1e-9){best=w;out=[c];} else if(Math.abs(w-best)<=1e-9){out.push(c);} });
+    return out; };
+  const customPlanObj=()=>({n:customPicks.length,picks:customPicks.slice(),total:0});
+  const cCost=customPicks.length?planCost({picks:customPicks},stock):null;
+  let cust='<div class="opt custcard'+(selCustom?" sel":"")+'" id="customCard">'+
+    '<div class="t"><b>'+(L.customOpt||L.sCustom||((CUSTOM_TXT.title||{})[lang])||"自定义")+'</b></div><div class="custgrid">';
+  cRows.forEach((r,ri)=>{
+    const ok=(ri===0)||customPicks.some(p=>p[0]===cRows[ri-1]);
+    const best=rowBest(r);
+    cust+='<div class="custrow">';
+    COLORS.forEach(c=>{
+      const cell=(DATA[r]||{})[c], has=!!(cell&&cell[0]);
+      const picked=customPicks.some(p=>p[0]===r&&p[1]===c);
+      const used=customPicks.some(p=>p[0]!==r&&p[1]===c);
+      const can=ok&&has&&!used;
+      const label=has?(colorName(c)+" "+efx2(cell[0])+" "+cell[1]):(colorName(c)+" —");
+      cust+='<button class="cbtn'+(picked?" on":"")+(used?" used":"")+(can?"":" dis")+'"'+(can?"":" disabled")+
+            ' data-crow="'+r+'" data-ccolor="'+c+'"><span class="cn'+(picked?" g":(best.indexOf(c)>=0?" b":""))+'">'+
+            label+'</span></button>';
+    });
+    cust+='</div>';
+  });
+  cust+='</div><div class="cost custcost">'+(cCost?cCost.html:'<span style="color:var(--mut2)">'+(L.customHint||((CUSTOM_TXT.hint||{})[lang])||"")+'</span>')+'</div></div>';
+  html+=cust;
   const list=document.getElementById("optList");
   list.innerHTML=html||`<div class="gempty">${L.noPlan}</div>`;
   list.querySelectorAll(".opt[data-plan]").forEach(o=>o.addEventListener("click",()=>{
     list.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));
+    selCustom=false;
     o.classList.add("sel");
-    selectedPlan=plans[+o.dataset.plan];
-    document.getElementById("confirmBtn").classList.add("show");
+    setSelectedPlan(plans[+o.dataset.plan]);
   }));
-  document.getElementById("confirmBtn").classList.remove("show");
+  const cc=list.querySelector("#customCard");
+  if(cc){
+    cc.addEventListener("click",e=>{
+      const b=e.target.closest(".cbtn");
+      if(!b||b.disabled){                       // 点大框=选中自定义，第一行默认取最优
+        if(!customPicks.length){ const best=rowBest(start);
+          if(best.length){ const cell=DATA[start][best[0]]; customPicks=[[start,best[0],cell[0],cell[1]]]; } }
+        selCustom=true; setSelectedPlan(customPicks.length?customPlanObj():null); renderHome(); return;
+      }
+      e.stopPropagation();
+      const r=+b.dataset.crow, c=b.dataset.ccolor;
+      if(customPicks.some(p=>p[0]===r&&p[1]===c)) customPicks=customPicks.filter(p=>!(p[0]===r&&p[1]===c));
+      else{
+        customPicks=customPicks.filter(p=>p[0]!==r&&p[1]!==c);   // 同色不能重复用
+        const cell=DATA[r][c]; customPicks.push([r,c,cell[0],cell[1]]);
+        customPicks.sort((a,b2)=>a[0]-b2[0]);
+      }
+      tidyCustom();
+      selCustom=customPicks.length>0;
+      setSelectedPlan(selCustom?customPlanObj():null);
+      renderHome();
+    });
+  }
+  if(!selCustom){
+    if(sel<0&&plans.length) sel=0;                     // 默认第一行（最优）即选中
+    if(sel>=0&&plans[sel]){
+      setSelectedPlan(plans[sel]);
+      const el=list.querySelector('.opt[data-plan="'+sel+'"]'); if(el) el.classList.add("sel");
+    }else setSelectedPlan(null);
+  }
   saveState();
 }
 document.getElementById("startLine").addEventListener("input",renderHome);
@@ -1658,11 +2335,9 @@ document.getElementById("confirmBtn").addEventListener("click",()=>{
   if(ACCTS[curAcc]) ACCTS[curAcc].crystals=curStock();
   const now=new Date();
   const t=(now.getHours()<10?"0":"")+now.getHours()+":"+(now.getMinutes()<10?"0":"")+now.getMinutes();
-  const tiles=p.picks.map(x=>colorTile(x[1])).join("");
-  const efx=p.picks.map(x=>colorName(x[1])+" "+efxName(x[2])+" "+x[3]).join(" · ");
+  const gainPicks=p.picks.map(x=>[x[1],x[2],x[3]]);
   const gainBefore=document.getElementById("gainContent").innerHTML;
-  const gainAfter=`<div class="seq">${tiles}</div><div class="efx"><b>${efx}</b></div>
-     <div class="gtime">${I18N[lang].gained} · ${t}</div>`;
+  const gainAfter=gainHtml(gainPicks,t);
   document.getElementById("gainContent").innerHTML=gainAfter;
   GAIN_PICKS=p.picks.map(x=>[x[1],x[2],x[3]]); GAIN_TIME=t;
   if(ACCTS[curAcc]){ ACCTS[curAcc].gain=GAIN_PICKS; ACCTS[curAcc].gainTime=t; }
@@ -1681,7 +2356,12 @@ document.getElementById("confirmBtn").addEventListener("click",()=>{
 });
 
 // ==== 更新日志（内容与 App 的 lib/changelog.dart 一致，改 App 时同步这里）====
-const CHANGELOG=[
+const CHANGELOG_OLD=[
+  {v:"1.3.0",d:"2026-10-11",items:[
+      "新增「清空雕刻序列」：在底部「顺序」菜单里，只清空当前账号的序列（历史记录、水晶、账号都保留），而且必须连续确认两次才会执行。",
+      "修复 xlsx 导入失败：有些工具（WPS 等）导出的表格把 numFmtId 41~44 这些内置格式号写成了自定义格式，违反 xlsx 规范，解析库读到会直接报错。现在遇到这类文件会先自动修掉样式表再解析（和单元格底色无关）。",
+      "xlsx 导入改为「每张工作表都试一遍，取数据最多的那张」；选择器里不再列出 .xls 老格式（不支持）。"
+  ]},
   {v:"1.2.1",d:"2026-10-11",items:[
       "权重卡片右上角新增「预设 -0.05 / -0.8 / 1」按钮：点一下就把水晶、时间、质量三个权重套用成这组值（因为三个权重都是 0 时分数只跟行数有关，同分会非常多）。",
       "推荐列表的同分组加上限：一组最多显示 6 个（同分整组一起给的规则不变，只是不会再把几十个同分方案全铺出来）。"
@@ -1690,12 +2370,12 @@ const CHANGELOG=[
       "待领取（主页左上那张卡）改成每个账号各存一份：切换账号时它会跟着切换（之前存在全局，切了账号还显示上一个账号的）。",
       "待领取里的四个色块改成按卡片宽度自适应，一行必定放得下四个。",
       "模拟柱状图改成「每一行都采样」：第 1 行、第 2 行、第 3 行每行都当作如果从这里开始选算一次（1-3、2-4、3-5 这样滑动），样本量约等于序列行数，偶然性更小；纵轴改成固定刻度，整根柱子高度 = 序列总行数。",
-      "每行采样会把消耗/时间/兜底/可能遗漏放大到约「平均行数」倍，这些数字统一除以平均行数（时间回到领取次数  8 小时的量级）。",
-      "表格解析放宽：从左到右、从上到下扫所有单元格，只认含雕刻信息的格子；等级 S/s//品质提升  S，B/b/币/没写等级  B；行号取该行最前面的数字（没有就按顺序 1、2、3）；颜色优先按表头（次数/绿/蓝/红/紫）对应列，没有表头就按雕刻出现的列顺序当 绿、蓝、红、紫；备注、空行、空列、无关文字全部忽略；不认识的雕刻名写成汉字 + 等级也能认。",
+      "每行采样会把消耗/时间/兜底/可能遗漏放大到约「平均行数」倍，这些数字统一除以平均行数（时间回到领取次数乘 8 小时的量级）。",
+      "表格解析放宽：从左到右、从上到下扫所有单元格，只认含雕刻信息的格子；等级 S/s//品质提升 归为 S，B/b/币/没写等级 归为 B；行号取该行最前面的数字（没有就按顺序 1、2、3）；颜色优先按表头（次数/绿/蓝/红/紫）对应列，没有表头就按雕刻出现的列顺序当 绿、蓝、红、紫；备注、空行、空列、无关文字全部忽略；不认识的雕刻名写成「汉字 + 等级」也能认。",
       "推荐方案里的消耗标记（红 5 绿 7 那种）改用水晶图，并强制一行不换行。",
       "确认按钮改成悬浮在底部图标条上方，选中方案就出现，不用再划到底。",
-      "推荐数量规则改成同分整组一起给、不拆开：累计到 3 个为止（第 1 名 3 个同分只给这 3 个；第 1 名 2 个给这 2 个加第 2 名整组；第 1、2 名各 1 个再给第 3 名，同分继续给）。",
-      "历史记录格式改成：#起始行 - 结束行 + 各雕刻（水晶图）+（建造时间：xx:xx 领取时间：xx:xx）；最新一条还没领下一次时显示「尚未领取」。"
+      "推荐数量规则改成「同分整组一起给、不拆开」：累计到 3 个为止（第 1 名 3 个同分就只给这 3 个；第 1 名 2 个就给这 2 个加第 2 名整组；第 1、2 名各 1 个时再给第 3 名，同分继续给）。",
+      "历史记录格式改成：起始行 - 结束行 + 各雕刻（水晶图）+（建造时间 / 领取时间）；最新一条还没领下一次时显示「尚未领取」。"
   ]},
   {v:"1.1.0",d:"2026-10-10",items:[
       "界面按确认稿的网页版重做：主页恢复「获得顺序 + 起始行」双卡片并排，推荐方案为列表卡片；底栏改成 5 个图标的操作条（撤销 / 重做 / 导入 / 导出 / 顺序）加 3 页导航，图标与网页同一套路径。",
@@ -1705,33 +2385,201 @@ const CHANGELOG=[
       "雕刻权重的 S / B 双滑块现在可以拖动、实时显示数值。",
       "历史记录、账号切换、新建账号即时刷新，不用退出重进。",
       "语言切换立即全局生效（设置页、底栏、序列表格一起变）。",
-      "查看雕刻序列改为表格：表头（行 / 绿色 / 蓝色 / 红色 / 紫色）常驻，打开时自动定位到当前查询行附近；雕刻名和 S / B 分列显示，不会再被截断成「坚固...」。",
+      "查看雕刻序列改为表格：表头（行 / 绿色 / 蓝色 / 红色 / 紫色）常驻，打开时自动定位到当前查询行附近；雕刻名和 S / B 分列显示，不会再被截断。",
       "导出改用系统「保存到」对话框，文件落在你自己选的位置，导入时能找到。",
       "「顺序」改为弹出菜单（查看当前雕刻序列 / 更改雕刻序列），不再跳到账号页；设置-账号移除序列查看与添加。",
-      "「应用」按钮放到设置页页眉（「设置」两字右侧、分段栏上方），固定不随内容滚动。",
-      "雕刻权重列表改为只按 S 从大到小排序；拖动滑块时列表顺序不会乱跳，点「应用」后按最新 S 重新排序。",
-      "修复设置-账号里切换账号后列表不即时刷新的问题（与偏好页同一个原因）。",
+      "「应用」按钮移到偏好页眉（与「偏好」同一行右侧），固定不随内容滚动。",
       "实时提示（获得 N 条等）提高文字对比度，位置不再被底栏遮挡。",
       "预设调整：四色水晶各 1000；默认只有一个账号，命名为 你的账号 / 你的賬號 / your account；水晶、时间、质量三个权重默认都改为 0。",
       "雕刻权重改为表格数值：坚固装甲 1 / 0.92、昏沉 0.98 / 0.91、前仆后继 0.9 / 0.84、过热 0.9 / 0.84、破坏阻滞 0.85 / 0.79、投诚 0.85 / 0.79、情报压制 0.75 / 0.45、修补 0.75 / 0.45、活力汲取 0.7 / 0.5、力竭 0.7 / 0.5、战地急救 0.45 / 0.25、保险 0.45 / 0.25、能量涌动 0.35 / 0.21，其余按「其他」0.2 / 0.1。",
       "软件名改为「海岛奇兵雕刻选择」，设置-关于新增更新日志。"
   ]}
 ];
+// 1.5.3 更新日志（三语）
+const CHANGELOG_NEW=[
+  {v:"1.5.2",d:"2026-10-17",
+   sum:{sc:"外观预设按钮 + 真毛玻璃把手 + 浅色自动深色文字",tc:"外觀預設按鈕 + 真毛玻璃把手 + 淺色自動深色文字",en:"Appearance preset button, real frosted handle, dark text on light themes"},
+   items:{sc:["外观标题右侧新增【预设】按钮：深色 / 浅色 / 恢复默认，点了立刻套用并保存。",
+             "四个颜色仍可逐个自选、全界面一致生效；浅色背景自动配深色文字；把手改成真毛玻璃（背后内容真实模糊，去掉白色高光球）。"],
+          tc:["外觀標題右側新增【預設】按鈕：深色 / 淺色 / 恢復預設，點了立刻套用並儲存。",
+             "四個顏色仍可逐個自選、全介面一致生效；淺色背景自動配深色文字；把手改成真毛玻璃（背後內容真實模糊，移除白色高光球）。"],
+          en:["The Appearance title row gained a [Preset] button: Dark / Light / Reset, applied and saved immediately.",
+             "All four colours stay individually editable and apply UI-wide; light backgrounds get dark text automatically; the handle is genuinely frosted (the white highlight ball is gone)."]}},
+  {v:"1.5.1",d:"2026-10-16",
+   sum:{sc:"胶囊滑条+∞星光、模拟改概率、外观卡片、算法调试按钮",tc:"膠囊滑條+∞星光、模擬改機率、外觀卡片、演算法除錯按鈕",en:"Pill sliders with +∞ starlight, probability sim, appearance card, debug button"},
+   items:{sc:["时间 / 质量换成胶囊滑条（14px 轨道 + 26×18 玻璃把手），拖到最右显示 +∞ 并有星光流动与外发光；主题色与主题色文字各有亮度下限。",
+             "模拟卡片：柱子改概率%、消耗改用绿/蓝/红/紫颜色名、兜底改「是否耗尽水晶：是/否」、可能遗漏按权重前三列出。",
+             "「算法调试」改成水晶存量标题右侧按钮（弹窗改四色每天增加，可为负）；权重卡第一行改【自动】【自定义】+数字框；新增「外观」四色卡片；获得顺序用全称；自定义实时显示所需水晶。"],
+          tc:["時間 / 質量換成膠囊滑條（14px 軌道 + 26×18 玻璃把手），拖到最右顯示 +∞ 並有星光流動與外發光；主題色與主題色文字各有亮度下限。",
+             "模擬卡片：柱子改機率%、消耗改用綠/藍/紅/紫顏色名、兜底改「是否耗盡水晶：是/否」、可能遺漏按權重前三列出。",
+             "「演算法除錯」改成水晶儲量標題右側按鈕（彈窗改四色每天增加，可為負）；權重卡第一行改【自動】【自訂】+數字框；新增「外觀」四色卡片；獲得順序用全稱；自訂即時顯示所需水晶。"],
+          en:["Time / Quality became pill sliders (14px track + 26×18 glass handle); +∞ shows flowing starlight and an outer glow; theme colour and theme-coloured text have brightness floors.",
+             "Simulation: probabilities, colour-name costs, \"Crystals run out: yes/no\", and \"May miss\" by your top three weights.",
+             "[Algorithm debug] moved to a button on the Crystals title; weight row 1 is [Automatic] [Custom] + a number box; added the Appearance card; gain names in full; the Custom option shows required crystals live."]}},
+  {v:"1.5.0",d:"2026-10-16",
+   sum:{sc:"小眼睛显隐模拟 + 算法调试",tc:"小眼睛顯隱模擬 + 演算法除錯",en:"Eye toggle for the sim + algorithm debug"},
+   items:{sc:["权重卡标题右侧加「小眼睛」显隐「模拟」卡片。","新增「算法调试」：四色「每天增加」可单独设置（可为负，默认 +2）。"],
+          tc:["權重卡標題右側加「小眼睛」顯隱「模擬」卡片。","新增「演算法除錯」：四色「每天增加」可單獨設定（可為負，預設 +2）。"],
+          en:["An eye button beside the Weights title shows / hides Simulation.","Added Algorithm debug: a per-colour daily gain (negatives allowed, +2 by default)."]}},
+  {v:"1.4.4",d:"2026-10-16",
+   sum:{sc:"推荐色块按建造顺序排列",tc:"推薦色塊按建造順序排列",en:"Plan swatches ordered by build order"},
+   items:{sc:["推荐方案里的色块按「建造顺序」（= 水晶平衡顺序：储量多的先建、花费低）排列，与消耗标记顺序对齐；文字描述不变。"],
+          tc:["推薦方案裡的色塊按「建造順序」（= 水晶平衡順序：儲量多的先建、花費低）排列，與消耗標記順序對齊；文字描述不變。"],
+          en:["Plan swatches are ordered by build order (= crystal-balance order), matching the cost markers; the text description is unchanged."]}},
+  {v:"1.4.3",d:"2026-10-16",
+   sum:{sc:"序列面板 + 底栏替换 + 获得顺序新样式 + 软件名翻译",tc:"序列面板 + 底欄替換 + 獲得順序新樣式 + 軟體名翻譯",en:"Sequence panel, bottom bar swap, new gain card, translated app name"},
+   items:{sc:["序列改为主页内的面板：底栏整条换成【导入】【追加】【删除】且始终可见，点面板外边缘或右上角 × 关闭。",
+             "主页/历史/设置 完全平行切换（去掉历史/设置里的返回箭头）。",
+             "获得顺序：左方块（颜色字，底色为该水晶色）+ 右方框（两个字 + S/B），S 绿 B 金黄加粗。",
+             "点整张自定义大框即选中并默认第一行最优，再点取消；软件名跟随语言翻译。"],
+          tc:["序列改為主頁內的面板：底欄整條換成【導入】【追加】【刪除】且始終可見，點面板外邊緣或右上角 × 關閉。",
+             "主頁/歷史/設定 完全平行切換（去掉歷史/設定裡的返回箭頭）。",
+             "獲得順序：左方塊（顏色字，底色為該水晶色）+ 右方框（兩個字 + S/B），S 綠 B 金黃加粗。",
+             "點整張自訂大框即選中並預設第一行最優，再點取消；軟體名跟隨語言翻譯。"],
+          en:["The sequence is an in-app panel: the whole bottom bar becomes [Import] [Append] [Delete] and stays visible; tap outside or × to close.",
+             "Home / History / Settings are fully parallel (no back arrows).",
+             "Gain card: colour square + box with two characters + S/B (S green, B golden, bold).",
+             "Tapping the whole Custom card selects it and defaults row 1 to the best; tap again to cancel; the app name follows the language."]}},
+  {v:"1.4.2",d:"2026-10-16",
+   sum:{sc:"序列 4 行高亮 + 弹窗返回 + 并列最佳标蓝",tc:"序列 4 行高亮 + 彈窗返回 + 並列最佳標藍",en:"Four-row highlight, dialog close, tied best blue"},
+   items:{sc:["序列高亮改 4 行（起始行及后 3 行）并加深颜色（未领取金、查询蓝）+ 图例。",
+             "序列改回弹窗（点边缘返回），底栏仍是 导入/追加/删除；每次打开重新滚到「未领取第一行」。",
+             "自定义：一行里并列最佳都标蓝。"],
+          tc:["序列高亮改 4 行（起始行及後 3 行）並加深顏色（未領取金、查詢藍）+ 圖例。",
+             "序列改回彈窗（點邊緣返回），底欄仍是 導入/追加/刪除；每次打開重新滾到「未領取第一行」。",
+             "自訂：一行裡並列最佳都標藍。"],
+          en:["Four-row highlighting with deeper colours and a legend.","The sequence is a dialog again and re-scrolls to the first unclaimed row on every open.","Every tied-best button in a Custom row is marked blue."]}},
+  {v:"1.4.1",d:"2026-10-16",
+   sum:{sc:"时间曲线平滑 + 序列真正打开 + 自定义规则 + 质量发光",tc:"時間曲線平滑 + 序列真正打開 + 自訂規則 + 質量發光",en:"Smooth time curve, sequence opens, custom rules, quality glow"},
+   items:{sc:["时间权重曲线改平滑插值（关键点之间平滑过渡，不再突跃）。",
+             "修复点底栏「序列」仍弹旧菜单；自定义：同色不能重复、再点可取消、每行最优用浅蓝字；质量拉到 +∞ 补发光与提示。"],
+          tc:["時間權重曲線改平滑插值（關鍵點之間平滑過渡，不再突躍）。",
+             "修復點底欄「序列」仍彈舊選單；自訂：同色不能重複、再點可取消、每行最優用淺藍字；質量拉到 +∞ 補發光與提示。"],
+          en:["The time curve interpolates smoothly between key points.",
+             "Fixed Sequence still opening the old menu; custom colours cannot repeat, tapping again cancels, the per-row best is light blue; +∞ glows with a hint."]}},
+  {v:"1.4.0",d:"2026-10-11",
+   sum:{sc:"权重同步、时间曲线、质量+∞、删水晶权重、自定义16按钮、待领取与历史格式",tc:"權重同步、時間曲線、質量+∞、刪水晶權重、自訂16按鈕、待領取與歷史格式",en:"Weight sync, time curve, quality +∞, crystal weight removed, 16-button custom, gain and history formats"},
+   items:{sc:["修复打开就按预设推荐；时间曲线：-1 永远 4 行 / -0.75 等于旧 -1 / -0.5 目标 3.5 / -0.25 目标 3 / 0 最平均 2.5 / 0 以上不变。",
+             "质量范围 0~1.01，拉到 1.01 显示 +∞（每行都要拿到权重最高者，冲突时宁可行少也不漏）；删除水晶权重滑块。",
+             "主页新增第 4 个「自定义」：4 行 × 4 色 = 16 按钮，第一行必选、后面按顺序解锁，点任意按钮即选中，每行最优浅蓝字。",
+             "显示统一「两个字 + S/B」（干扰信号→信号）；待领取改「建造xx:xx」+ 圆角方框；底栏「顺序」→「序列」点开即看；序列滚到未领取第一行 + 金/蓝高亮 + 图例。",
+             "序列底栏【导入】【追加】【删除】（追加按名搜索并验证后 5 行、找不到提醒加错账号；删除双重确认）。",
+             "更新日志支持三语。"],
+          tc:["修復打開就按預設推薦；時間曲線：-1 永遠 4 行 / -0.75 等於舊 -1 / -0.5 目標 3.5 / -0.25 目標 3 / 0 最平均 2.5 / 0 以上不變。",
+             "質量範圍 0~1.01，拉到 1.01 顯示 +∞（每行都要拿到權重最高者，衝突時寧可列少也不漏）；刪除水晶權重滑條。",
+             "主頁新增第 4 個「自訂」：4 行 × 4 色 = 16 按鈕，第一行必選、後面按順序解鎖，點任意按鈕即選中，每行最優淺藍字。",
+             "顯示統一「兩個字 + S/B」（干擾信號→信號）；待領取改「建造xx:xx」+ 圓角方框；底欄「順序」→「序列」點開即看；序列滾到未領取第一行 + 金/藍高亮 + 圖例。",
+             "序列底欄【導入】【追加】【刪除】（追加按名搜尋並驗證後 5 行、找不到提醒加錯帳號；刪除雙重確認）。",
+             "更新日誌支援三語。"],
+          en:["Fixed recommending with preset weights on launch; the time curve is -1 = always 4 rows, -0.75 = old -1, -0.5 ≈ 3.5, -0.25 = 3, 0 = most even (2.5), above 0 unchanged.",
+             "Quality 0–1.01 shows +∞ at the far right (every row must get the top weight; conflicts reduce rows rather than miss); the crystal-weight slider is gone.",
+             "New fourth Home option Custom: 4 rows × 4 colours = 16 buttons, row 1 required, later rows unlock in order, tapping selects, each row's best in light blue.",
+             "Labels are two characters + S/B; the claim card uses Built + rounded boxes; Order became Sequence and opens directly; the sequence scrolls to the first unclaimed row with gold/blue highlighting and a legend.",
+             "The sequence bottom bar is [Import] [Append] [Delete] (Append matches by name and verifies the next 5 rows; Delete asks twice).",
+             "The changelog supports three languages."]}},
+  {v:"1.5.4",d:"2026-10-17",
+   sum:{sc:"+∞ 不再遗漏、获得顺序版式、滑条渐变跟主题、S/B 固定色、序列底栏置顶",tc:"+∞ 不再遺漏、獲得順序版式、滑條漸變跟主題、S/B 固定色、序列底欄置頂",en:"+inf never misses, gain-card layout, theme-derived slider gradient, fixed S/B colours, sequence bar on top"},
+   items:{
+    sc:["修复：质量拉到 +∞ 仍会「可能遗漏」。+∞ 现在是硬约束 —— 每一行拾取的雕刻必须正好是该行权重最高者，颜色冲突时宁可减少行数，也绝不漏掉最高权重雕刻。",
+        "获得顺序卡片版式修正：每项改成「左方块（一个字，底色=水晶色）+ 右方框（雕刻全称 + S/B）」自动换行不溢出；时间文案由「获得」改为「建造」。",
+        "滑条填充渐变改为从主题色派生（之前顶部写死琥珀金 #f0bc63，改成冷色调时上半截仍是金色、很突兀）；序列图例与未领取高亮也改为跟随主题色。",
+        "雕刻权重的 S / B 圆点改为固定色：S = 绿 #43D17A、B = 黄 #FFD54A（之前 S 用主题金色、B 用了蓝水晶的蓝）。",
+        "序列打开时的底栏改为固定在最上层，面板遮罩不再盖住【导入 / 追加 / 删除】。"],
+    tc:["修復：質量拉到 +∞ 仍會「可能遺漏」。+∞ 現在是硬約束 —— 每一行拾取的雕刻必須正好是該行權重最高者，顏色衝突時寧可減少行數，也絕不漏掉最高權重雕刻。",
+        "獲得順序卡片版式修正：每項改成「左方塊（一個字，底色=水晶色）+ 右方框（雕刻全稱 + S/B）」自動換行不溢出；時間文案由「獲得」改為「建造」。",
+        "滑條填充漸變改為從主題色派生（之前頂部寫死琥珀金 #f0bc63，改成冷色調時上半截仍是金色、很突兀）；序列圖例與未領取高亮也改為跟隨主題色。",
+        "雕刻權重的 S / B 圓點改為固定色：S = 綠 #43D17A、B = 黃 #FFD54A（之前 S 用主題金色、B 用了藍水晶的藍）。",
+        "序列打開時的底欄改為固定在最上層，面板遮罩不再蓋住【導入 / 追加 / 刪除】。"],
+    en:["Fixed may-miss still appearing when quality is +inf. +inf is now a hard constraint: every row must pick exactly the highest-weighted carving of that row; on colour conflicts it reduces rows instead of ever missing one.",
+        "Gain card rebuilt: each item is a colour square (one character, filled with that crystal colour) plus a box with the full carving name and S/B, wrapping without overflow; the time label changed from Gained to Built.",
+        "The slider fill gradient is now derived from the theme colour (the top stop used to be a hard-coded amber #f0bc63, which looked wrong with cool themes); the sequence legend and the unclaimed-row highlight follow the theme too.",
+        "The effect-weight S / B handles now use fixed colours: S = green #43D17A, B = yellow #FFD54A (S used the theme gold and B used the blue crystal colour).",
+        "The sequence bottom bar is fixed above the panel overlay, so Import / Append / Delete stay visible."]}},
+  {v:"1.5.3",d:"2026-10-11",
+   sum:{sc:"偏好滑条重做、模拟改概率、外观卡片、序列底栏、账号不限",
+        tc:"偏好滑條重做、模擬改機率、外觀卡片、序列底欄、帳號不限",
+        en:"New sliders, probability sim, appearance card, sequence bar, unlimited accounts"},
+   items:{
+    sc:["设置·偏好重做：权重卡片标题右侧新增「小眼睛」，可一键显示 / 隐藏模拟卡片。",
+        "权重卡片第一行改为【自动】【自定义】+ 行数数字框（选自动时隐藏数字框）。",
+        "水晶 / 时间 / 质量三条权重改成胶囊滑条：14px 轨道 + 26×18 半透明毛玻璃把手（backdrop-filter 模糊）；质量拖到最右显示 +∞，并触发星光流动与外发光。",
+        "预设改成四项菜单：完美质量（时间 -0.75 / 质量 +∞）、时间有限（时间 -1 / 质量 0.6）、最佳性价比（时间 -0.75 / 质量 0.9 / 行数 2）、原预设（水晶 -0.05 / 时间 -0.8 / 质量 1）。",
+        "模拟卡片：柱子数字改成概率%；消耗行改成绿 / 蓝 / 红 / 紫 颜色名（不再显示 G/B/R/P 字母）；新增「是否耗尽水晶：是 / 否」；「可能遗漏」按你当前的雕刻权重取前三名列出。",
+        "「水晶存量」标题右侧新增【算法调试】：四种颜色水晶的每天增加量可单独设置（可为负数）。",
+        "新增「外观」卡片：主题色 / 背景色 / 方框色 / 方框边框色四个调色盘（色块 + HEX 输入），外加深色 / 浅色 / 恢复默认三个预设；主题色用作文字时自动做亮度下限保护，太暗会提亮到可读。",
+        "获得顺序卡片：色块和雕刻名都用全称（绿色 / 蓝色 / 红色 / 紫色）；左侧颜色方块与右侧文字方框等高；等级固定配色 S = 绿 #43D17A、B = 黄 #FFD54A。",
+        "推荐方案：点大框即选中，默认选中第一行（最优），并列最佳的方案都标蓝，底部实时显示所需水晶（与方案里的消耗标记同格式）。",
+        "主页 / 历史 / 设置 三页平行切换（不再需要返回箭头）；打开「雕刻序列」时底栏变成【导入 / 追加 / 删除】。",
+        "设置·关于：应用图标、名称、版本居中；更新日志每个版本只显示一行，点击单独展开。",
+        "账号数量不再限制（原来最多 10 个）。",
+        "版本号改为 1.5.3；简体 / 繁体 / 英文三语文案补齐。"],
+    tc:["設定·偏好重做：權重卡片標題右側新增「小眼睛」，可一鍵顯示 / 隱藏模擬卡片。",
+        "權重卡片第一行改為【自動】【自訂】+ 行數數字框（選自動時隱藏數字框）。",
+        "水晶 / 時間 / 質量三條權重改成膠囊滑條：14px 軌道 + 26×18 半透明毛玻璃把手（backdrop-filter 模糊）；質量拖到最右顯示 +∞，並觸發星光流動與外發光。",
+        "預設改成四項選單：完美質量（時間 -0.75 / 質量 +∞）、時間有限（時間 -1 / 質量 0.6）、最佳性價比（時間 -0.75 / 質量 0.9 / 行數 2）、原預設（水晶 -0.05 / 時間 -0.8 / 質量 1）。",
+        "模擬卡片：柱子數字改成機率%；消耗行改成綠 / 藍 / 紅 / 紫 顏色名（不再顯示 G/B/R/P 字母）；新增「是否耗盡水晶：是 / 否」；「可能遺漏」按你目前的雕刻權重取前三名列。",
+        "「水晶存量」標題右側新增【演算法除錯】：四色水晶的每天增加量可單獨設定（可為負數）。",
+        "新增「外觀」卡片：主題色 / 背景色 / 方框色 / 方框邊框色四個調色盤（色塊 + HEX 輸入），另有深色 / 淺色 / 恢復預設三個預設；主題色用作文字時自動做亮度下限保護，太暗會提亮到可讀。",
+        "獲得順序卡片：色塊和雕刻名都用全稱（綠色 / 藍色 / 紅色 / 紫色）；左側顏色方塊與右側文字方框等高；等級固定配色 S = 綠 #43D17A、B = 黃 #FFD54A。",
+        "推薦方案：點大框即選中，預設選中第一行（最優），並列最佳的方案都標藍，底部即時顯示所需水晶（與方案裡的消耗標記同格式）。",
+        "主頁 / 歷史 / 設定 三頁平行切換（不再需要返回箭頭）；開啟「雕刻序列」時底欄變成【導入 / 追加 / 刪除】。",
+        "設定·關於：應用圖示、名稱、版本置中；更新日誌每個版本只顯示一行，點擊單獨展開。",
+        "帳號數量不再限制（原本最多 10 個）。",
+        "版本號改為 1.5.3；簡體 / 繁體 / 英文三語文案補齊。"],
+    en:["Preference redesigned: an eye button beside the Weights title shows / hides the Simulation card.",
+        "First row of the Weights card is now [Automatic] [Custom] plus a line-count box (hidden in Automatic).",
+        "Crystal / Time / Quality became pill sliders: 14px track with a 26×18 translucent frosted handle (backdrop-filter blur); dragging Quality fully right shows +∞ and triggers flowing starlight plus an outer glow.",
+        "Presets became a four-item menu: Perfect quality (Time -0.75 / Quality +∞), Limited time (Time -1 / Quality 0.6), Best value (Time -0.75 / Quality 0.9 / Lines 2), Original preset (Crystal -0.05 / Time -0.8 / Quality 1).",
+        "Simulation card: bar numbers are probabilities (%); the cost row now uses the colour names Green / Blue / Red / Purple (no G/B/R/P letters); added \"Crystals run out: Yes / No\"; \"May miss\" now lists the top three by your current effect weights.",
+        "The Crystals card gained an [Algorithm debug] button: the daily gain of each colour can be set separately and may be negative.",
+        "New Appearance card: theme / background / card / card-border colour pickers (swatch + HEX) plus Dark / Light / Reset presets. A theme colour used as text gets a brightness floor and is auto-lightened when too dark to stay readable.",
+        "Gain-order card: swatches and carving names are both spelled out (Green / Blue / Red / Purple); the swatch column and the text box are the same height; grades use fixed colours, S = green #43D17A and B = yellow #FFD54A.",
+        "Recommendations: tapping the whole row selects it, the first (best) row is selected by default, all tied-best rows are marked blue, and the required crystals are shown live at the bottom in the same format as the plans.",
+        "Home / History / Settings switch in parallel (no back arrows); while the carving sequence is open the bottom bar becomes [Import / Append / Delete].",
+        "About: icon, name and version are centred; the changelog shows one line per version and expands on tap.",
+        "No more account limit (previously 10).",
+        "Version bumped to 1.5.3; Simplified Chinese, Traditional Chinese and English text completed."]
+   }}
+];
+// 折叠时的单行摘要（旧版本补摘要，三语）
+const LOG_SUM={
+ "1.3.0":{sc:"清空雕刻序列 + xlsx 导入修复",tc:"清空雕刻序列 + xlsx 導入修正",en:"Clear sequence + xlsx import fixes"},
+ "1.2.1":{sc:"权重预设按钮 + 同分组上限",tc:"權重預設按鈕 + 同分組上限",en:"Weight preset button + same-score group cap"},
+ "1.2.0":{sc:"逐行采样模拟 + 解析放宽",tc:"逐行取樣模擬 + 解析放寬",en:"Per-row sampling simulation + looser parsing"},
+ "1.1.0":{sc:"界面按确认稿重做",tc:"介面按確認稿重做",en:"UI rebuilt to the approved draft"}
+};
+const CHANGELOG=CHANGELOG_NEW.concat(CHANGELOG_OLD).sort(function(a,b){return b.v.localeCompare(a.v,undefined,{numeric:true});});
+function logItems(e){ return Array.isArray(e.items)?e.items:((e.items&&(e.items[lang]||e.items.sc))||[]); }
+function logSum(e){
+  if(e.sum) return e.sum[lang]||e.sum.sc||"";
+  if(LOG_SUM[e.v]) return LOG_SUM[e.v][lang]||LOG_SUM[e.v].sc||"";
+  const it=logItems(e); return it.length?it[0]:"";
+}
+// 每个版本只显示一行，点击单独展开
 function renderLog(){
   const box=document.getElementById("logBox"); if(!box) return;
   let h="";
-  CHANGELOG.forEach(e=>{
-    h+='<div style="margin-bottom:12px"><span class="logv">v'+e.v+'</span><span class="logd">'+e.d+'</span>';
-    e.items.forEach(it=>{ h+='<div class="logi"><i></i><span>'+it+'</span></div>'; });
-    h+='</div>';
+  CHANGELOG.forEach((e,i)=>{
+    const items=logItems(e);
+    h+='<div class="logitem"><div class="loghead" data-log="'+i+'">'+
+       '<span class="logv">v'+e.v+'</span><span class="logd">'+e.d+'</span>'+
+       '<span class="logsum">'+escapeHtml(logSum(e))+'</span><span class="logar">▾</span></div>'+
+       '<div class="logbody" data-logbody="'+i+'">';
+    items.forEach(it=>{ h+='<div class="logi"><i></i><span>'+it+'</span></div>'; });
+    h+='</div></div>';
   });
   box.innerHTML=h;
+  box.querySelectorAll("[data-log]").forEach(hd=>hd.addEventListener("click",()=>{
+    const b=box.querySelector('[data-logbody="'+hd.dataset.log+'"]');
+    hd.classList.toggle("on"); if(b) b.classList.toggle("on");
+  }));
 }
 
 // ================= 初始化 =================
 loadState();
+applyTheme(); syncThemeUI(); syncAlgoUI(); initThemeUI(); initSliders(); syncSliderPositions();
 applyAccount(); renderSim(); applyLang(); setUru(); renderEfxW(); renderAccList();
-syncApplyBtn(); renderLog();
+syncApplyBtn(); syncLinesUI(); renderLog();
 window.addEventListener("beforeunload",saveState);
 
 </script>
