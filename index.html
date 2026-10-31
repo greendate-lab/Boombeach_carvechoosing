@@ -469,7 +469,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <div class="about-hero">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
             <div style="font-size:16px;font-weight:700;text-align:center">海岛奇兵雕刻选择</div>
-            <div class="ver" style="text-align:center">Version 1.6.1</div>
+            <div class="ver" style="text-align:center">Version 1.6.2</div>
           </div>
           <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
         </div>
@@ -2752,6 +2752,17 @@ const CHANGELOG_OLD=[
 ];
 // 1.5.3 更新日志（三语）
 const CHANGELOG_NEW=[
+  {v:"1.6.2",d:"2026-10-31",
+   sum:{sc:"登录后账号名改成用户名 + 删除账号可选注销",tc:"登入後帳號名改成使用者名稱 + 刪除帳號可選註銷",en:"Account renamed on sign-in + delete local or cloud"},
+   items:{sc:["账号页的【新建账号】正式换成【注册】和【登录】：注册只填用户名+密码，账号名就是用户名。",
+              "修复：从一个未登录的本地账号登录别人的云账号时，账号名还是原来那个——现在登录成功后账号名自动变成用户名。",
+              "删除账号改成先问：【删除本机数据】只清这台设备；【注销账号】连云端数据一起删（不可恢复）。"],
+          tc:["帳號頁的【新建帳號】正式換成【註冊】和【登入】：註冊只填使用者名稱+密碼，帳號名就是使用者名稱。",
+              "修正：從未登入的本機帳號登入別人的雲端帳號時，帳號名還是原本那個——現在會自動變成使用者名稱。",
+              "刪除帳號改成先問：【刪除本機資料】只清這台裝置；【註銷帳號】連雲端資料一起刪（無法復原）。"],
+          en:["Account page now has Register and Sign in; registering only asks username + password, and the account name is the username.",
+              "Fixed: signing into another cloud account from an unbound local account kept the old name — the account is renamed to the username now.",
+              "Deleting an account asks first: remove local data only, or delete the cloud account too (cannot be undone)."]}},
   {v:"1.6.1",d:"2026-10-31",
    sum:{sc:"注册/登录分开 + 云端本地冲突可选",tc:"註冊/登入分開 + 雲端本機衝突可選",en:"Separate register/sign-in + cloud-vs-local choice"},
    items:{sc:["账号页的【新建账号】拆成【注册】和【登录】；账号名就是用户名，不能重名。",
