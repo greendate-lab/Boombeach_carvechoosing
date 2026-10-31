@@ -576,6 +576,16 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
       <button class="mopt ghost" id="mergeCancel" data-i18n="cancel"></button>
     </div>
   </div>
+  <!-- 删除账号：本机 / 注销 -->
+  <div class="modal" id="delAccModal">
+    <div class="mcard">
+      <div class="mtitle"><h3 data-i18n="delAccTitle"></h3></div>
+      <div class="pinfo" style="font-size:12px;color:var(--mut);margin-bottom:10px"><b id="delAccName"></b></div>
+      <button class="mopt" id="delLocalBtn"><span class="mo-t" data-i18n="delLocalOnly"></span><span class="mo-s" data-i18n="delLocalSub"></span></button>
+      <button class="mopt" id="delCloudBtn" style="color:#e0645c"><span class="mo-t" data-i18n="delCloud"></span><span class="mo-s" data-i18n="delCloudSub"></span></button>
+      <button class="mopt ghost" id="delAccCancel" data-i18n="cancel"></button>
+    </div>
+  </div>
   <!-- 导入预设菜单 -->
   <div class="modal" id="importMenu">
     <div class="mcard">
@@ -1226,9 +1236,9 @@ const SYNC_I18N={
 };
 Object.keys(SYNC_I18N).forEach(function(l){ if(I18N[l]) Object.assign(I18N[l],SYNC_I18N[l]); });
 // 合并弹窗三语文案（单独覆盖，避免之前写串语言）
-Object.assign(I18N.sc, {mergeTitle:"本地和云端数据不一致",mergeInfo:"云端有 {cloud} 条记录；这台设备有 {rows} 行序列、{hist} 条历史。",useCloud:"使用云端数据（覆盖这台设备）",useLocal:"使用本地数据（本地优先，云端其它记录保留）",localAcc:"本地账号（未登录）",nameTakenLocal:"这台设备已有同名账号，请改用【登录】。"});
-Object.assign(I18N.tc, {mergeTitle:"本機和雲端資料不一致",mergeInfo:"雲端有 {cloud} 筆記錄；這台裝置有 {rows} 行序列、{hist} 筆歷史。",useCloud:"使用雲端資料（覆蓋這台裝置）",useLocal:"使用本機資料（本機優先，雲端其它記錄保留）",localAcc:"本機帳號（未登入）",nameTakenLocal:"這台裝置已有同名帳號，請改用【登入】。"});
-Object.assign(I18N.en, {mergeTitle:"Local and cloud data differ",mergeInfo:"Cloud has {cloud} records; this device has {rows} sequence rows and {hist} history entries.",useCloud:"Use cloud data (overwrite this device)",useLocal:"Use local data (local wins, cloud-only records are kept)",localAcc:"Local account (not signed in)",nameTakenLocal:"An account with this name already exists on this device — use Sign in instead."});
+Object.assign(I18N.sc, {mergeTitle:"本地和云端数据不一致",mergeInfo:"云端有 {cloud} 条记录；这台设备有 {rows} 行序列、{hist} 条历史。",useCloud:"使用云端数据（覆盖这台设备）",useLocal:"使用本地数据（本地优先，云端其它记录保留）",localAcc:"本地账号（未登录）",nameTakenLocal:"这台设备已有同名账号，请改用【登录】。",delAccTitle:"删除账号",delLocalOnly:"删除本机数据",delLocalSub:"只清掉这台设备的记录，云端不动。",delCloud:"注销账号",delCloudSub:"云端记录一并删除，不可恢复。"});
+Object.assign(I18N.tc, {mergeTitle:"本機和雲端資料不一致",mergeInfo:"雲端有 {cloud} 筆記錄；這台裝置有 {rows} 行序列、{hist} 筆歷史。",useCloud:"使用雲端資料（覆蓋這台裝置）",useLocal:"使用本機資料（本機優先，雲端其它記錄保留）",localAcc:"本機帳號（未登入）",nameTakenLocal:"這台裝置已有同名帳號，請改用【登入】。",delAccTitle:"刪除帳號",delLocalOnly:"刪除本機資料",delLocalSub:"只清掉這台裝置，雲端不動。",delCloud:"註銷帳號",delCloudSub:"雲端記錄一併刪除，無法復原。"});
+Object.assign(I18N.en, {mergeTitle:"Local and cloud data differ",mergeInfo:"Cloud has {cloud} records; this device has {rows} sequence rows and {hist} history entries.",useCloud:"Use cloud data (overwrite this device)",useLocal:"Use local data (local wins, cloud-only records are kept)",localAcc:"Local account (not signed in)",nameTakenLocal:"An account with this name already exists on this device — use Sign in instead.",delAccTitle:"Delete account",delLocalOnly:"Remove local data",delLocalSub:"Only this device is cleared; the cloud is untouched.",delCloud:"Delete cloud account",delCloudSub:"Cloud records are deleted too. This cannot be undone."});
 
 function applyLang(){
   document.querySelectorAll("[data-i18n]").forEach(e=>{
@@ -1458,12 +1468,7 @@ document.addEventListener("click",e=>{
   const del=e.target.closest("[data-del]");
   if(del){const k=del.dataset.del;
     if(Object.keys(ACCTS).length<=1){toast(lang==="en"?"At least one account required":"至少保留一个账号");return;}
-    if(confirm(lang==="en"?'Delete account "'+ACCTS[k].name+'"?':'删除账号 "'+ACCTS[k].name+'"？')){
-      delete ACCTS[k];
-      if(curAcc===k) curAcc=Object.keys(ACCTS)[0];
-      renderAccList(); applyAccount(); saveState();
-      toast(lang==="en"?"Account deleted":"账号已删除");
-    }
+    askDeleteAccount(k);
     return;}
   const row=e.target.closest(".accrow[data-acc]");
   if(row){saveCfg();curAcc=row.dataset.acc;applyAccount();renderAccList();saveState();if(window.SyncUI) SyncUI.onAccountSwitch();
@@ -2174,6 +2179,50 @@ function deletePreset(i){
   if(!confirm((I18N[lang]&&I18N[lang].delete)||"Delete")) return;
   list.splice(i,1); renderPresets(); saveState();
 }
+// ===== 删除账号：只删本机 / 注销云端 =====
+var _delKey = null;
+function askDeleteAccount(k) {
+  _delKey = k;
+  var a = ACCTS[k]; if (!a) return;
+  var on = !!(a.cloud && a.cloud.token);
+  document.getElementById("delAccName").textContent = a.name || k;
+  document.getElementById("delLocalBtn").style.display = "";
+  document.getElementById("delCloudBtn").style.display = on ? "" : "none";
+  document.getElementById("delAccModal").classList.add("show");
+}
+function closeDelAcc() { document.getElementById("delAccModal").classList.remove("show"); _delKey = null; }
+function deleteLocalOnly() {
+  var k = _delKey; if (!k) return closeDelAcc();
+  delete ACCTS[k];
+  if (curAcc === k) curAcc = Object.keys(ACCTS)[0];
+  closeDelAcc();
+  renderAccList(); applyAccount(); saveState();
+  if (window.SyncUI) SyncUI.render && SyncUI.render();
+  toast(lang === "en" ? "Removed from this device" : "已删除本机数据");
+}
+function deleteCloudAccount() {
+  var k = _delKey; if (!k) return closeDelAcc();
+  var a = ACCTS[k];
+  var c = a && a.cloud;
+  if (!c || !c.token) { toast((I18N[lang] && I18N[lang].syncOnlyLocal) || "未登录"); return closeDelAcc(); }
+  fetch("https://carving-sync.pages.dev/api/account", {
+    method: "DELETE",
+    headers: { "content-type": "application/json", "authorization": "Bearer " + c.token },
+    body: JSON.stringify({ confirm: true })
+  }).then(function (r) { return r.json().catch(function () { return {}; }); }).then(function (j) {
+      if (j && j.error) throw new Error(j.error);
+      delete ACCTS[k];
+      if (curAcc === k) curAcc = Object.keys(ACCTS)[0];
+      closeDelAcc();
+      renderAccList(); applyAccount(); saveState();
+      toast(lang === "en" ? "Account deleted" : "账号已注销");
+    }).catch(function (e) { toast(((I18N[lang] && I18N[lang].syncFail) || "同步失败") + ": " + (e.message || e)); });
+}
+document.addEventListener("click", function (e) {
+  if (e.target.closest("#delLocalBtn")) deleteLocalOnly();
+  else if (e.target.closest("#delCloudBtn")) deleteCloudAccount();
+  else if (e.target.closest("#delAccCancel") || e.target === document.getElementById("delAccModal")) closeDelAcc();
+});
 function applyPreset(k){
   const p=PRESETS[k]; if(!p) return;
   W.cry=p.cry; W.time=p.time; QUALITY_INF=(p.qual===null); W.qual=(p.qual===null)?1:p.qual;
@@ -3287,13 +3336,12 @@ var SyncUI = (function () {
     return request("POST", "/api/login", { username: user, password: pass, device: st.device })
       .then(function (r) {
         var key = null;
-        Object.keys(ACCTS).forEach(function (k) { if ((ACCTS[k].name || "") === user) key = k; });
+        // 已经有同名账号 → 直接切过去绑定；否则把"当前这个未登录账号"改名成用户名的名字
+        Object.keys(ACCTS).forEach(function (k) { if (k !== curAcc && (ACCTS[k].name || "") === user) key = k; });
         if (!key) {
-          key = acctKeyOf(user);
-          ACCTS[key] = {
-            name: user, crystals: Object.assign({}, DEFAULT_CRYSTALS), start: 1, seq: {}, hist: [],
-            cfg: { ws: [0, 0, 0], qinf: false, preference: "attack", linesMode: "auto", customN: 2 }
-          };
+          key = curAcc;
+          // key 固定不变（文档 key 跟着它），只改显示名
+          ACCTS[key].name = user;
         }
         curAcc = key;
         cloud();
