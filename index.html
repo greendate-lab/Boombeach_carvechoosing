@@ -3143,11 +3143,8 @@ var SyncUI = (function () {
       var a = ACCTS[curAcc];
       if (rc > 0 && localHasData(a)) {
         // 内容真不一样才问；刚同步过的两边一样，不该再弹
-        // 只比"数据"：账号文档里的 cfg（权重/预设）是设备各自的设置，不算冲突
-        function norm(key, str) {
-          if (key.indexOf("a:") !== 0) return str;
-          try { var o = JSON.parse(str); if (o) delete o.cfg; return JSON.stringify(o); } catch (e) { return str; }
-        }
+        // cfg 也算：设置不一样同样算"本地和云端不一致"
+        function norm(key, str) { return str; }
         var lm = {}, rm = {}, differ = false;
         SyncCore.collect(stateObj(), curAcc).forEach(function (d) { lm[d.key] = norm(d.key, JSON.stringify(d.json)); });
         docs.forEach(function (d) { if (!d.deleted) rm[d.key] = norm(d.key, JSON.stringify(d.json)); });
