@@ -3142,6 +3142,13 @@ var SyncUI = (function () {
         showMerge(rc, a);
         return 0;
       }
+      if (rc === 0) {
+        // 云端是空的：以本地为准（不能反过来把本地清掉）
+        c.rev = r.rev || 0;
+        snap = {};
+        refreshAll();
+        return syncNow();
+      }
       applyRemote(docs, r.rev);
       return syncNow();
     });
@@ -3176,16 +3183,25 @@ var SyncUI = (function () {
       return !d.deleted && !localMap[d.key];
     }).map(function (d) { return { key: d.key, deleted: true }; });
     snap = {};
-    return request("POST", "/api/sync", { since: c.rev, docs: localDocs.concat(tombs) }, c.token)
-      .then(function (r) {
-        c.rev = r.rev;
-        SyncCore.apply(stateObj(), r.docs || [], hooks());
-        snap = snapshot();
-        refreshAll(); saveState(); save();
-        pending = null; closeMerge();
-        toast(T("syncOK"));
-        return syncNow();
-      }).catch(function (e) { st.error = errText(e); render(); });
+    var all = localDocs.concat(tombs);
+    var chain = Promise.resolve();
+    for (var i = 0; i < all.length; i += 450) {
+      (function (chunk) {
+        chain = chain.then(function () {
+          return request("POST", "/api/sync", { since: c.rev, docs: chunk }, c.token).then(function (r) {
+            c.rev = r.rev;
+            SyncCore.apply(stateObj(), r.docs || [], hooks());
+          });
+        });
+      })(all.slice(i, i + 450));
+    }
+    return chain.then(function () {
+      snap = snapshot();
+      refreshAll(); saveState(); save();
+      pending = null; closeMerge();
+      toast(T("syncOK"));
+      return syncNow();
+    }).catch(function (e) { st.error = errText(e); render(); });
   }
 
   function syncNow() {
@@ -3201,9 +3217,17 @@ var SyncUI = (function () {
 
     var p = Promise.resolve();
     if (dirty.length) {
-      p = request("POST", "/api/sync", { since: c.rev, docs: dirty }, c.token).then(function (r) {
-        c.rev = r.rev; SyncCore.apply(S, r.docs || [], hooks());
-      });
+      // 一次最多 450 个文档（服务端限制 500），多了分批推
+      for (var i = 0; i < dirty.length; i += 450) {
+        (function (chunk) {
+          p = p.then(function () {
+            return request("POST", "/api/sync", { since: c.rev, docs: chunk }, c.token).then(function (r) {
+              c.rev = r.rev;
+              SyncCore.apply(S, r.docs || [], hooks());
+            });
+          });
+        })(dirty.slice(i, i + 450));
+      }
     }
     return p.then(function () {
       return request("GET", "/api/sync?since=" + c.rev, null, c.token);
