@@ -469,7 +469,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <div class="about-hero">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
             <div style="font-size:16px;font-weight:700;text-align:center">海岛奇兵雕刻选择</div>
-            <div class="ver" style="text-align:center">Version 1.6.0</div>
+            <div class="ver" style="text-align:center">Version 1.6.1</div>
           </div>
           <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
         </div>
@@ -2703,6 +2703,23 @@ const CHANGELOG_OLD=[
 ];
 // 1.5.3 更新日志（三语）
 const CHANGELOG_NEW=[
+  {v:"1.6.1",d:"2026-10-31",
+   sum:{sc:"注册/登录分开 + 云端本地冲突可选",tc:"註冊/登入分開 + 雲端本機衝突可選",en:"Separate register/sign-in + cloud-vs-local choice"},
+   items:{sc:["账号页的【新建账号】拆成【注册】和【登录】；账号名就是用户名，不能重名。",
+              "登录后如果本地和云端的数据或设置不一致，会先问用哪边：【使用云端数据】= 云端覆盖这台设备；【使用本地数据】= 本机覆盖云端同名记录，云端其它记录保留。选完两边立即对齐。",
+              "配置（权重/预设/雕刻权重/每日水晶）也参与判断并一起同步：选云端则本机配置变云端的，选本地则云端配置变本机的。",
+              "同步改为分批上传（每批 450 条），序列几百行的账号不再报 too many docs。",
+              "修复：【使用本地】曾把云端其余记录全部删除（导致云端数据被清空）——现在绝不再删。"],
+          tc:["帳號頁的【新建帳號】拆成【註冊】和【登入】；帳號名就是使用者名稱，不能重名。",
+              "登入後若本機和雲端資料或設定不一致，會先問用哪一邊：【使用雲端資料】= 雲端覆蓋這台裝置；【使用本機資料】= 本機覆蓋雲端同名記錄，雲端其它記錄保留。",
+              "設定（權重/預設/雕刻權重/每日水晶）也一起判斷與同步。",
+              "同步改為分批上傳（每批 450 筆），不再報 too many docs。",
+              "修正：【使用本機】曾把雲端其餘記錄全部刪除——現在絕不再刪。"],
+          en:["Account page: New account split into Register and Sign in; the account name is the username, so names must be unique.",
+              "After signing in, if local and cloud differ you pick a side: use cloud (overwrite this device) or use local (local overwrites same-named cloud records; others are kept). Both sides align immediately.",
+              "Settings (weights/presets/effect weights/daily crystals) take part in the comparison and sync.",
+              "Uploads are batched (450 docs per request), so large sequences no longer hit \"too many docs\".",
+              "Fixed: use-local used to delete every other cloud record (it wiped cloud data once); it never deletes now."]}},
   {v:"1.6.0",d:"2026-10-31",
    sum:{sc:"云同步：每个账号一组账密，多设备互通",tc:"雲端同步：每個帳號一組帳密，多裝置互通",en:"Cloud sync: one login per account, shared across devices"},
    items:{sc:["新增云同步：每个账号绑一组自己的云账密（用户名+密码，不需要邮箱）。换手机/换设备用同一组登录，就能看到同一份历史记录、雕刻序列、水晶和上一次选择。",
