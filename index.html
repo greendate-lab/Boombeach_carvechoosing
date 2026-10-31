@@ -322,6 +322,10 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
   padding-bottom:calc(env(safe-area-inset-bottom) + 2px);
   box-shadow:0 -8px 20px rgba(0,0,0,.5)}
 #seqView .mcard{max-height:calc(100vh - 150px)}
+.hdel{float:right;color:#e0645c;font-size:12px;line-height:1;padding:2px 3px;cursor:pointer;opacity:.75}
+.hdel:active{opacity:1}
+.pdel{float:right;color:#e0645c;font-size:12px;padding:2px 4px}
+.gmark{font-size:11px;font-weight:700;margin-left:1px;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -410,7 +414,8 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <button class="choice" data-grp="strat" data-pref="custom"><span data-i18n="sCustom"></span><span class="rd"></span></button>
         </div>
         <div class="card">
-          <h3 data-i18n="efxWeight"></h3>
+          <div class="whead"><h3 data-i18n="efxWeight"></h3>
+            <span class="chip" id="efxTopBtn" style="font-size:10.5px"></span></div>
           <div class="seg" id="efxSeg">
             <button class="on" data-efxpane="atk" data-i18n="efxAtk"></button>
             <button data-efxpane="def" data-i18n="efxDef"></button>
@@ -474,6 +479,16 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
       </div>
 
       <div class="pane" data-pane="account">
+        <div class="card" id="syncCard">
+          <h3 data-i18n="cloudSync"></h3>
+          <div id="syncStatus" class="pinfo" style="font-size:11.5px"></div>
+          <div id="syncProfiles"></div>
+          <div style="display:flex;gap:8px;margin-top:9px">
+            <button class="btn btn-s" id="syncOpen" data-i18n="cloudSync"></button>
+            <button class="btn btn-s" id="syncNow" data-i18n="syncNow"></button>
+            <button class="btn btn-s" id="syncLogout" data-i18n="syncLogout" style="display:none"></button>
+          </div>
+        </div>
         <div class="card">
           <h3 data-i18n="accTitle"></h3>
           <div id="accList"></div>
@@ -512,10 +527,8 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
   <div class="modal" id="presetMenu">
     <div class="mcard">
       <h3 data-i18n="preset"></h3>
-      <button class="mopt" data-preset="perfect"><span class="mo-t" data-i18n="pPerfect"></span><span class="mo-s" data-i18n="pPerfectSub"></span></button>
-      <button class="mopt" data-preset="time"><span class="mo-t" data-i18n="pTime"></span><span class="mo-s" data-i18n="pTimeSub"></span></button>
-      <button class="mopt" data-preset="value"><span class="mo-t" data-i18n="pValue"></span><span class="mo-s" data-i18n="pValueSub"></span></button>
-      <button class="mopt" data-preset="orig"><span class="mo-t" data-i18n="pOrig"></span><span class="mo-s" data-i18n="pOrigSub"></span></button>
+      <div id="presetList"></div>
+      <button class="mopt ghost" id="pmSave"><span class="mo-t" data-i18n="saveAsPreset"></span></button>
       <button class="mopt ghost" id="pmClose" data-i18n="close"></button>
     </div>
   </div>
@@ -529,6 +542,22 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
       <div class="cinput"><label><span class="dotc" style="background:var(--r)"></span><span data-i18n="cR"></span></label><input type="number" class="dailyg" data-c="红色" value="2"></div>
       <div class="cinput"><label><span class="dotc" style="background:var(--p)"></span><span data-i18n="cP"></span></label><input type="number" class="dailyg" data-c="紫色" value="2"></div>
       <div class="pinfo" style="font-size:11px;color:var(--mut)" data-i18n="algoHint"></div>
+    </div>
+  </div>
+
+  <!-- 云同步 -->
+  <div class="modal" id="syncModal">
+    <div class="mcard">
+      <div class="mtitle"><h3 data-i18n="cloudSync"></h3><button class="x" id="syncClose">×</button></div>
+      <div class="cinput"><label><span data-i18n="syncServer"></span></label><input id="syncBase" type="text" placeholder="https://xxx.workers.dev"></div>
+      <div class="cinput"><label><span data-i18n="syncUser"></span></label><input id="syncUser" type="text"></div>
+      <div class="cinput"><label><span data-i18n="syncPass"></span></label><input id="syncPass" type="password"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);margin:6px 0 2px"><input type="checkbox" id="syncRemember" checked><span data-i18n="syncRemember"></span></label>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-s" id="syncLogin" data-i18n="syncLogin"></button>
+        <button class="btn btn-s ghost" id="syncRegister" data-i18n="syncRegister"></button>
+      </div>
+      <div class="pinfo" id="syncMsg" style="font-size:11px;color:var(--mut2);margin-top:8px" data-i18n="syncHint"></div>
     </div>
   </div>
 
@@ -1174,6 +1203,14 @@ const I18N={
    showSim:"顯示 / 隱藏模擬",renameAsk:"為該帳號輸入新名稱",newAccName:"新帳號名稱"}
 };
 let lang="sc";
+// ================= 云同步文案（与 App 的 SYNC_I18N 对齐） =================
+const SYNC_I18N={
+ en:{cloudSync:"Cloud sync",syncServer:"Server URL",syncUser:"Username",syncPass:"Password",syncLogin:"Sign in",syncRegister:"Create account",syncLogout:"Sign out",syncNow:"Sync now",syncOK:"Synced",syncFail:"Sync failed",syncNever:"Not synced yet",syncAuto:"Auto sync (30s)",syncDevice:"This device",syncHint:"Username + password only, no email. Same login on every device.",syncing:"Syncing…",syncUpdated:"updated",syncRemember:"Remember password on this device",syncAccounts:"Saved accounts",syncAdd:"Add account",syncRemove:"Remove from this device",syncNeedPass:"Enter the password to sign in",syncErrLogin:"Wrong username or password",syncErrTaken:"Username already taken",syncBadInput:"Username 2-24 chars, password at least 6",syncLast:"Last sync",syncSwitchHint:"Tap to switch; saved accounts sync automatically",syncOnlyLocal:"Not signed in. Data stays on this device.",fromSrc:"by ",delHistAsk:"Delete this record?",syncTooMany:"Too many attempts, try again later",saveAsPreset:"+ Save current as preset",presetName:"Preset name",bOnTop:"B on top",sOnTop:"S on top"},
+ tc:{cloudSync:"雲端同步",syncServer:"伺服器位址",syncUser:"使用者名稱",syncPass:"密碼",syncLogin:"登入",syncRegister:"註冊新帳號",syncLogout:"登出",syncNow:"立即同步",syncOK:"已同步",syncFail:"同步失敗",syncNever:"尚未同步",syncAuto:"自動同步（30 秒）",syncDevice:"本機裝置",syncHint:"只用帳號密碼，不需要 email。多台裝置用同一組登入。",syncing:"同步中…",syncUpdated:"已更新",syncRemember:"在這台裝置記住密碼",syncAccounts:"已儲存的帳號",syncAdd:"新增帳號",syncRemove:"從本機移除",syncNeedPass:"請輸入密碼登入",syncErrLogin:"帳號或密碼錯誤",syncErrTaken:"此使用者名稱已被使用",syncBadInput:"帳號 2-24 字元，密碼至少 6 位",syncLast:"上次同步",syncSwitchHint:"點一下就切換；已儲存的帳號會自動同步",syncOnlyLocal:"未登入，資料只存在這台裝置。",fromSrc:"來自 ",delHistAsk:"刪除這條記錄？",syncTooMany:"嘗試次數過多，請稍後再試",saveAsPreset:"+ 儲存目前為預設",presetName:"預設名稱",bOnTop:"B 在上",sOnTop:"S 在上"},
+ sc:{cloudSync:"云同步",syncServer:"服务器地址",syncUser:"用户名",syncPass:"密码",syncLogin:"登录",syncRegister:"注册新账号",syncLogout:"退出登录",syncNow:"立即同步",syncOK:"已同步",syncFail:"同步失败",syncNever:"尚未同步",syncAuto:"自动同步（30 秒）",syncDevice:"本机设备",syncHint:"只用用户名密码，不需要邮箱。多台设备用同一组登录。",syncing:"同步中…",syncUpdated:"已更新",syncRemember:"在这台设备记住密码",syncAccounts:"已保存的账号",syncAdd:"添加账号",syncRemove:"从本机移除",syncNeedPass:"请输入密码登录",syncErrLogin:"用户名或密码错误",syncErrTaken:"这个用户名已被占用",syncBadInput:"用户名 2-24 个字符，密码至少 6 位",syncLast:"上次同步",syncSwitchHint:"点一下就切换；已保存的账号会自动同步",syncOnlyLocal:"未登录，数据只存在这台设备。",fromSrc:"来自 ",delHistAsk:"删除这条记录？",syncTooMany:"尝试次数过多，请稍后再试",saveAsPreset:"+ 保存当前为预设",presetName:"预设名称",bOnTop:"B 在上",sOnTop:"S 在上"}
+};
+Object.keys(SYNC_I18N).forEach(function(l){ if(I18N[l]) Object.assign(I18N[l],SYNC_I18N[l]); });
+
 function applyLang(){
   document.querySelectorAll("[data-i18n]").forEach(e=>{
     const k=e.dataset.i18n;
@@ -1228,6 +1265,21 @@ let DATA=ACCTS.main.seq;
 let curAcc="main";
 function todayPart(){const d=new Date();return (d.getMonth()+1)+"月"+d.getDate()+"日";}
 function todayWord(){return lang==="en"?"Today":"今天";}
+// 历史分组标题：只认存下来的日期，按真实今天算「今天/昨天/前天」；
+// 老数据里每组都冻着「今天」，隔天也不会变（1.5.10 修的就是这个）
+function histDayLabel(date){
+  const m=/(\d+)月(\d+)日/.exec(date||""); if(!m) return date||"";
+  const L=I18N[lang]||{};
+  const now=new Date(); const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  let that=new Date(now.getFullYear(), +m[1]-1, +m[2]);
+  if(that>today) that=new Date(now.getFullYear()-1, +m[1]-1, +m[2]);
+  const diff=Math.round((today-that)/86400000);
+  const ds=(lang==="en")?enDate(date):date;
+  if(diff===0) return (L.today||"今天")+" · "+ds;
+  if(diff===1) return (L.yesterday||"昨天")+" · "+ds;
+  if(diff===2) return (L.dayBefore||"前天")+" · "+ds;
+  return ds;
+}
 function todayLabel(){return todayWord()+" · "+todayPart();}
 function defaultAccName(l){return l==="en"?"your account":l==="tc"?"你的賬號":"你的账号";}
 function curStock(){
@@ -1246,10 +1298,10 @@ function renderHistory(){
   const flat=[];
   hist.forEach(g=>g.slice(1).forEach(it=>flat.push(it)));
   hist.forEach(group=>{
-    const g0=group[0][0], g1=group[0][1];
-    const dn=lang==="en"?(DAY_EN[g0]||g0):g0;
-    const ds=lang==="en"?enDate(g1):g1;
-    html+='<div class="hday">'+dn+"  "+ds+"</div>";
+    const g1=group[0][1];
+    const dn=histDayLabel(g1);
+    
+    html+='<div class="hday">'+dn+'</div>';
     group.slice(1).forEach(it=>{
       const idx=flat.indexOf(it);
       const claim=(idx>0)?flat[idx-1][1]:null;
@@ -1259,14 +1311,20 @@ function renderHistory(){
       const items=picks.map(c=>'<span class="hpick"><i class="cimg cimg-'+LETTERS[c[0]].toLowerCase()+'"></i>'+escapeHtml(efxName(c[1]))+" "+gradeTag(c[2])+'</span>').join("");
       const times=(claim==null)?("（"+L.buildTime+"："+it[1]+"　"+L.notClaimed+"）")
                               :("（"+L.buildTime+"："+it[1]+"　"+L.claimTime+"："+claim+"）");
-      html+='<div class="hitem"><div class="hrow"><span class="hrange">'+range+'</span>'+items+'</div>'+
-        '<div class="htime">'+times+'</div></div>';
+      const srcTag=(it[3]&&it[3].src)?("　·　"+(L.fromSrc||"来自 ")+it[3].src):"";
+      const eid=SyncCore.entryId(it,g1);
+      html+='<div class="hitem" data-hid="'+escapeHtml(eid)+'"><div class="hrow"><span class="hrange">'+range+'</span>'+items+'</div>'+
+        '<div class="htime">'+times+srcTag+
+        '<span class="hdel" data-hdel="'+escapeHtml(eid)+'" title="'+escapeHtml(L.delete||"删除")+'">'+trashIcon(12)+'</span></div></div>';
     });
   });
   box.innerHTML=html;
 }// 软件名跟随语言（App 1.4.3：简中/繁中/English）
 function syncAppName(){
   var el=document.getElementById("appTitle"); if(!el) return;
+  // 1.5.10：顶栏标题改成当前账号名（APP 名字在「关于」里还能看到）
+  var a=ACCTS[curAcc];
+  if(a&&a.name){ el.textContent=a.name; return; }
   var n=(I18N[lang]&&I18N[lang].appName)||(lang==="en"?"Boom Beach Carving Picker":(lang==="tc"?"海島奇兵雕刻選擇":"海岛奇兵雕刻选择"));
   el.textContent=n;
 }
@@ -1278,6 +1336,47 @@ function renderRound(){
   document.getElementById("startHint").innerHTML=
     lang==="en"?"Last recorded to "+last+", defaults to next.":"上次记录到第 "+last+" 行，默认下一行";
 }
+// ===== 每个账号自己的配置（1.5.10 对齐 App：外观和语言仍是全局）=====
+function applyCfg(cfg){
+  if(!cfg) return;
+  if(cfg.ws && cfg.ws.length===3){
+    const w=document.querySelectorAll(".ws");
+    if(w.length===3){ w[0].value=cfg.ws[0]; w[1].value=cfg.ws[1]; w[2].value=cfg.ws[2]; }
+    syncWFromWs();
+    // App 用 ws[2]=1.01 表示 +∞；网页用 qinf 标记，两边都认
+    if(cfg.qinf!==undefined) QUALITY_INF=!!cfg.qinf;
+    if(+cfg.ws[2]>=1.005) { QUALITY_INF=true; W.qual=1; }
+  }
+  if(cfg.preference){
+    PREFERENCE=cfg.preference;
+    document.querySelectorAll('.choice[data-grp=strat]').forEach(x=>x.classList.toggle("on",x.dataset.pref===PREFERENCE));
+  }
+  if(cfg.linesMode) linesMode=cfg.linesMode;
+  if(cfg.customN) customN=Math.max(1,Math.min(4,cfg.customN));
+  if(cfg.efxW) Object.keys(EFX_W).forEach(n=>{
+    const s=cfg.efxW[n]; if(!s) return;
+    if(s.S!==undefined) EFX_W[n].S=s.S;
+    if(s.B!==undefined) EFX_W[n].B=s.B;
+  });
+  const daily=cfg.dailyGain||cfg.daily;   // App 写 dailyGain，旧网页写 daily
+  if(daily) COLORS.forEach(c=>{ if(daily[c]!==undefined&&isFinite(+daily[c])) DAILY_GAIN_C[c]=+daily[c]; });
+  efxNeedSort=true;
+  try{ syncLinesUI(); }catch(e){}
+  try{ renderEfxW(); }catch(e){}
+  try{ syncAlgoUI(); }catch(e){}
+  try{ renderSim(); }catch(e){}
+}
+function saveCfg(){
+  const a=ACCTS[curAcc]; if(!a) return;
+  // 以内存里的 W 为准（拖动滑条时 .ws 隐藏输入不一定会同步）
+  // 保留旧 cfg 里的其它字段（预设列表等），只覆盖界面上这几个
+  // +∞ 统一写成 1.01（与 App 一致），字段名也用 dailyGain
+  const qv=QUALITY_INF?1.01:Math.max(-1,Math.min(1,W.qual));
+  a.cfg=Object.assign({}, a.cfg||{}, {
+          ws:[W.cry, W.time, qv], qinf:QUALITY_INF,
+          preference:PREFERENCE, linesMode:linesMode, customN:customN,
+          efxW:JSON.parse(JSON.stringify(EFX_W)), dailyGain:Object.assign({},DAILY_GAIN_C) });
+}
 function applyAccount(){
   const a=ACCTS[curAcc];
   DATA=ACCTS[curAcc].seq||{};
@@ -1285,7 +1384,13 @@ function applyAccount(){
   document.getElementById("startLine").value=a.start;
   document.querySelectorAll(".accrow[data-acc]").forEach(x=>
     x.classList.toggle("on",x.dataset.acc===curAcc));
+  if(a.cfg) applyCfg(a.cfg);   // 切账号：把这个账号自己的权重/预设搬进来
   syncAppName(); renderRound(); renderHistory(); renderHome(); renderGain();
+}
+// 统一垃圾桶图标（红色描边，和 App 的矢量图标一致）
+const TRASH_SVG='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14"/><path d="M10 7V5h4v2"/><path d="M8 7l1 12h6l1-12"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>';
+function trashIcon(size){
+  return TRASH_SVG.replace('width="13" height="13"','width="'+(size||13)+'" height="'+(size||13)+'"');
 }
 function escapeHtml(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function renderAccList(){
@@ -1321,7 +1426,7 @@ document.addEventListener("click",e=>{
     }
     return;}
   const row=e.target.closest(".accrow[data-acc]");
-  if(row){curAcc=row.dataset.acc;applyAccount();renderAccList();saveState();
+  if(row){saveCfg();curAcc=row.dataset.acc;applyAccount();renderAccList();saveState();
     toast((lang==="en"?"Switched to ":"已切换账号：")+ACCTS[curAcc].name);return;}
   const na=e.target.closest("#newAcc");
   if(na){
@@ -1329,7 +1434,8 @@ document.addEventListener("click",e=>{
     if(nn&&nn.trim()){
       let n=1; while(ACCTS["acc"+n]) n++;              // 账号数量不限
       const key="acc"+n;
-      ACCTS[key]={name:nn.trim(),crystals:{...DEFAULT_CRYSTALS},start:1,seq:{},hist:[]};
+      ACCTS[key]={name:nn.trim(),crystals:{...DEFAULT_CRYSTALS},start:1,seq:{},hist:[],
+      cfg:{ws:[0,0,0],qinf:false,preference:"attack",linesMode:"auto",customN:2,daily:{"绿色":2,"蓝色":2,"红色":2,"紫色":2}}};
       curAcc=key; renderAccList(); applyAccount(); saveState();
       toast((lang==="en"?"Account created: ":"已创建账号：")+ACCTS[key].name);
     }
@@ -1426,7 +1532,10 @@ function renderSeqView(){
     COLORS.forEach(c=>{
       const v=d[c];
       if(v&&v[0]){
-        html+='<td><div class="cellw"><span class="enm">'+escapeHtml(efx2(v[0]))+'</span>'+gradeTag(v[1])+'</div></td>';
+        const mk=markOf(k,c);
+        const mkColor=(String(v[1])==="S"?"#43D17A":"#FFD54A");
+        html+='<td><div class="cellw"><span class="enm">'+escapeHtml(efx2(v[0]))+'</span>'+gradeTag(v[1])+
+          (mk?('<span class="gmark" style="color:'+mkColor+'">'+mk+'</span>'):"")+'</div></td>';
       }else{
         html+='<td></td>';
       }
@@ -1698,15 +1807,82 @@ function parseSeq(rows2d){
     nd[String(rno)]=entry; cnt++;
   });
   return Object.keys(nd).length?nd:null;
-}function applySeq(nd){
+}// ===== 追加：按雕刻名对齐、校验后 5 行、记录 S/B 升降（与 App 的 planAppend 一致）=====
+function nameOfRow(row,c){ const v=row&&row[c]; return (v&&v.length)?String(v[0]):""; }
+function rowNameEq(a,b){
+  let any=false;
+  for(const c of COLORS){
+    const na=nameOfRow(a,c); if(!na) continue;
+    any=true; if(nameOfRow(b,c)!==na) return false;
+  }
+  return any;
+}
+function planAppend(oldSeq,nd){
+  const oldRows=Object.keys(oldSeq).map(Number).filter(n=>n>0).sort((x,y)=>x-y);
+  const newRows=Object.keys(nd).map(Number).filter(n=>n>0).sort((x,y)=>x-y);
+  const oldMax=oldRows.length?oldRows[oldRows.length-1]:0;
+  const result={}; let align=null;
+  if(oldRows.length&&newRows.length){
+    const first=nd[String(newRows[0])];
+    for(let i=oldRows.length-1;i>=0;i--){
+      if(rowNameEq(first,oldSeq[String(oldRows[i])])){ align=oldRows[i]; break; }
+    }
+  }
+  let tailOk=false;
+  if(align!==null){
+    tailOk=true;
+    for(let i=1;i<=5;i++){
+      if(i>=newRows.length) break;
+      const orow=oldSeq[String(align+i)];
+      if(!orow) break;
+      if(!rowNameEq(nd[String(newRows[i])],orow)){ tailOk=false; break; }
+    }
+    oldRows.forEach(r=>{ if(r<align) result[String(r)]=oldSeq[String(r)]; });
+    newRows.forEach((r,i)=>{ result[String(align+i)]=nd[String(r)]; });
+  }else{
+    oldRows.forEach(r=>{ result[String(r)]=oldSeq[String(r)]; });
+    newRows.forEach((r,i)=>{ result[String(oldMax+1+i)]=nd[String(r)]; });
+  }
+  const marks={};
+  if(align!==null){
+    for(let i=0;i<newRows.length;i++){
+      const orow=oldSeq[String(align+i)]; if(!orow) break;
+      const nrow=nd[String(newRows[i])];
+      for(const c of COLORS){
+        const ov=orow[c], nv=nrow[c];
+        if(!ov||!nv||ov.length<2||nv.length<2) continue;
+        if(ov[0]!==nv[0]) continue;
+        if(ov[1]===nv[1]) continue;
+        marks[(align+i)+"|"+c]= (nv[1]==="S"?"\u2191":"\u2193");
+      }
+    }
+  }
+  return {align:align,tailOk:tailOk,seq:result,marks:marks};
+}
+function markOf(k,c){
+  const a=ACCTS[curAcc]; const m=(a&&a.cfg&&a.cfg.gradeMarks)||{};
+  return m[k+"|"+c]||"";
+}
+function applySeq(nd){
   if(!nd){toast(lang==="en"?"Header not found (need 次数/绿色/蓝色/红色/紫色 columns)":"未找到表头（需含 次数/绿/蓝/红/紫 列）");return;}
   const ks=Object.keys(nd);
   if(!ks.length){toast(lang==="en"?"No valid rows parsed":"未解析到有效数据行");return;}
-  if(importMode==="append"){                      // 追加：保留已有行，只补新行
-    let added=0;
-    ks.forEach(k=>{ if(!DATA[k]) added++; DATA[k]=nd[k]; });
+  if(importMode==="append"){                      // 追加：按名字对齐，替换重叠行，记 S/B 升降
+    const plan=planAppend(DATA, nd);
+    if(plan.align===null){
+      if(!confirm(lang==="en"?"No row with the same carving names was found. Append the new rows at the end anyway?":
+        (lang==="tc"?"找不到同名雕刻行。仍要把新資料接在最後嗎？":"找不到同名雕刻行。仍要把新数据接在最后吗？"))) return;
+    }else if(!plan.tailOk){
+      if(!confirm(lang==="en"?"The next 5 rows do not match — it may be a different account. Replace anyway?":
+        (lang==="tc"?"後 5 行不一致，可能不是同一帳號。仍要替換嗎？":"后 5 行不一致，可能不是同一个账号。仍要替换吗？"))) return;
+    }
+    Object.keys(DATA).forEach(k=>delete DATA[k]);
+    Object.keys(plan.seq).forEach(k=>{ DATA[k]=plan.seq[k]; });
+    const a=ACCTS[curAcc];
+    a.cfg=a.cfg||{}; a.cfg.gradeMarks=plan.marks;
     renderSim();renderHome();renderRound();renderSeqView();saveState();
-    toast(added?(I18N[lang].seqAppendDone+added):I18N[lang].seqAppendNone);
+    const marksN=Object.keys(plan.marks).length;
+    toast((I18N[lang].seqAppendDone||"已追加：")+Object.keys(DATA).length+(marksN?("  · "+marksN+(lang==="en"?" grade changes":" 处等级变化")):""));
     return;
   }
   Object.keys(DATA).forEach(k=>delete DATA[k]);
@@ -1809,6 +1985,7 @@ const LSKEY="carving_app_v1";
 function saveState(){
   try{
     syncWsFromW();
+    try{ saveCfg(); }catch(e){}
     const w=document.querySelectorAll(".ws");
     const cry={}; document.querySelectorAll(".cryst").forEach(i=>cry[i.dataset.c]=+i.value||0);
     if(ACCTS[curAcc]) ACCTS[curAcc].start=parseInt(document.getElementById("startLine").value)||1;
@@ -1890,6 +2067,83 @@ const PRESETS={
   value:  {cry:0,    time:-0.75, qual:0.9,  n:2},
   orig:   {cry:-0.05,time:-0.8,  qual:1,    n:null}
 };
+// ===== 权重预设：系统 4 套 + 用户自己存的，同一个列表（每个账号各一份）=====
+// 存储格式与 App 完全一致：data = {wTime, wQual, preference, linesMode, customN}
+// 这样网页和 APK 同步 preset 不会互相读不懂。
+function presetStore(){
+  const a=ACCTS[curAcc]; if(!a) return [];
+  a.cfg=a.cfg||{};
+  if(!a.cfg.presets) a.cfg.presets={weight:[],efx:[]};
+  if(!a.cfg.presets.weight) a.cfg.presets.weight=[];
+  const list=a.cfg.presets.weight;
+  if(!list.length){
+    ["perfect","time","value","orig"].forEach(function(k){
+      const p=PRESETS[k]; if(!p) return;
+      list.push({name:presetName(k), data:presetData(p.time, (p.qual===null?1.01:p.qual), (p.n?"custom":"auto"), (p.n||2), "attack")});
+    });
+  }
+  return list;
+}
+function presetData(wTime,wQual,linesMode,customN,preference){
+  return {wTime:+wTime||0, wQual:+wQual||0, preference:preference||"attack",
+          linesMode:linesMode||"auto", customN:+customN||2};
+}
+function presetName(k){
+  const L=I18N[lang]||{};
+  if(k==="perfect") return L.pPerfect||"Perfect quality";
+  if(k==="time") return L.pTime||"Limited time";
+  if(k==="value") return L.pValue||"Best value";
+  return L.pOrig||"Preset -0.8 / 1";
+}
+function presetSub(p){
+  const d=p.data||{}, L=I18N[lang]||{};
+  const q=(+d.wQual>=1.005)?("+∞"):(+d.wQual||0).toFixed(2);
+  const rows=(d.linesMode==="custom"?(" · "+(d.customN||2)+" "+(L.line||"lines")):" · "+(L.lAuto||"Auto"));
+  return (L.wTime||"Time")+" "+(+d.wTime||0).toFixed(2)+" · "+(L.wQuality||"Quality")+" "+q+rows;
+}
+function renderPresets(){
+  const list=presetStore(), box=document.getElementById("presetList"); if(!box) return;
+  box.innerHTML=list.map(function(p,i){
+    return '<div class="mopt" data-pi="'+i+'"><span class="mo-t">'+escapeHtml(p.name)+'</span>'+
+      '<span class="mo-s">'+escapeHtml(presetSub(p))+'</span>'+
+      '<span class="pdel" data-pdel="'+i+'" title="删除">'+trashIcon(12)+'</span></div>';
+  }).join("");
+}
+function applyStoredPreset(i){
+  const list=presetStore(), p=list[i]; if(!p) return;
+  const d=p.data||{};
+  W.cry=0; W.time=+d.wTime||0;
+  QUALITY_INF=(+d.wQual>=1.005);
+  W.qual=QUALITY_INF?1:(+d.wQual||0);
+  syncWsFromW();
+  linesMode=(d.linesMode==="custom"?"custom":"auto");
+  if(d.customN) customN=Math.max(1,Math.min(4,+d.customN));
+  if(d.preference) PREFERENCE=d.preference;
+  try{ syncLinesUI(); }catch(e){}
+  try{ syncSliderPositions(); }catch(e){}
+  try{ renderSim(); }catch(e){}
+  try{ renderHome(); }catch(e){}
+  try{ document.querySelectorAll('.choice[data-grp=strat]').forEach(x=>x.classList.toggle("on",x.dataset.pref===PREFERENCE)); }catch(e){}
+  saveState();
+  toast((I18N[lang]&&I18N[lang].presetApplied)||"Preset applied");
+}
+function saveCurrentPreset(){
+  const list=presetStore();
+  const dflt="预设 "+(list.length+1);
+  const name=prompt((I18N[lang]&&I18N[lang].presetName)||"Preset name", dflt);
+  if(name===null) return;
+  const nm=String(name).trim(); if(!nm) return;
+  list.push({name:nm, data:presetData(W.time, QUALITY_INF?1.01:W.qual,
+    linesMode, customN, PREFERENCE)});
+  renderPresets(); saveState();
+  toast((I18N[lang]&&I18N[lang].saved)||"Saved");
+}
+function deletePreset(i){
+  const list=presetStore();
+  if(i<0||i>=list.length) return;
+  if(!confirm((I18N[lang]&&I18N[lang].delete)||"Delete")) return;
+  list.splice(i,1); renderPresets(); saveState();
+}
 function applyPreset(k){
   const p=PRESETS[k]; if(!p) return;
   W.cry=p.cry; W.time=p.time; QUALITY_INF=(p.qual===null); W.qual=(p.qual===null)?1:p.qual;
@@ -1906,9 +2160,16 @@ if(presetMenu){
   document.getElementById("wPreset").addEventListener("click",()=>presetMenu.classList.add("show"));
   document.getElementById("pmClose").addEventListener("click",()=>presetMenu.classList.remove("show"));
   presetMenu.addEventListener("click",e=>{ if(e.target===presetMenu) presetMenu.classList.remove("show"); });
-  presetMenu.querySelectorAll("[data-preset]").forEach(b=>b.addEventListener("click",()=>{
-    presetMenu.classList.remove("show"); applyPreset(b.dataset.preset);
-  }));
+  // 1.5.10 对齐：系统预设并进用户列表，一层搞定（应用 / 删除 / 保存当前）
+  document.getElementById("wPreset").addEventListener("click",renderPresets);
+  document.getElementById("pmSave").addEventListener("click",saveCurrentPreset);
+  const pl=document.getElementById("presetList");
+  if(pl) pl.addEventListener("click",function(e){
+    const del=e.target.closest?e.target.closest("[data-pdel]"):null;
+    if(del){ e.stopPropagation(); deletePreset(+del.getAttribute("data-pdel")); return; }
+    const row=e.target.closest?e.target.closest("[data-pi]"):null;
+    if(row){ presetMenu.classList.remove("show"); applyStoredPreset(+row.getAttribute("data-pi")); }
+  });
 }
 // ================= 胶囊滑条：14px 轨道 + 26×18 半透明毛玻璃把手 =================
 function setSliderPos(id,t){ const el=document.getElementById(id); if(el&&el._paint) el._paint(t); }
@@ -2127,12 +2388,27 @@ function renderEfxW(){
     names=efxOrder;
   }
   const box=document.getElementById("efxList");
+  // 哪根柄在上层：B 在上（黄）时 B 可拖；S 在上（绿）时 S 可拖（与 App 1.5.9 的双掷一致）
+  const bTop=(ACCTS[curAcc]&&ACCTS[curAcc].cfg&&ACCTS[curAcc].cfg.efxBOnTop!==false);
+  const topBtn=document.getElementById("efxTopBtn");
+  if(topBtn){
+    topBtn.textContent=(bTop?(I18N[lang].bOnTop||"B 在上"):(I18N[lang].sOnTop||"S 在上"));
+    topBtn.onclick=function(){
+      const a=ACCTS[curAcc]; a.cfg=a.cfg||{};
+      a.cfg.efxBOnTop=!(a.cfg.efxBOnTop!==false);
+      renderEfxW(); saveState();
+    };
+  }
+  const inputs=(w)=>bTop
+    ? `<input type="range" class="es" min="0" max="1" step="0.01" value="${w.S}" style="z-index:1">
+       <input type="range" class="eb" min="0" max="1" step="0.01" value="${w.B}" style="z-index:2">`
+    : `<input type="range" class="eb" min="0" max="1" step="0.01" value="${w.B}" style="z-index:1">
+       <input type="range" class="es" min="0" max="1" step="0.01" value="${w.S}" style="z-index:2">`;
   let html=names.map(n=>{
     const w=EFX_W[n];
     return `<div class="efxw" data-e="${n}"><span class="efxw-n">${efxName(n)}</span>
       <div class="dual"><div class="track"></div>
-        <input type="range" class="es" min="0" max="1" step="0.01" value="${w.S}">
-        <input type="range" class="eb" min="0" max="1" step="0.01" value="${w.B}">
+        ${inputs(w)}
       </div><span class="efxw-v">S ${w.S.toFixed(2)} · B ${w.B.toFixed(2)}</span></div>`;
   }).join("");
   box.innerHTML=html||"";
@@ -2345,7 +2621,7 @@ document.getElementById("confirmBtn").addEventListener("click",()=>{
   const newStart=start+p.n;
   document.getElementById("startLine").value=newStart;
   const a=ACCTS[curAcc];
-  const entry=[newStart,t,p.picks.map(x=>[x[1],x[2],x[3]])];
+  const entry=[newStart,t,p.picks.map(x=>[x[1],x[2],x[3]]),{id:syncNewId(),src:(window.SyncUI?SyncUI.state.device:"网页")}];
   if(a.hist[0]&&a.hist[0][0][1]===todayPart()) a.hist[0].splice(1,0,entry);
   else a.hist.unshift([[todayWord(),todayPart()],entry]);
   undoStack.push({from:start,to:newStart,entry,gainBefore,gainAfter}); redoStack=[]; setUru();
@@ -2575,11 +2851,369 @@ function renderLog(){
   }));
 }
 
+/* ==SYNC-CORE-START== */
+// 云同步核心（无 DOM 依赖，方便用 Node 直接测）：状态 <-> 文档
+function syncNewId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+var SyncCore = (function () {
+  function entryId(e, date) {
+    return (e && e[3] && e[3].id) ? e[3].id : (date + "#" + e[0] + "#" + e[1]);
+  }
+  function collect(S) {
+    var out = [];
+    out.push({ key: "meta", json: {
+      schema: 2, curAcc: S.curAcc, lang: S.lang,
+      colors: S.colors || {}, appearancePresets: S.ap || []
+    }});
+    Object.keys(S.ACCTS).forEach(function (k) {
+      var a = S.ACCTS[k];
+      var j = { name: a.name, start: a.start, crystals: a.crystals,
+                seq: a.seq || {}, gain: a.gain || null, gainTime: a.gainTime || null };
+      if (a.cfg) j.cfg = a.cfg;                 // 每个账号自己的配置，原样带过去
+      out.push({ key: "a:" + k, json: j });
+      (a.hist || []).forEach(function (g) {
+        var date = g[0][1];
+        g.slice(1).forEach(function (e) {
+          out.push({ key: "h:" + k + ":" + entryId(e, date), json: { date: date, entry: e } });
+        });
+      });
+    });
+    return out;
+  }
+  function apply(S, docs, hooks) {
+    hooks = hooks || {};
+    var changed = 0;
+    var first = (docs || []).filter(function (d) { return d.key === "meta" || d.key.indexOf("a:") === 0; });
+    var second = (docs || []).filter(function (d) { return d.key.indexOf("h:") === 0; });
+    first.concat(second).forEach(function (d) {
+      if (d.key === "meta") {
+        if (d.deleted) return;
+        var m = d.json || {};
+        if (m.colors) S.colors = m.colors;
+        if (m.appearancePresets) S.ap = m.appearancePresets;
+        if (hooks.setLang && m.lang) hooks.setLang(m.lang);
+        if (m.curAcc && S.ACCTS[m.curAcc] && hooks.setAcc) hooks.setAcc(m.curAcc);
+        changed++;
+        return;
+      }
+      var parts = d.key.split(":");
+      var kind = parts[0], accKey = parts[1];
+      if (kind === "a") {
+        if (d.deleted) {
+          if (S.ACCTS[accKey] && Object.keys(S.ACCTS).length > 1) {
+            delete S.ACCTS[accKey];
+            if (S.curAcc === accKey && hooks.setAcc) hooks.setAcc(Object.keys(S.ACCTS)[0]);
+            changed++;
+          }
+          return;
+        }
+        var a = S.ACCTS[accKey] || { name: accKey, crystals: {}, start: 1, seq: {}, hist: [] };
+        var j = d.json || {};
+        if (j.name !== undefined) a.name = j.name;
+        if (j.start !== undefined) a.start = j.start;
+        if (j.crystals) a.crystals = j.crystals;
+        if (j.seq) a.seq = j.seq;
+        if (j.cfg) a.cfg = j.cfg;
+        if (j.gain !== undefined) a.gain = j.gain;
+        if (j.gainTime !== undefined) a.gainTime = j.gainTime;
+        if (!a.hist) a.hist = [];
+        S.ACCTS[accKey] = a;
+        changed++;
+        return;
+      }
+      if (kind === "h") {
+        var acc = S.ACCTS[accKey];
+        if (!acc) return;
+        var id = parts.slice(2).join(":");
+        if (!acc.hist) acc.hist = [];
+        if (d.deleted) {
+          var before = acc.hist.length;
+          for (var i = 0; i < acc.hist.length; i++) {
+            var g0 = acc.hist[i];
+            for (var x = g0.length - 1; x >= 1; x--) {
+              if (entryId(g0[x], g0[0][1]) === id) g0.splice(x, 1);
+            }
+          }
+          acc.hist = acc.hist.filter(function (g) { return g.length > 1; });
+          if (acc.hist.length !== before) changed++;
+          return;
+        }
+        var jj = d.json || {};
+        var date = jj.date, entry = jj.entry;
+        if (!date || !entry) return;
+        var grp = null;
+        acc.hist.some(function (g) { if (g[0][1] === date) { grp = g; return true; } return false; });
+        if (!grp) { grp = [["", date]]; acc.hist.push(grp); }
+        var e2 = [entry[0], entry[1], entry[2]];
+        var meta = { id: id };
+        if (entry[3] && entry[3].src) meta.src = entry[3].src;
+        e2[3] = meta;
+        var found = false;
+        for (var q = 1; q < grp.length; q++) {
+          if (entryId(grp[q], date) === id) { grp[q] = e2; found = true; break; }
+        }
+        if (!found) { grp.push(e2); grp.slice(1).sort(function (p1, p2) {
+          return String(p2[1]).localeCompare(String(p1[1]));
+        }); }
+        changed++;
+      }
+    });
+    return changed;
+  }
+  return { collect: collect, apply: apply, entryId: entryId, newId: syncNewId };
+})();
+/* ==SYNC-CORE-END== */
+
+/* ==SYNC-UI-START== */
+var SyncUI = (function () {
+  var LS = "carving_sync_v2";
+  var st = { base: "", user: "", token: "", rev: 0, device: "", profiles: [],
+             auto: true, lastOk: 0, error: "", colors: null, ap: null, busy: false, changed: 0 };
+  var snap = {};
+
+  function el(id) { return document.getElementById(id); }
+  function val(id) { var e = el(id); return e ? e.value : ""; }
+  function chk(id) { var e = el(id); return !!(e && e.checked); }
+  function norm(u) { return String(u || "").replace(/\/+$/, ""); }
+  function T(k) { return (I18N[lang] && I18N[lang][k]) || k; }
+
+  function load() {
+    try {
+      var d = JSON.parse(localStorage.getItem(LS) || "null");
+      if (d) {
+        st.base = d.base || ""; st.user = d.user || ""; st.token = d.token || "";
+        st.rev = d.rev || 0; st.device = d.device || ""; st.profiles = d.profiles || [];
+        st.auto = d.auto !== false; st.lastOk = d.lastOk || 0;
+      }
+    } catch (e) {}
+    if (!st.device) st.device = "网页·" + Date.now().toString(36).slice(-3);
+  }
+  function save() {
+    try {
+      localStorage.setItem(LS, JSON.stringify({ base: st.base, user: st.user, token: st.token,
+        rev: st.rev, device: st.device, profiles: st.profiles, auto: st.auto, lastOk: st.lastOk }));
+    } catch (e) {}
+  }
+  function stateObj() { return { ACCTS: ACCTS, curAcc: curAcc, lang: lang, colors: st.colors, ap: st.ap }; }
+  function hooks() {
+    return {
+      setLang: function (l) { if (I18N[l]) { lang = l; applyLang(); } },
+      setAcc: function (k) { if (ACCTS[k]) { curAcc = k; } }
+    };
+  }
+
+  function request(method, path, body) {
+    var headers = { "accept": "application/json" };
+    if (body) headers["content-type"] = "application/json";
+    if (st.token) headers["authorization"] = "Bearer " + st.token;
+    return fetch(norm(st.base) + path, {
+      method: method, headers: headers, body: body ? JSON.stringify(body) : undefined
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) { var e = new Error(j.error || ("HTTP " + r.status)); e.status = r.status; throw e; }
+        return j;
+      });
+    });
+  }
+
+  function errText(e) {
+    var s = String((e && e.message) || e || "");
+    if (s === "bad credentials") return T("syncErrLogin");
+    if (s === "username taken") return T("syncErrTaken");
+    if (s === "bad username" || s === "bad password") return T("syncBadInput");
+    if (/too many attempts/i.test(s)) return T("syncTooMany");
+    return T("syncFail") + ": " + s;
+  }
+
+  function syncNow() {
+    if (!st.token || !st.base || st.busy) return Promise.resolve(0);
+    st.busy = true; st.error = ""; render();
+    var S = stateObj();
+    var docs = SyncCore.collect(S);
+    var map = {}, dirty = [];
+    docs.forEach(function (d) { map[d.key] = JSON.stringify(d.json); });
+    docs.forEach(function (d) { if (snap[d.key] !== map[d.key]) dirty.push(d); });
+    Object.keys(snap).forEach(function (k) { if (!(k in map)) dirty.push({ key: k, deleted: true }); });
+
+    var p = Promise.resolve();
+    if (dirty.length) {
+      p = request("POST", "/api/sync", { since: st.rev, docs: dirty }).then(function (r) {
+        st.rev = r.rev;
+        SyncCore.apply(S, r.docs || [], hooks());
+      });
+    }
+    return p.then(function () {
+      return request("GET", "/api/sync?since=" + st.rev);
+    }).then(function (r) {
+      st.rev = r.rev;
+      var n = SyncCore.apply(S, r.docs || [], hooks());
+      st.lastOk = Date.now(); st.changed = n; st.busy = false;
+      try {
+        applyAccount(); renderHistory(); renderRound(); renderHome();
+        renderSim(); renderAccList(); saveState();
+      } catch (e) {}
+      snap = {};
+      SyncCore.collect(stateObj()).forEach(function (d) { snap[d.key] = JSON.stringify(d.json); });
+      save(); render();
+      return n;
+    }).catch(function (e) {
+      st.busy = false; st.error = errText(e);
+      if (e && e.status === 401) { st.token = ""; }
+      save(); render();
+      return 0;
+    });
+  }
+
+  function upsertProfile(user, base, pass) {
+    var id = base + "|" + user;
+    var p = null;
+    st.profiles.forEach(function (x) { if (x.id === id) p = x; });
+    if (!p) { p = { id: id, base: base, user: user }; st.profiles.push(p); }
+    p.base = base; p.user = user; p.token = st.token; p.rev = 0;
+    if (pass !== undefined) p.pass = pass;
+    p.lastOk = 0;
+    return p;
+  }
+
+  function auth(isReg) {
+    var base = norm(val("syncBase")), u = String(val("syncUser")).trim(), p = val("syncPass");
+    if (!base || !u || !p) { st.error = T("syncBadInput"); render(); return; }
+    st.base = base; st.user = u; st.busy = true; st.error = ""; render();
+    var pass = chk("syncRemember") ? p : undefined;
+    request("POST", isReg ? "/api/register" : "/api/login", { username: u, password: p, device: st.device })
+      .then(function (r) {
+        st.token = r.token; st.rev = 0; snap = {};
+        upsertProfile(u, base, pass);
+        st.busy = false; save(); close(); render();
+        return syncNow();
+      })
+      .catch(function (e) { st.busy = false; st.error = errText(e); render(); });
+  }
+
+  function switchTo(p) {
+    if (st.busy) return;
+    if (p.id === (st.base + "|" + st.user) && st.token) { syncNow(); return; }
+    st.base = p.base; st.user = p.user; st.error = ""; st.busy = true; render();
+    var go = function (token) {
+      st.token = token; st.rev = 0; snap = {};
+      st.busy = false; save(); render();
+      syncNow();
+    };
+    if (p.token) { go(p.token); return; }
+    if (p.pass) {
+      request("POST", "/api/login", { username: p.user, password: p.pass, device: st.device })
+        .then(function (r) { p.token = r.token; go(r.token); })
+        .catch(function (e) { st.busy = false; st.error = errText(e); render(); });
+      return;
+    }
+    // 没有记住密码：把表单填好，让用户输
+    st.busy = false;
+    el("syncBase").value = p.base; el("syncUser").value = p.user;
+    el("syncPass").value = ""; el("syncPass").focus();
+    render();
+  }
+
+  function logout() {
+    st.token = ""; st.rev = 0; snap = {};
+    var p = null;
+    st.profiles.forEach(function (x) { if (x.user === st.user) p = x; });
+    if (p) { p.token = ""; p.rev = 0; }
+    save(); render();
+  }
+
+  function fmt(ms) {
+    if (!ms) return T("syncNever");
+    var d = new Date(ms), n = new Date();
+    var hm = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+    if (d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate()) return hm;
+    return (d.getMonth() + 1) + "/" + d.getDate() + " " + hm;
+  }
+
+  function render() {
+    var box = el("syncStatus");
+    if (box) {
+      var line = st.token
+        ? escapeHtml(st.user) + " · " + escapeHtml(norm(st.base).replace(/^https?:\/\//, ""))
+        : T("syncOnlyLocal");
+      var sub = st.busy ? T("syncing")
+        : (st.error ? st.error
+          : (st.token ? T("syncLast") + ": " + fmt(st.lastOk) + (st.changed ? " · " + st.changed + " " + T("syncUpdated") : "")
+            : ""));
+      box.innerHTML = '<div style="display:flex;gap:6px;align-items:center">' +
+        '<span style="width:8px;height:8px;border-radius:50%;background:' +
+        (st.token ? (st.error ? "#e0645c" : "#3bb273") : "var(--mut2)") + '"></span>' +
+        '<span>' + line + '</span></div>' +
+        (sub ? '<div style="margin-top:4px;color:' + (st.error ? "#e0645c" : "var(--mut2)") + '">' + escapeHtml(sub) + '</div>' : "");
+    }
+    var list = el("syncProfiles");
+    if (list) {
+      list.innerHTML = st.profiles.map(function (p, i) {
+        var on = p.base === st.base && p.user === st.user;
+        return '<div class="accrow' + (on ? " on" : "") + '" data-syncprof="' + i + '">' +
+          '<span class="av">' + escapeHtml((p.user || "?").charAt(0).toUpperCase()) + '</span>' +
+          '<span class="accinfo"><b>' + escapeHtml(p.user) + '</b><small>' +
+          escapeHtml(norm(p.base).replace(/^https?:\/\//, "")) + (p.pass ? " 🔒" : "") + '</small></span></div>';
+      }).join("");
+      list.querySelectorAll("[data-syncprof]").forEach(function (row) {
+        row.addEventListener("click", function () { switchTo(st.profiles[+row.dataset.syncprof]); });
+      });
+    }
+    var lo = el("syncLogout"); if (lo) lo.style.display = st.token ? "" : "none";
+    var sn = el("syncNow"); if (sn) sn.style.display = st.token ? "" : "none";
+    var btn = el("syncOpen");
+    if (btn) btn.textContent = st.token ? T("syncAccounts") : T("syncLogin");
+  }
+
+  function open() {
+    el("syncBase").value = st.base;
+    el("syncUser").value = st.user;
+    el("syncPass").value = "";
+    el("syncModal").classList.add("on");
+    render();
+  }
+  function close() { el("syncModal").classList.remove("on"); }
+
+  function boot() {
+    load();
+    var b = el("syncOpen");
+    if (b) b.addEventListener("click", open);
+    var x = el("syncClose"); if (x) x.addEventListener("click", close);
+    var m = el("syncModal"); if (m) m.addEventListener("click", function (e) { if (e.target === m) close(); });
+    var l = el("syncLogin"); if (l) l.addEventListener("click", function () { auth(false); });
+    var r = el("syncRegister"); if (r) r.addEventListener("click", function () { auth(true); });
+    var o = el("syncLogout"); if (o) o.addEventListener("click", function () { logout(); });
+    var n = el("syncNow"); if (n) n.addEventListener("click", function () { syncNow(); });
+    render();
+    if (st.token) { syncNow(); setInterval(function () { if (st.auto) syncNow(); }, 30000); }
+  }
+
+  return { boot: boot, syncNow: syncNow, state: st };
+})();
+/* ==SYNC-UI-END== */
+
 // ================= 初始化 =================
 loadState();
 applyTheme(); syncThemeUI(); syncAlgoUI(); initThemeUI(); initSliders(); syncSliderPositions();
 applyAccount(); renderSim(); applyLang(); setUru(); renderEfxW(); renderAccList();
 syncApplyBtn(); syncLinesUI(); renderLog();
+try{ SyncUI.boot(); }catch(e){}
+// 历史记录：点垃圾桶删除这一条（网页版没有左滑，直接给按钮）
+(function(){
+  var box=document.getElementById("histList"); if(!box) return;
+  box.addEventListener("click",function(e){
+    var t=e.target.closest?e.target.closest("[data-hdel]"):null; if(!t) return;
+    var id=t.getAttribute("data-hdel");
+    var L=I18N[lang]||{};
+    if(!confirm((L.delHistAsk||"删除这条记录？")+"\n"+id)) return;
+    var a=ACCTS[curAcc]; if(!a||!a.hist) return;
+    for(var i=0;i<a.hist.length;i++){
+      var g=a.hist[i];
+      for(var x=g.length-1;x>=1;x--){ if(SyncCore.entryId(g[x],g[0][1])===id) g.splice(x,1); }
+    }
+    a.hist=a.hist.filter(function(g){ return g.length>1; });
+    saveState(); renderHistory();
+    if(window.SyncUI) SyncUI.syncNow();
+  });
+})();
 window.addEventListener("beforeunload",saveState);
 
 </script>
