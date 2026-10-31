@@ -3331,6 +3331,11 @@ function stateObj() { return { ACCTS: ACCTS, curAcc: curAcc, lang: lang, colors:
       // 平时（启动/切号/改完自动同步）一律本地优先：
       // 把本地全部推上去覆盖云端同名记录，再拉回云端独有的记录（不删云端）
       c.rev = r.rev || 0;
+      // 先落地云端独有的文档（历史/序列不能丢），再推本地
+      var localKeys = {};
+      SyncCore.collect(stateObj(), curAcc).forEach(function (d2) { localKeys[d2.key] = 1; });
+      var onlyRemote = (docs || []).filter(function (d2) { return !d2.deleted && !localKeys[d2.key]; });
+      if (onlyRemote.length) SyncCore.apply(stateObj(), onlyRemote, hooks());
       snap = {};
       afterLogin = false;
       refreshAll();
