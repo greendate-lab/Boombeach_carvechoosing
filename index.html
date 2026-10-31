@@ -469,7 +469,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <div class="about-hero">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
             <div style="font-size:16px;font-weight:700;text-align:center">海岛奇兵雕刻选择</div>
-            <div class="ver" style="text-align:center">Version 1.5.4</div>
+            <div class="ver" style="text-align:center">Version 1.6.0</div>
           </div>
           <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
         </div>
@@ -2686,6 +2686,23 @@ const CHANGELOG_OLD=[
 ];
 // 1.5.3 更新日志（三语）
 const CHANGELOG_NEW=[
+  {v:"1.6.0",d:"2026-10-31",
+   sum:{sc:"云同步：每个账号一组账密，多设备互通",tc:"雲端同步：每個帳號一組帳密，多裝置互通",en:"Cloud sync: one login per account, shared across devices"},
+   items:{sc:["新增云同步：每个账号绑一组自己的云账密（用户名+密码，不需要邮箱）。换手机/换设备用同一组登录，就能看到同一份历史记录、雕刻序列、水晶和上一次选择。",
+              "打开即拉、改完 4 秒内自动推、前台每 30 秒同步；断网照常用，联网自动补；token 过期会用记住的密码静默重登。",
+              "历史记录标出是哪台设备改的（例如「来自 手机·k3f」）；序列按行同步，两台设备各改各的行不会互相覆盖。",
+              "新建账号要填账号名 + 用户名 + 密码；切账号自动换成该账号的云身份；账号卡片直接显示同步状态；双击账号名可原地改名。",
+              "修复与追平：历史记录不再永远显示「今天」；配置跟着账号走（外观与语言仍全局）；顶栏显示当前账号名；历史可删除；追加按雕刻名对齐并标出 S↓/B↓；预设合并为单层；雕刻权重可切换 S/B 谁在上层。"],
+          tc:["新增雲端同步：每個帳號綁一組自己的雲端帳密（使用者名稱+密碼，不需要 email）。換裝置用同一組登入，就能看到同一份歷史、序列、水晶與上次選擇。",
+              "開啟即拉、改完 4 秒內自動推、前景每 30 秒同步；斷網照常用，連網自動補；token 過期會用記住的密碼靜默重登。",
+              "歷史記錄標出是哪台裝置改的；序列按行同步，兩台裝置各改各的行不會互相覆蓋。",
+              "新建帳號要填帳號名 + 使用者名稱 + 密碼；切帳號自動換成該帳號的雲端身分；帳號卡片直接顯示同步狀態；雙擊帳號名可原地改名。",
+              "修正與追平：歷史不再永遠顯示「今天」；設定跟著帳號走（外觀與語言仍全域）；頂欄顯示目前帳號名；歷史可刪除；追加按雕刻名對齊並標出 S↓/B↓；預設合併為單層；雕刻權重可切換 S/B 誰在上層。"],
+          en:["Cloud sync: every account now has its own username+password (no email). Sign in with the same pair on another device and you get the same history, sequence, crystals and last pick.",
+              "Pull on open, push within 4s of a change, poll every 30s; works offline and catches up automatically; an expired token is renewed silently with the remembered password.",
+              "History entries show which device made them; sequences sync row by row so two devices editing different rows never overwrite each other.",
+              "Creating an account asks for a name plus username/password; switching accounts switches the cloud identity; sync status shows right in the account card; double-click a name to rename in place.",
+              "Fixes and catch-up: history no longer always says Today; settings follow the account (appearance and language stay global); the title shows the current account; history can be deleted; append aligns by carving name and marks S↓/B↓; presets are a single layer; the S/B handle layer can be toggled."]}},
   {v:"1.5.2",d:"2026-10-17",
    sum:{sc:"外观预设按钮 + 真毛玻璃把手 + 浅色自动深色文字",tc:"外觀預設按鈕 + 真毛玻璃把手 + 淺色自動深色文字",en:"Appearance preset button, real frosted handle, dark text on light themes"},
    items:{sc:["外观标题右侧新增【预设】按钮：深色 / 浅色 / 恢复默认，点了立刻套用并保存。",
