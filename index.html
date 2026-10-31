@@ -474,7 +474,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <div class="about-hero">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
             <div style="font-size:16px;font-weight:700;text-align:center">海岛奇兵雕刻选择</div>
-            <div class="ver" style="text-align:center">Version 1.7.6</div>
+            <div class="ver" style="text-align:center">Version 1.7.7</div>
           </div>
           <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
         </div>
@@ -1367,7 +1367,11 @@ function renderRound(){
   const start=parseInt(document.getElementById("startLine").value)||1;
   const L=I18N[lang];
   document.getElementById("roundSub").textContent=L.roundP+start+L.roundTail;
-  const last=start-1;
+  // A：优先用"最后一条历史"的行号；没有历史才用 起始行-1
+  let lastH = 0;
+  const _h = (ACCTS[curAcc] && ACCTS[curAcc].hist) || [];
+  _h.forEach(function (g) { (g || []).slice(1).forEach(function (it) { if (it && it[0] > lastH) lastH = it[0]; }); });
+  const last = lastH > 0 ? lastH : start - 1;
   document.getElementById("startHint").innerHTML=
     lang==="en"?"Last recorded to "+last+", defaults to next.":"上次记录到第 "+last+" 行，默认下一行";
 }
@@ -2193,6 +2197,13 @@ function askDeleteAccount(k) {
   _delKey = k;
   var a = ACCTS[k]; if (!a) return;
   var on = !!(a.cloud && (a.cloud.token || a.cloud.user));
+  if (!on) {
+    // 同名账号里只要有一个绑过云，这个弹窗也提供"注销账号"
+    Object.keys(ACCTS).forEach(function (kk) {
+      var b = ACCTS[kk];
+      if (kk !== k && b && b.name === a.name && b.cloud && (b.cloud.token || b.cloud.user)) on = true;
+    });
+  }
   document.getElementById("delAccName").textContent = a.name || k;
   document.getElementById("delLocalBtn").style.display = "";
   document.getElementById("delCloudBtn").style.display = on ? "" : "none";
@@ -2212,6 +2223,13 @@ function deleteCloudAccount() {
   var k = _delKey; if (!k) return closeDelAcc();
   var a = ACCTS[k];
   var c = a && a.cloud;
+  if (!c || (!c.token && !c.user)) {
+    // 同名账号里借一个绑过云的凭证
+    Object.keys(ACCTS).forEach(function (kk) {
+      var b = ACCTS[kk];
+      if (b && b.name === a.name && b.cloud && (b.cloud.token || b.cloud.user)) c = b.cloud;
+    });
+  }
   if (!c || !c.token) {
     // token 过期：先用记住的密码登一次，再注销
     if (c && c.user && c.pass) {
@@ -2772,6 +2790,15 @@ const CHANGELOG_OLD=[
 ];
 // 1.5.3 更新日志（三语）
 const CHANGELOG_NEW=[
+  {v:"1.7.7",d:"2026-10-31",
+   sum:{sc:"起始行提示跟历史；清掉占位账号",tc:"起始行提示跟歷史；清掉佔位帳號",en:"Start-line hint follows history; drop placeholder accounts"},
+   items:{sc:["起始行下面的【上次记录到第 X 行】改成读取最后一条历史：删了历史就跟着回退，没有历史时才用 起始行-1。",
+              "自动清掉旧版本留下的占位账号（名字就是 key，例如 u_jellyfish）：空的直接删，有数据的并入同名真实账号。"],
+          tc:["起始行提示改為讀取最後一條歷史。",
+              "自動清掉舊版本留下的佔位帳號。"],
+          en:["The start-line hint now reads the last history entry (falls back to start-1 when empty).",
+              "Placeholder accounts left by old versions are removed automatically (merged into the real same-name account when they hold data)."]}},
+
   {v:"1.7.6",d:"2026-10-31",
    sum:{sc:"删除账号恢复【注销账号】选项",tc:"刪除帳號恢復「註銷帳號」",en:"Restore delete-cloud option"},
    items:{sc:["修复：删除账号弹窗只剩【删除本机数据】——因为 token 过期后把云账号当成了未登录。现在只要这个账号绑过云账号，就会显示【注销账号】；token 过期会先用记住的密码重登再注销。只改了这一处。"],
@@ -3520,6 +3547,36 @@ function stateObj() { return { ACCTS: ACCTS, curAcc: curAcc, lang: lang, colors:
       Object.keys(al).forEach(function (kk) { if (al[kk] === k) delete al[kk]; });
       saveAliases(al);
       removed++;
+    });
+    // 占位账号（旧版本用云端 key 建的，name 就是 key，例如 u_jellyfish / acc2）
+    Object.keys(ACCTS).forEach(function (k) {
+      if (k === curAcc) return;
+      var a = ACCTS[k];
+      if (!a) return;
+      if (a.cloud && (a.cloud.token || a.cloud.user)) return;
+      if ((a.name || "") !== k) return;
+      var rows = Object.keys(a.seq || {}).length, hg = (a.hist || []).length;
+      var real = (k.indexOf("u_") === 0) ? k.slice(2) : "";
+      var target = null;
+      if (real) {
+        Object.keys(ACCTS).forEach(function (kk) { if (!target && kk !== k && (ACCTS[kk].name || "") === real) target = kk; });
+      }
+      if (rows === 0 && hg === 0) { delete ACCTS[k]; removed++; return; }
+      if (target) {
+        var t = ACCTS[target];
+        Object.keys(a.seq || {}).forEach(function (r) { if (!t.seq[r]) t.seq[r] = a.seq[r]; });
+        (a.hist || []).forEach(function (g) {
+          if (!g || !g[0]) return;
+          var date = g[0][1], grp = null;
+          t.hist.some(function (x) { if (x && x[0] && x[0][1] === date) { grp = x; return true; } return false; });
+          if (!grp) { grp = [["", date]]; t.hist.push(grp); }
+          var have = {};
+          for (var i = 1; i < grp.length; i++) have[SyncCore.entryId(grp[i], date)] = 1;
+          for (var j = 1; j < g.length; j++) { var id = SyncCore.entryId(g[j], date); if (!have[id]) { grp.push(g[j]); have[id] = 1; } }
+        });
+        delete ACCTS[k];
+        removed++;
+      }
     });
     if (removed) { refreshAll(); saveQuiet(); save(); }
     return removed;
