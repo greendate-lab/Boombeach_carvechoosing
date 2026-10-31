@@ -474,7 +474,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <div class="about-hero">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
             <div style="font-size:16px;font-weight:700;text-align:center">海岛奇兵雕刻选择</div>
-            <div class="ver" style="text-align:center">Version 1.7.3</div>
+            <div class="ver" style="text-align:center">Version 1.7.4</div>
           </div>
           <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
         </div>
@@ -2760,6 +2760,15 @@ const CHANGELOG_OLD=[
 ];
 // 1.5.3 更新日志（三语）
 const CHANGELOG_NEW=[
+  {v:"1.7.4",d:"2026-10-31",
+   sum:{sc:"自动清理同名重复账号，不再写错账号",tc:"自動清理同名重複帳號",en:"Auto-remove duplicate same-name accounts"},
+   items:{sc:["打开页面/同步/重建时会自动把同名的重复账号合并进当前账号并删掉（历史按 id 去重，行缺失补齐），不会再出现【数据写进另一个 greendate】。",
+              "同步不再新建重复账号：云端 key 与本机 key 不同且同名时，一律落到当前选中的账号。"],
+          tc:["開啟頁面/同步/重建時會自動把同名的重複帳號併入目前帳號並刪除。",
+              "同步不再建立重複帳號。"],
+          en:["On load/sync/rebuild the app merges same-name duplicate accounts into the selected one and deletes them (history deduped by id).",
+              "Sync no longer creates duplicate accounts when cloud/local keys differ."]}},
+
   {v:"1.7.3",d:"2026-10-31",
    sum:{sc:"重建时把同名重复账号的数据一起收进来",tc:"重建時把同名重複帳號的資料一起收進來",en:"Rebuild collects duplicate same-name accounts"},
    items:{sc:["修复：本机存在两个同名账号（例如 greendate 和 u_greendate，旧版本的遗留）时，重建/同步会把数据写进另一个账号，你当前看的那个仍然是旧的。现在同名时一律认当前选中的账号，重建也会把同名来源的数据一起收进来。",
@@ -3426,12 +3435,51 @@ function stateObj() { return { ACCTS: ACCTS, curAcc: curAcc, lang: lang, colors:
         return d;
       });
       applyRemote(fixed, r.rev || 0);
+      var cleaned = cleanupSameName();
       snap = snapshot();
       refreshAll(); saveQuiet(); save(); render();
       toast(lang === "en" ? "Rebuilt from cloud" : "已从云端重建");
     }).catch(function (e) {
       st.error = errText(e); render();
     }).then(function () { st.busy = false; render(); });
+  }
+
+  /// 同名重复账号：数据并进当前账号，然后把重复的删掉（旧版本遗留）
+  function cleanupSameName() {
+    var cur = ACCTS[curAcc];
+    if (!cur) return 0;
+    var name = cur.name || "";
+    if (!name) return 0;
+    var removed = 0;
+    Object.keys(ACCTS).forEach(function (k) {
+      if (k === curAcc) return;
+      var a = ACCTS[k];
+      if (!a || (a.name || "") !== name) return;
+      // 行：缺的补上
+      if (!cur.seq) cur.seq = {};
+      Object.keys(a.seq || {}).forEach(function (r) { if (!cur.seq[r]) cur.seq[r] = a.seq[r]; });
+      // 历史：按 id 去重后并进对应日期
+      if (!cur.hist) cur.hist = [];
+      (a.hist || []).forEach(function (g) {
+        if (!g || !g[0]) return;
+        var date = g[0][1], grp = null;
+        cur.hist.some(function (x) { if (x && x[0] && x[0][1] === date) { grp = x; return true; } return false; });
+        if (!grp) { grp = [["", date]]; cur.hist.push(grp); }
+        var have = {};
+        for (var i = 1; i < grp.length; i++) have[SyncCore.entryId(grp[i], date)] = 1;
+        for (var j = 1; j < g.length; j++) {
+          var id = SyncCore.entryId(g[j], date);
+          if (!have[id]) { grp.push(g[j]); have[id] = 1; }
+        }
+      });
+      delete ACCTS[k];
+      var al = loadAliases();
+      Object.keys(al).forEach(function (kk) { if (al[kk] === k) delete al[kk]; });
+      saveAliases(al);
+      removed++;
+    });
+    if (removed) { refreshAll(); saveQuiet(); save(); }
+    return removed;
   }
 
   function showMerge(rc, a) {
@@ -3512,6 +3560,7 @@ function stateObj() { return { ACCTS: ACCTS, curAcc: curAcc, lang: lang, colors:
       c.rev = r.rev;
       SyncCore.apply(S, r.docs || [], hooks());
       c.lastOk = Date.now();
+      cleanupSameName();
       snap = snapshot();
       refreshAll(); saveQuiet(); save(); render();
       return 1;
@@ -3674,6 +3723,7 @@ function stateObj() { return { ACCTS: ACCTS, curAcc: curAcc, lang: lang, colors:
     var mc = el("mergeCancel"); if (mc) mc.addEventListener("click", function () { pending = null; closeMerge(); });
     var rb = el("rebuildCloud"); if (rb) rb.addEventListener("click", rebuildFromCloud);
     render();
+    cleanupSameName();
     // 打开页面先把云端全量拉一次（建立云端 key → 本机 key 映射，避免增量拉取丢历史）
     var c0 = cloud();
     if (c0 && c0.token) prepareSession();
