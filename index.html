@@ -469,7 +469,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <div class="about-hero">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
             <div style="font-size:16px;font-weight:700;text-align:center">海岛奇兵雕刻选择</div>
-            <div class="ver" style="text-align:center">Version 1.6.2</div>
+            <div class="ver" style="text-align:center">Version 1.6.4</div>
           </div>
           <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
         </div>
@@ -2752,6 +2752,19 @@ const CHANGELOG_OLD=[
 ];
 // 1.5.3 更新日志（三语）
 const CHANGELOG_NEW=[
+  {v:"1.6.4",d:"2026-10-31",
+   sum:{sc:"修复：登录 B 把 A 吞掉",tc:"修正：登入 B 把 A 吃掉",en:"Fix: signing in as B swallowed A"},
+   items:{sc:["修复：登录完 A 账号再登录 B 账号时，A 会被改名成 B（看起来像 A 消失了）。已绑过云的账号再登录别的账号现在会另开一个，A 原样保留；本机已有同名账号则直接切过去。"],
+          tc:["修正：登入完 A 再登入 B 時，A 會被改名成 B（看起來像消失）。已綁雲端的帳號再登入別的帳號會另開一個，A 保留。"],
+          en:["Fixed: signing in as B after A renamed A to B (A looked gone). Signing into another account from a bound account now creates a separate account; a local account with that name is switched to."]}},
+  {v:"1.6.3",d:"2026-10-31",
+   sum:{sc:"修复云端数据被误删 + 大批量删除确认",tc:"修正雲端資料被誤刪 + 大批刪除確認",en:"Fix accidental cloud wipe + bulk-delete confirmation"},
+   items:{sc:["修复：云端与本机账号内部标识不同（main / u_greendate）时，同步会把序列和历史当成多余记录删掉——现在按账号名认成同一个。",
+              "保险阀：本机为空却要删云端 200 条以上，会先停下，60 秒内再点一次「立即同步」才执行。"],
+          tc:["修正：雲端與本機帳號識別不同時，同步會把序列和歷史當成多餘記錄刪掉——現在依帳號名認成同一個。",
+              "保險：本機為空卻要刪雲端 200 筆以上會先停下，60 秒內再按一次才執行。"],
+          en:["Fixed: when cloud and local account ids differ (main / u_greendate), sync deleted the sequence and history as extra records — accounts are now matched by name.",
+              "Safety valve: if this device is empty but the sync would delete 200+ cloud records it stops and asks for a second tap within 60s."]}},
   {v:"1.6.2",d:"2026-10-31",
    sum:{sc:"登录后账号名改成用户名 + 删除账号可选注销",tc:"登入後帳號名改成使用者名稱 + 刪除帳號可選註銷",en:"Account renamed on sign-in + delete local or cloud"},
    items:{sc:["账号页的【新建账号】正式换成【注册】和【登录】：注册只填用户名+密码，账号名就是用户名。",
@@ -3347,12 +3360,25 @@ var SyncUI = (function () {
     return request("POST", "/api/login", { username: user, password: pass, device: st.device })
       .then(function (r) {
         var key = null;
-        // 已经有同名账号 → 直接切过去绑定；否则把"当前这个未登录账号"改名成用户名的名字
+        // 1) 已有别的账号叫这个名字 → 切过去
         Object.keys(ACCTS).forEach(function (k) { if (k !== curAcc && (ACCTS[k].name || "") === user) key = k; });
         if (!key) {
-          key = curAcc;
-          // key 固定不变（文档 key 跟着它），只改显示名
-          ACCTS[key].name = user;
+          var cur = ACCTS[curAcc];
+          var bound = !!(cur && cur.cloud && cur.cloud.token);
+          if (!bound) {
+            // 2) 当前账号没绑过云 → 改名绑定
+            key = curAcc;
+            cur.name = user;
+          } else {
+            // 3) 当前账号已经绑了别的云 → 另开一个，绝不把 A 改名成 B
+            key = acctKeyOf(user);
+            var n = 1;
+            while (ACCTS[key]) key = acctKeyOf(user + "_" + (++n));
+            ACCTS[key] = {
+              name: user, crystals: Object.assign({}, DEFAULT_CRYSTALS), start: 1, seq: {}, hist: [],
+              cfg: { ws: [0, 0, 0], qinf: false, preference: "attack", linesMode: "auto", customN: 2 }
+            };
+          }
         }
         curAcc = key;
         cloud();
