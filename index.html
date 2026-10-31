@@ -2966,6 +2966,7 @@ var SyncCore = (function () {
 /* ==SYNC-UI-START== */
 var SyncUI = (function () {
   var LS = "carving_sync_v2";
+  var DEFAULT_BASE = "https://carving-sync.pages.dev";
   var st = { base: "", user: "", token: "", rev: 0, device: "", profiles: [],
              auto: true, lastOk: 0, error: "", colors: null, ap: null, busy: false, changed: 0 };
   var snap = {};
@@ -3075,7 +3076,7 @@ var SyncUI = (function () {
   }
 
   function auth(isReg) {
-    var base = norm(val("syncBase")), u = String(val("syncUser")).trim(), p = val("syncPass");
+    var base = norm(val("syncBase")) || DEFAULT_BASE, u = String(val("syncUser")).trim(), p = val("syncPass");
     if (!base || !u || !p) { st.error = T("syncBadInput"); render(); return; }
     st.base = base; st.user = u; st.busy = true; st.error = ""; render();
     var pass = chk("syncRemember") ? p : undefined;
@@ -3164,13 +3165,13 @@ var SyncUI = (function () {
   }
 
   function open() {
-    el("syncBase").value = st.base;
+    el("syncBase").value = st.base || DEFAULT_BASE;
     el("syncUser").value = st.user;
     el("syncPass").value = "";
-    el("syncModal").classList.add("on");
+    el("syncModal").classList.add("show");
     render();
   }
-  function close() { el("syncModal").classList.remove("on"); }
+  function close() { el("syncModal").classList.remove("show"); }
 
   function boot() {
     load();
