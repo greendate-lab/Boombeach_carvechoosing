@@ -474,7 +474,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <div class="about-hero">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
             <div style="font-size:16px;font-weight:700;text-align:center">海岛奇兵雕刻选择</div>
-            <div class="ver" style="text-align:center">Version 1.7.4</div>
+            <div class="ver" style="text-align:center">Version 1.7.5</div>
           </div>
           <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
         </div>
@@ -2760,6 +2760,12 @@ const CHANGELOG_OLD=[
 ];
 // 1.5.3 更新日志（三语）
 const CHANGELOG_NEW=[
+  {v:"1.7.5",d:"2026-10-31",
+   sum:{sc:"修复历史日期乱序（只看到27和31）",tc:"修正歷史日期亂序",en:"Fix history date ordering"},
+   items:{sc:["修复：从云端合并进来的历史被追加到末尾，导致列表里只看到 27 号和 31 号、中间的 28–30 号像丢了一样。现在统一按日期从新到旧排序，组内按行号排序。"],
+          tc:["修正：從雲端合併的歷史被追加到最後，導致只看到 27 與 31 號。現在統一按日期新到舊排序。"],
+          en:["Fixed: merged history was appended at the end, so only 27 and 31 appeared. History is now sorted newest-first by date and by row inside each day."]}},
+
   {v:"1.7.4",d:"2026-10-31",
    sum:{sc:"自动清理同名重复账号，不再写错账号",tc:"自動清理同名重複帳號",en:"Auto-remove duplicate same-name accounts"},
    items:{sc:["打开页面/同步/重建时会自动把同名的重复账号合并进当前账号并删掉（历史按 id 去重，行缺失补齐），不会再出现【数据写进另一个 greendate】。",
@@ -3112,6 +3118,25 @@ var SyncCore = (function () {
     try { localStorage.setItem('sync_aliases', JSON.stringify(a || {})); } catch (e) {}
   }
 
+  // 历史排序：组按日期新→旧，组内条目按行号新→旧（渲染逻辑假定"新的在前"）
+  function histDateKeyCore(g) {
+    var d = (g && g[0] && g[0][1]) || "";
+    var m = d.match(/(\d+)月(\d+)日/);
+    return m ? (+m[1]) * 100 + (+m[2]) : 0;
+  }
+  function sortHistCore(a) {
+    if (!a || !a.hist) return;
+    a.hist.forEach(function (g) {
+      if (!g || g.length < 3) return;
+      var head = g[0], items = g.slice(1);
+      items.sort(function (x, y) { return (y[0] || 0) - (x[0] || 0); });
+      g.length = 0;
+      g.push(head);
+      for (var i = 0; i < items.length; i++) g.push(items[i]);
+    });
+    a.hist.sort(function (g1, g2) { return histDateKeyCore(g2) - histDateKeyCore(g1); });
+  }
+
   function apply(S, docs, hooks) {
     hooks = hooks || {};
     var changed = 0;
@@ -3250,6 +3275,7 @@ var SyncCore = (function () {
         changed++;
       }
     });
+    if (changed && S.ACCTS[S.curAcc]) sortHistCore(S.ACCTS[S.curAcc]);
     return changed;
   }
   return { collect: collect, apply: apply, entryId: entryId, newId: syncNewId };
@@ -3480,6 +3506,25 @@ function stateObj() { return { ACCTS: ACCTS, curAcc: curAcc, lang: lang, colors:
     });
     if (removed) { refreshAll(); saveQuiet(); save(); }
     return removed;
+  }
+
+  /// 历史统一排序：组按日期新→旧，组内条目按行号新→旧（渲染逻辑假定"新的在前"）
+  function histDateKey(g) {
+    var d = (g && g[0] && g[0][1]) || "";
+    var m = d.match(/(\d+)月(\d+)日/);
+    return m ? (+m[1]) * 100 + (+m[2]) : 0;
+  }
+  function sortHist(a) {
+    if (!a || !a.hist) return;
+    a.hist.forEach(function (g) {
+      if (!g || g.length < 3) return;
+      var head = g[0], items = g.slice(1);
+      items.sort(function (x, y) { return (y[0] || 0) - (x[0] || 0); });
+      g.length = 0;
+      g.push(head);
+      for (var i = 0; i < items.length; i++) g.push(items[i]);
+    });
+    a.hist.sort(function (g1, g2) { return histDateKey(g2) - histDateKey(g1); });
   }
 
   function showMerge(rc, a) {
