@@ -485,7 +485,10 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
             <span class="chip" id="syncQuick" style="font-size:10.5px"></span></div>
           <div id="syncStatus" class="pinfo" style="font-size:11.5px;margin-bottom:8px"></div>
           <div id="accList"></div>
-          <button class="btn btn-s" id="newAcc" data-i18n="newAcc"></button>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button class="btn btn-s" id="accRegister" data-i18n="syncRegister" style="flex:1"></button>
+            <button class="btn btn-s" id="accLogin" data-i18n="syncLogin" style="flex:1"></button>
+          </div>
         </div>
       </div>
     </div>
@@ -555,12 +558,22 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
   <!-- 新建账号：账号名 + 云账密（每个账号一组） -->
   <div class="modal" id="newAccModal">
     <div class="mcard">
-      <div class="mtitle"><h3 data-i18n="newAcc"></h3><button class="x" id="nacClose">×</button></div>
-      <div class="cinput"><label><span data-i18n="accName"></span></label><input id="nacName" type="text"></div>
+      <div class="mtitle"><h3 data-i18n="syncRegister"></h3><button class="x" id="nacClose">×</button></div>
       <div class="cinput"><label><span data-i18n="syncUser"></span></label><input id="nacUser" type="text"></div>
       <div class="cinput"><label><span data-i18n="syncPass"></span></label><input id="nacPass" type="password"></div>
-      <div class="pinfo" id="nacMsg" style="font-size:11px;color:var(--mut2);margin-top:6px"></div>
-      <button class="btn btn-s" id="nacOk" style="margin-top:10px;width:100%">注册并创建</button>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);margin:6px 0 2px"><input type="checkbox" id="nacRemember" checked><span data-i18n="syncRemember"></span></label>
+      <div class="pinfo" style="font-size:11px;color:var(--mut2);margin-top:6px" data-i18n="newAccHint"></div>
+      <button class="btn btn-s" id="nacOk" style="margin-top:10px;width:100%">注册</button>
+    </div>
+  </div>
+  <!-- 本地 / 云端数据不一致 -->
+  <div class="modal" id="mergeModal">
+    <div class="mcard">
+      <div class="mtitle"><h3 data-i18n="mergeTitle"></h3></div>
+      <div class="pinfo" id="mergeInfo" style="font-size:12px;color:var(--mut);line-height:1.7;margin-bottom:10px"></div>
+      <button class="mopt" id="mergeUseCloud"><span class="mo-t" data-i18n="useCloud"></span></button>
+      <button class="mopt" id="mergeUseLocal"><span class="mo-t" data-i18n="useLocal"></span></button>
+      <button class="mopt ghost" id="mergeCancel" data-i18n="cancel"></button>
     </div>
   </div>
   <!-- 导入预设菜单 -->
@@ -1207,9 +1220,9 @@ const I18N={
 let lang="sc";
 // ================= 云同步文案（与 App 的 SYNC_I18N 对齐） =================
 const SYNC_I18N={
- en:{cloudSync:"Cloud sync",syncServer:"Server URL",syncUser:"Username",syncPass:"Password",syncLogin:"Sign in",syncRegister:"Create account",syncLogout:"Sign out",syncNow:"Sync now",syncOK:"Synced",syncFail:"Sync failed",syncNever:"Not synced yet",syncAuto:"Auto sync (30s)",syncDevice:"This device",syncHint:"Username + password only, no email. Same login on every device.",syncing:"Syncing…",syncUpdated:"updated",syncRemember:"Remember password on this device",syncAccounts:"Saved accounts",syncAdd:"Add account",syncRemove:"Remove from this device",syncNeedPass:"Enter the password to sign in",syncErrLogin:"Wrong username or password",syncErrTaken:"Username already taken",syncBadInput:"Username 2-24 chars, password at least 6",syncLast:"Last sync",syncSwitchHint:"Tap to switch; saved accounts sync automatically",syncOnlyLocal:"Not signed in. Data stays on this device.",fromSrc:"by ",delHistAsk:"Delete this record?",syncTooMany:"Too many attempts, try again later",saveAsPreset:"+ Save current as preset",presetName:"Preset name",bOnTop:"B on top",sOnTop:"S on top",accName:"Account name",newAccHint:"This account gets its own cloud login. Same username + password on another device = same data."},
- tc:{cloudSync:"雲端同步",syncServer:"伺服器位址",syncUser:"使用者名稱",syncPass:"密碼",syncLogin:"登入",syncRegister:"註冊新帳號",syncLogout:"登出",syncNow:"立即同步",syncOK:"已同步",syncFail:"同步失敗",syncNever:"尚未同步",syncAuto:"自動同步（30 秒）",syncDevice:"本機裝置",syncHint:"只用帳號密碼，不需要 email。多台裝置用同一組登入。",syncing:"同步中…",syncUpdated:"已更新",syncRemember:"在這台裝置記住密碼",syncAccounts:"已儲存的帳號",syncAdd:"新增帳號",syncRemove:"從本機移除",syncNeedPass:"請輸入密碼登入",syncErrLogin:"帳號或密碼錯誤",syncErrTaken:"此使用者名稱已被使用",syncBadInput:"帳號 2-24 字元，密碼至少 6 位",syncLast:"上次同步",syncSwitchHint:"點一下就切換；已儲存的帳號會自動同步",syncOnlyLocal:"未登入，資料只存在這台裝置。",fromSrc:"來自 ",delHistAsk:"刪除這條記錄？",syncTooMany:"嘗試次數過多，請稍後再試",saveAsPreset:"+ 儲存目前為預設",presetName:"預設名稱",bOnTop:"B 在上",sOnTop:"S 在上",accName:"帳號名",newAccHint:"這個帳號會有自己獨立的一組雲帳密；另一台裝置用同一組登入就能看到同一份資料。"},
- sc:{cloudSync:"云同步",syncServer:"服务器地址",syncUser:"用户名",syncPass:"密码",syncLogin:"登录",syncRegister:"注册新账号",syncLogout:"退出登录",syncNow:"立即同步",syncOK:"已同步",syncFail:"同步失败",syncNever:"尚未同步",syncAuto:"自动同步（30 秒）",syncDevice:"本机设备",syncHint:"只用用户名密码，不需要邮箱。多台设备用同一组登录。",syncing:"同步中…",syncUpdated:"已更新",syncRemember:"在这台设备记住密码",syncAccounts:"已保存的账号",syncAdd:"添加账号",syncRemove:"从本机移除",syncNeedPass:"请输入密码登录",syncErrLogin:"用户名或密码错误",syncErrTaken:"这个用户名已被占用",syncBadInput:"用户名 2-24 个字符，密码至少 6 位",syncLast:"上次同步",syncSwitchHint:"点一下就切换；已保存的账号会自动同步",syncOnlyLocal:"未登录，数据只存在这台设备。",fromSrc:"来自 ",delHistAsk:"删除这条记录？",syncTooMany:"尝试次数过多，请稍后再试",saveAsPreset:"+ 保存当前为预设",presetName:"预设名称",bOnTop:"B 在上",sOnTop:"S 在上",accName:"帳號名",newAccHint:"這個帳號會有自己獨立的一組雲帳密；另一台裝置用同一組登入就能看到同一份資料。"}
+ en:{cloudSync:"Cloud sync",syncServer:"Server URL",syncUser:"Username",syncPass:"Password",syncLogin:"Sign in",syncRegister:"Create account",syncLogout:"Sign out",syncNow:"Sync now",syncOK:"Synced",syncFail:"Sync failed",syncNever:"Not synced yet",syncAuto:"Auto sync (30s)",syncDevice:"This device",syncHint:"Username + password only, no email. Same login on every device.",syncing:"Syncing…",syncUpdated:"updated",syncRemember:"Remember password on this device",syncAccounts:"Saved accounts",syncAdd:"Add account",syncRemove:"Remove from this device",syncNeedPass:"Enter the password to sign in",syncErrLogin:"Wrong username or password",syncErrTaken:"Username already taken",syncBadInput:"Username 2-24 chars, password at least 6",syncLast:"Last sync",syncSwitchHint:"Tap to switch; saved accounts sync automatically",syncOnlyLocal:"Not signed in. Data stays on this device.",fromSrc:"by ",delHistAsk:"Delete this record?",syncTooMany:"Too many attempts, try again later",saveAsPreset:"+ Save current as preset",presetName:"Preset name",bOnTop:"B on top",sOnTop:"S on top",accName:"Account name",newAccHint:"The account name is also the username, so names must be unique. Same username + password on another device = same data.",mergeTitle:"Local and cloud data differ",mergeInfo:"Cloud has {cloud} records; this device has {rows} sequence rows and {hist} history entries.",useCloud:"Use cloud data (overwrite this device)",useLocal:"Use local data (overwrite the cloud)",localAcc:"Local account (not signed in)",nameTakenLocal:"An account with this name already exists on this device — use Sign in instead."},
+ tc:{cloudSync:"雲端同步",syncServer:"伺服器位址",syncUser:"使用者名稱",syncPass:"密碼",syncLogin:"登入",syncRegister:"註冊新帳號",syncLogout:"登出",syncNow:"立即同步",syncOK:"已同步",syncFail:"同步失敗",syncNever:"尚未同步",syncAuto:"自動同步（30 秒）",syncDevice:"本機裝置",syncHint:"只用帳號密碼，不需要 email。多台裝置用同一組登入。",syncing:"同步中…",syncUpdated:"已更新",syncRemember:"在這台裝置記住密碼",syncAccounts:"已儲存的帳號",syncAdd:"新增帳號",syncRemove:"從本機移除",syncNeedPass:"請輸入密碼登入",syncErrLogin:"帳號或密碼錯誤",syncErrTaken:"此使用者名稱已被使用",syncBadInput:"帳號 2-24 字元，密碼至少 6 位",syncLast:"上次同步",syncSwitchHint:"點一下就切換；已儲存的帳號會自動同步",syncOnlyLocal:"未登入，資料只存在這台裝置。",fromSrc:"來自 ",delHistAsk:"刪除這條記錄？",syncTooMany:"嘗試次數過多，請稍後再試",saveAsPreset:"+ 儲存目前為預設",presetName:"預設名稱",bOnTop:"B 在上",sOnTop:"S 在上",accName:"帳號名",newAccHint:"帳號名就是使用者名稱，所以不能重名。另一台裝置用同一組登入就能看到同一份資料。",mergeTitle:"本機和雲端資料不一致",mergeInfo:"雲端有 {cloud} 筆；這台裝置有 {rows} 行序列、{hist} 筆歷史。",useCloud:"使用雲端資料（覆蓋本機）",useLocal:"使用本機資料（覆蓋雲端）",localAcc:"本機帳號（未登入）",nameTakenLocal:"這台裝置已有同名帳號，請改用【登入】。"},
+ sc:{cloudSync:"云同步",syncServer:"服务器地址",syncUser:"用户名",syncPass:"密码",syncLogin:"登录",syncRegister:"注册新账号",syncLogout:"退出登录",syncNow:"立即同步",syncOK:"已同步",syncFail:"同步失败",syncNever:"尚未同步",syncAuto:"自动同步（30 秒）",syncDevice:"本机设备",syncHint:"只用用户名密码，不需要邮箱。多台设备用同一组登录。",syncing:"同步中…",syncUpdated:"已更新",syncRemember:"在这台设备记住密码",syncAccounts:"已保存的账号",syncAdd:"添加账号",syncRemove:"从本机移除",syncNeedPass:"请输入密码登录",syncErrLogin:"用户名或密码错误",syncErrTaken:"这个用户名已被占用",syncBadInput:"用户名 2-24 个字符，密码至少 6 位",syncLast:"上次同步",syncSwitchHint:"点一下就切换；已保存的账号会自动同步",syncOnlyLocal:"未登录，数据只存在这台设备。",fromSrc:"来自 ",delHistAsk:"删除这条记录？",syncTooMany:"尝试次数过多，请稍后再试",saveAsPreset:"+ 保存当前为预设",presetName:"预设名称",bOnTop:"B 在上",sOnTop:"S 在上",accName:"帳號名",newAccHint:"帳號名就是使用者名稱，所以不能重名。另一台裝置用同一組登入就能看到同一份資料。",mergeTitle:"本機和雲端資料不一致",mergeInfo:"雲端有 {cloud} 筆；這台裝置有 {rows} 行序列、{hist} 筆歷史。",useCloud:"使用雲端資料（覆蓋本機）",useLocal:"使用本機資料（覆蓋雲端）",localAcc:"本機帳號（未登入）",nameTakenLocal:"這台裝置已有同名帳號，請改用【登入】。"}
 };
 Object.keys(SYNC_I18N).forEach(function(l){ if(I18N[l]) Object.assign(I18N[l],SYNC_I18N[l]); });
 
@@ -2920,6 +2933,17 @@ var SyncCore = (function () {
   function apply(S, docs, hooks) {
     hooks = hooks || {};
     var changed = 0;
+    // 不同设备的本地账号 key 可能不同（main / u:名字 / acc2）→ 用名字把它们认成同一个
+    var remap = {};
+    (docs || []).forEach(function (d) {
+      if (d.deleted || d.key.indexOf("a:") !== 0) return;
+      var k = d.key.slice(2), nm = d.json && d.json.name;
+      if (!k || !nm || S.ACCTS[k]) return;
+      Object.keys(S.ACCTS).some(function (x) {
+        if ((S.ACCTS[x].name || "") === nm) { remap[k] = x; return true; }
+        return false;
+      });
+    });
     var first = (docs || []).filter(function (d) { return d.key === "meta" || d.key.indexOf("a:") === 0; });
     var rows = (docs || []).filter(function (d) { return d.key.indexOf("r:") === 0; });
     var second = (docs || []).filter(function (d) { return d.key.indexOf("h:") === 0; });
@@ -2935,7 +2959,9 @@ var SyncCore = (function () {
         return;
       }
       var parts = d.key.split(":");
-      var kind = parts[0], accKey = parts[1];
+      var kind = parts[0];
+      var accKey = (kind === "a") ? d.key.slice(2) : parts[1];
+      accKey = remap[accKey] || accKey;
       if (kind === "a") {
         if (d.deleted) {
           if (S.ACCTS[accKey] && Object.keys(S.ACCTS).length > 1) {
@@ -3012,21 +3038,22 @@ var SyncCore = (function () {
 /* ==SYNC-CORE-END== */
 
 /* ==SYNC-UI-START== */
-// 每个游戏账号绑一组云账密：切账号 = 切云身份
+// 每个游戏账号绑一组云账密；账号名 = 用户名（不重名）
 var SyncUI = (function () {
   var LS = "carving_sync_v2";
   var BASE = "https://carving-sync.pages.dev";
   var st = { device: "", auto: true, busy: false, error: "" };
   var snap = {};
+  var pending = null; // {rev, docs} 等用户决定用云端还是本地
 
   function el(id) { return document.getElementById(id); }
   function T(k) { return (I18N[lang] && I18N[lang][k]) || k; }
-  function norm(u) { return String(u || "").replace(/\/+$/, ""); }
   function cloud() {
     var a = ACCTS[curAcc]; if (!a) return null;
     if (!a.cloud) a.cloud = { user: "", pass: "", token: "", rev: 0, lastOk: 0 };
     return a.cloud;
   }
+  function acctKeyOf(name) { return "u_" + name; }
 
   function load() {
     try {
@@ -3079,22 +3106,86 @@ var SyncUI = (function () {
       renderSim(); renderSeqView(); saveState();
     } catch (e) {}
   }
+  function localHasData(a) {
+    if (!a) return false;
+    var rows = Object.keys(a.seq || {}).length;
+    var hist = (a.hist || []).reduce(function (n, g) { return n + g.length - 1; }, 0);
+    return rows > 0 || hist > 0;
+  }
+  function remoteCount(docs) {
+    return (docs || []).filter(function (d) {
+      return !d.deleted && (d.key.indexOf("a:") === 0 || d.key.indexOf("r:") === 0 || d.key.indexOf("h:") === 0);
+    }).length;
+  }
 
-  // 登录后第一次：先拉全量并合并，再推本地（避免本地旧数据把对方覆盖）
-  function startSession() {
+  function applyRemote(docs, rev) {
+    var c = cloud(); if (!c) return;
+    var a = ACCTS[curAcc];
+    if (a) { a.seq = {}; a.hist = []; }   // 用云端数据 = 本地这份清空再覆盖
+    c.rev = rev || 0;
+    SyncCore.apply(stateObj(), docs || [], hooks());
+    snap = {};
+    (docs || []).forEach(function (d) { if (!d.deleted) snap[d.key] = JSON.stringify(d.json); });
+    refreshAll(); saveState(); save();
+  }
+
+  // 登录/注册后：先拉一次，判断要不要让用户选"云端 / 本地"
+  function prepareSession() {
     var c = cloud(); if (!c || !c.token) return Promise.resolve(0);
     c.rev = 0; snap = {};
     return request("GET", "/api/sync?since=0", null, c.token).then(function (r) {
-      c.rev = r.rev || 0;
-      SyncCore.apply(stateObj(), r.docs || [], hooks());
-      // 快照只记"服务器上已有的"，本地独有的文档才会被推上去
-      snap = {};
-      (r.docs || []).forEach(function (d) {
-        if (!d.deleted) snap[d.key] = JSON.stringify(d.json);
-      });
-      refreshAll();
+      var docs = r.docs || [];
+      var rc = remoteCount(docs);
+      var a = ACCTS[curAcc];
+      if (rc > 0 && localHasData(a)) {
+        pending = { rev: r.rev || 0, docs: docs };
+        showMerge(rc, a);
+        return 0;
+      }
+      applyRemote(docs, r.rev);
       return syncNow();
     });
+  }
+
+  function showMerge(rc, a) {
+    var rows = Object.keys(a.seq || {}).length;
+    var hist = (a.hist || []).reduce(function (n, g) { return n + g.length - 1; }, 0);
+    if (el("mergeInfo")) {
+      el("mergeInfo").textContent = (T("mergeInfo") || "")
+        .replace("{cloud}", rc).replace("{rows}", rows).replace("{hist}", hist);
+    }
+    el("mergeModal").classList.add("show");
+  }
+  function closeMerge() { el("mergeModal").classList.remove("show"); }
+
+  function useCloud() {
+    if (!pending) return closeMerge();
+    applyRemote(pending.docs, pending.rev);
+    pending = null; closeMerge();
+    toast(T("syncOK"));
+    syncNow();
+  }
+
+  function useLocal() {
+    if (!pending) return closeMerge();
+    var c = cloud(); var p = pending;
+    var localDocs = SyncCore.collect(stateObj(), curAcc);
+    var localMap = {};
+    localDocs.forEach(function (d) { localMap[d.key] = 1; });
+    var tombs = (p.docs || []).filter(function (d) {
+      return !d.deleted && !localMap[d.key];
+    }).map(function (d) { return { key: d.key, deleted: true }; });
+    snap = {};
+    return request("POST", "/api/sync", { since: c.rev, docs: localDocs.concat(tombs) }, c.token)
+      .then(function (r) {
+        c.rev = r.rev;
+        SyncCore.apply(stateObj(), r.docs || [], hooks());
+        snap = snapshot();
+        refreshAll(); saveState(); save();
+        pending = null; closeMerge();
+        toast(T("syncOK"));
+        return syncNow();
+      }).catch(function (e) { st.error = errText(e); render(); });
   }
 
   function syncNow() {
@@ -3121,29 +3212,67 @@ var SyncUI = (function () {
       SyncCore.apply(S, r.docs || [], hooks());
       c.lastOk = Date.now();
       snap = snapshot();
-      saveState(); refreshAll(); save(); render();
+      refreshAll(); saveState(); save(); render();
       return 1;
     }).catch(function (e) {
-      st.busy = false; st.error = errText(e);
+      st.error = errText(e);
       if (e && e.status === 401) c.token = "";
       save(); render();
       return 0;
     }).then(function (v) { st.busy = false; render(); return v; });
   }
 
-  function auth(isReg, user, pass) {
-    var c = cloud(); if (!c) return Promise.resolve(false);
+  function bind(user, token, pass) {
+    var c = cloud();
+    c.user = user; c.token = token; c.rev = 0; c.lastOk = 0;
+    if (pass !== undefined) c.pass = pass;
+    ACCTS[curAcc].name = ACCTS[curAcc].name || user;
+    saveState(); render();
+  }
+
+  function doLogin(user, pass) {
     st.busy = true; st.error = ""; render();
-    return request("POST", isReg ? "/api/register" : "/api/login",
-        { username: user, password: pass, device: st.device })
+    return request("POST", "/api/login", { username: user, password: pass, device: st.device })
       .then(function (r) {
-        c.user = user; c.token = r.token; c.rev = 0;
-        c.pass = (el("syncRemember") && el("syncRemember").checked) ? pass : "";
-        c.lastOk = 0;
-        st.busy = false; saveState(); save(); close(); render();
-        return startSession().then(function () { return true; });
+        var key = null;
+        Object.keys(ACCTS).forEach(function (k) { if ((ACCTS[k].name || "") === user) key = k; });
+        if (!key) {
+          key = acctKeyOf(user);
+          ACCTS[key] = {
+            name: user, crystals: Object.assign({}, DEFAULT_CRYSTALS), start: 1, seq: {}, hist: [],
+            cfg: { ws: [0, 0, 0], qinf: false, preference: "attack", linesMode: "auto", customN: 2 }
+          };
+        }
+        curAcc = key;
+        cloud();
+        bind(user, r.token, el("syncRemember") && el("syncRemember").checked ? pass : "");
+        st.busy = false; close(); refreshAll(); save();
+        return prepareSession().then(function () { return true; });
       })
       .catch(function (e) { st.busy = false; st.error = errText(e); render(); return false; });
+  }
+
+  function doRegister(user, pass) {
+    var exists = null;
+    Object.keys(ACCTS).forEach(function (k) { if ((ACCTS[k].name || "") === user) exists = k; });
+    if (exists) { toast(T("nameTakenLocal")); return Promise.resolve(false); }
+    st.busy = true; st.error = ""; render();
+    return request("POST", "/api/register", { username: user, password: pass, device: st.device })
+      .then(function (r) {
+        var key = acctKeyOf(user);
+        ACCTS[key] = {
+          name: user, crystals: Object.assign({}, DEFAULT_CRYSTALS), start: 1, seq: {}, hist: [],
+          cfg: { ws: [0, 0, 0], qinf: false, preference: "attack", linesMode: "auto", customN: 2 }
+        };
+        curAcc = key;
+        cloud();
+        bind(user, r.token, el("nacRemember") && el("nacRemember").checked ? pass : "");
+        st.busy = false;
+        if (el("newAccModal")) el("newAccModal").classList.remove("show");
+        refreshAll(); save();
+        return prepareSession().then(function () { return true; });
+      })
+      .catch(function (e) { st.busy = false; st.error = errText(e); toast(errText(e)); return false; });
   }
 
   function logout() {
@@ -3162,11 +3291,11 @@ var SyncUI = (function () {
 
   function render() {
     var c = cloud();
+    var on = !!(c && c.token);
     var box = el("syncStatus");
     if (box) {
-      var on = !!(c && c.token);
       var line = on ? escapeHtml(c.user) : T("syncOnlyLocal");
-      var sub = st.busy ? T("syncing") : (st.error ? st.error : (on ? T("syncLast") + ": " + fmt(c.lastOk) : ""));
+      var sub = st.busy ? T("syncing") : (st.error ? st.error : (on ? T("syncLast") + ": " + fmt(c.lastOk) : (T("localAcc") || "")));
       box.innerHTML = '<div style="display:flex;gap:6px;align-items:center">' +
         '<span style="width:8px;height:8px;border-radius:50%;background:' +
         (on ? (st.error ? "#e0645c" : "#3bb273") : "var(--mut2)") + '"></span>' +
@@ -3175,87 +3304,68 @@ var SyncUI = (function () {
     }
     var q = el("syncQuick");
     if (q) {
-      var on2 = !!(c && c.token);
-      q.textContent = on2 ? (st.busy ? T("syncing") : T("syncNow")) : T("syncLogin");
-      q.onclick = function () { if (on2) syncNow(); else open(); };
+      q.textContent = on ? (st.busy ? T("syncing") : T("syncNow")) : T("syncLogin");
+      q.onclick = function () { if (on) syncNow(); else openLogin(); };
     }
-    var lo = el("syncLogout");
-    if (lo) lo.style.display = (c && c.token) ? "" : "none";
   }
 
-  function open() {
+  function openLogin() {
     var c = cloud();
-    if (el("syncUser")) el("syncUser").value = (c && c.user) || "";
+    if (el("syncUser")) el("syncUser").value = (c && c.user) || (ACCTS[curAcc] ? ACCTS[curAcc].name : "") || "";
     if (el("syncPass")) el("syncPass").value = "";
     el("syncModal").classList.add("show");
     render();
   }
   function close() { el("syncModal").classList.remove("show"); }
 
-  // ---- 新建账号（账号名 + 云账密 一次搞定）----
-  function openNewAcc() {
-    el("nacName").value = "账号" + (Object.keys(ACCTS).length + 1);
-    el("nacUser").value = "";
-    el("nacPass").value = "";
+  function openRegister() {
+    if (el("nacUser")) el("nacUser").value = "";
+    if (el("nacPass")) el("nacPass").value = "";
+    if (el("nacRemember")) el("nacRemember").checked = true;
     el("newAccModal").classList.add("show");
-  }
-  function createAccWithCloud() {
-    var name = String(el("nacName").value || "").trim();
-    var user = String(el("nacUser").value || "").trim();
-    var pass = String(el("nacPass").value || "");
-    if (!name || !user || !pass) { toast(T("syncBadInput")); return; }
-    var key = "acc" + (Object.keys(ACCTS).length + 1);
-    while (ACCTS[key]) key = "acc" + (parseInt(key.slice(3), 10) + 1);
-    request("POST", "/api/register", { username: user, password: pass, device: st.device })
-      .then(function (r) {
-        ACCTS[key] = {
-          name: name, crystals: Object.assign({}, DEFAULT_CRYSTALS), start: 1, seq: {}, hist: [],
-          cfg: { ws: [0, 0, 0], qinf: false, preference: "attack", linesMode: "auto", customN: 2 },
-          cloud: { user: user, pass: pass, token: r.token, rev: 0, lastOk: 0 }
-        };
-        curAcc = key;
-        el("newAccModal").classList.remove("show");
-        saveState(); applyAccount(); renderAccList(); render();
-        toast(T("syncOK"));
-        startSession();
-      })
-      .catch(function (e) { toast(errText(e)); });
   }
 
   function boot() {
     load();
-    var b = el("syncQuick"); if (b) b.onclick = function () { var c = cloud(); if (c && c.token) syncNow(); else open(); };
+    var q = el("syncQuick"); if (q) q.onclick = function () { var c = cloud(); if (c && c.token) syncNow(); else openLogin(); };
     var x = el("syncClose"); if (x) x.addEventListener("click", close);
     var m = el("syncModal"); if (m) m.addEventListener("click", function (e) { if (e.target === m) close(); });
     var l = el("syncLogin"); if (l) l.addEventListener("click", function () {
       var u = String((el("syncUser").value || "")).trim(), p = el("syncPass").value;
       if (!u || !p) { toast(T("syncBadInput")); return; }
-      auth(false, u, p);
+      doLogin(u, p);
     });
-    var r = el("syncRegister"); if (r) r.addEventListener("click", function () {
-      var u = String((el("syncUser").value || "")).trim(), p = el("syncPass").value;
-      if (!u || !p) { toast(T("syncBadInput")); return; }
-      auth(true, u, p);
-    });
-    var lo = el("syncLogout"); if (lo) lo.addEventListener("click", logout);
-    var na = el("newAcc"); if (na) na.addEventListener("click", openNewAcc);
+    var rg = el("accRegister"); if (rg) rg.addEventListener("click", openRegister);
+    var lg = el("accLogin"); if (lg) lg.addEventListener("click", openLogin);
     var nc = el("nacClose"); if (nc) nc.addEventListener("click", function () { el("newAccModal").classList.remove("show"); });
     var nm = el("newAccModal"); if (nm) nm.addEventListener("click", function (e) { if (e.target === nm) nm.classList.remove("show"); });
-    var ok = el("nacOk"); if (ok) ok.addEventListener("click", createAccWithCloud);
+    var ok = el("nacOk"); if (ok) ok.addEventListener("click", function () {
+      var u = String((el("nacUser").value || "")).trim(), p = el("nacPass").value;
+      if (!u || !p) { toast(T("syncBadInput")); return; }
+      doRegister(u, p);
+    });
+    var lo = el("syncLogout"); if (lo) lo.addEventListener("click", logout);
+    var uc = el("mergeUseCloud"); if (uc) uc.addEventListener("click", useCloud);
+    var ul = el("mergeUseLocal"); if (ul) ul.addEventListener("click", useLocal);
+    var mc = el("mergeCancel"); if (mc) mc.addEventListener("click", function () { pending = null; closeMerge(); });
     render();
-    var c = cloud();
-    if (c && c.token) startSession();
     setInterval(function () { if (st.auto) syncNow(); }, 30000);
   }
 
   function onAccountSwitch() {
+    snap = {}; pending = null;
     var c = cloud();
-    snap = {};
-    if (c && c.token) { startSession(); } else { render(); }
+    if (c && c.token) { prepareSession(); } else { render(); }
   }
-  return { boot: boot, syncNow: syncNow, state: st, cloud: cloud, openNewAcc: openNewAcc, openLogin: open, onAccountSwitch: onAccountSwitch };
+
+  return {
+    boot: boot, syncNow: syncNow, state: st, cloud: cloud,
+    openRegister: openRegister, openLogin: openLogin, onAccountSwitch: onAccountSwitch,
+    useCloud: useCloud, useLocal: useLocal
+  };
 })();
 /* ==SYNC-UI-END== */
+
 
 
 // ================= 初始化 =================
