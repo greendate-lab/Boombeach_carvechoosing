@@ -331,6 +331,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
 .btn.btn-s{padding:8px 10px;font-size:12px}
 .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--mut)}
 .btn.btn-outline{background:transparent;border:1px solid var(--gold);color:var(--gold-tx)}
+.linkbtn{background:none;border:none;padding:2px 0;margin-top:4px;font-size:11px;color:var(--gold-tx);text-decoration:underline;cursor:pointer;font-family:inherit}
 </style>
 </head>
 <body>
@@ -473,7 +474,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <div class="about-hero">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
             <div style="font-size:16px;font-weight:700;text-align:center">海岛奇兵雕刻选择</div>
-            <div class="ver" style="text-align:center">Version 1.7.1</div>
+            <div class="ver" style="text-align:center">Version 1.7.2</div>
           </div>
           <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
         </div>
@@ -488,6 +489,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <div class="whead"><h3 data-i18n="accTitle"></h3>
             <span class="chip" id="syncQuick" style="font-size:10.5px"></span></div>
           <div id="syncStatus" class="pinfo" style="font-size:11.5px;margin-bottom:8px"></div>
+          <button class="linkbtn" id="rebuildCloud" data-i18n="rebuildCloud" style="display:none;margin-bottom:8px"></button>
           <div id="accList"></div>
           <div style="display:flex;gap:8px;margin-top:6px">
             <button class="btn btn-s" id="accRegister" data-i18n="syncRegister" style="flex:1"></button>
@@ -1240,9 +1242,9 @@ const SYNC_I18N={
 };
 Object.keys(SYNC_I18N).forEach(function(l){ if(I18N[l]) Object.assign(I18N[l],SYNC_I18N[l]); });
 // 合并弹窗三语文案（单独覆盖，避免之前写串语言）
-Object.assign(I18N.sc, {mergeTitle:"本地和云端数据不一致",mergeInfo:"云端有 {cloud} 条记录；这台设备有 {rows} 行序列、{hist} 条历史。",useCloud:"使用云端数据（覆盖这台设备）",useLocal:"使用本地数据（本地优先，云端其它记录保留）",localAcc:"本地账号（未登录）",nameTakenLocal:"这台设备已有同名账号，请改用【登录】。",delAccTitle:"删除账号",delLocalOnly:"删除本机数据",delLocalSub:"只清掉这台设备的记录，云端不动。",delCloud:"注销账号",delCloudSub:"云端记录一并删除，不可恢复。"});
-Object.assign(I18N.tc, {mergeTitle:"本機和雲端資料不一致",mergeInfo:"雲端有 {cloud} 筆記錄；這台裝置有 {rows} 行序列、{hist} 筆歷史。",useCloud:"使用雲端資料（覆蓋這台裝置）",useLocal:"使用本機資料（本機優先，雲端其它記錄保留）",localAcc:"本機帳號（未登入）",nameTakenLocal:"這台裝置已有同名帳號，請改用【登入】。",delAccTitle:"刪除帳號",delLocalOnly:"刪除本機資料",delLocalSub:"只清掉這台裝置，雲端不動。",delCloud:"註銷帳號",delCloudSub:"雲端記錄一併刪除，無法復原。"});
-Object.assign(I18N.en, {mergeTitle:"Local and cloud data differ",mergeInfo:"Cloud has {cloud} records; this device has {rows} sequence rows and {hist} history entries.",useCloud:"Use cloud data (overwrite this device)",useLocal:"Use local data (local wins, cloud-only records are kept)",localAcc:"Local account (not signed in)",nameTakenLocal:"An account with this name already exists on this device — use Sign in instead.",delAccTitle:"Delete account",delLocalOnly:"Remove local data",delLocalSub:"Only this device is cleared; the cloud is untouched.",delCloud:"Delete cloud account",delCloudSub:"Cloud records are deleted too. This cannot be undone."});
+Object.assign(I18N.sc, {mergeTitle:"本地和云端数据不一致",mergeInfo:"云端有 {cloud} 条记录；这台设备有 {rows} 行序列、{hist} 条历史。",useCloud:"使用云端数据（覆盖这台设备）",useLocal:"使用本地数据（本地优先，云端其它记录保留）",localAcc:"本地账号（未登录）",nameTakenLocal:"这台设备已有同名账号，请改用【登录】。",delAccTitle:"删除账号",delLocalOnly:"删除本机数据",delLocalSub:"只清掉这台设备的记录，云端不动。",delCloud:"注销账号",delCloudSub:"云端记录一并删除，不可恢复。",rebuildCloud:"从云端重建本机",rebuildCloudSub:"清掉本机这份，按云端重新落地（不删云端）"});
+Object.assign(I18N.tc, {mergeTitle:"本機和雲端資料不一致",mergeInfo:"雲端有 {cloud} 筆記錄；這台裝置有 {rows} 行序列、{hist} 筆歷史。",useCloud:"使用雲端資料（覆蓋這台裝置）",useLocal:"使用本機資料（本機優先，雲端其它記錄保留）",localAcc:"本機帳號（未登入）",nameTakenLocal:"這台裝置已有同名帳號，請改用【登入】。",delAccTitle:"刪除帳號",delLocalOnly:"刪除本機資料",delLocalSub:"只清掉這台裝置，雲端不動。",delCloud:"註銷帳號",delCloudSub:"雲端記錄一併刪除，無法復原。",rebuildCloud:"從雲端重建本機",rebuildCloudSub:"清掉本機這份，按雲端重新落地（不刪雲端）"});
+Object.assign(I18N.en, {mergeTitle:"Local and cloud data differ",mergeInfo:"Cloud has {cloud} records; this device has {rows} sequence rows and {hist} history entries.",useCloud:"Use cloud data (overwrite this device)",useLocal:"Use local data (local wins, cloud-only records are kept)",localAcc:"Local account (not signed in)",nameTakenLocal:"An account with this name already exists on this device — use Sign in instead.",delAccTitle:"Delete account",delLocalOnly:"Remove local data",delLocalSub:"Only this device is cleared; the cloud is untouched.",delCloud:"Delete cloud account",delCloudSub:"Cloud records are deleted too. This cannot be undone.",rebuildCloud:"Rebuild from cloud",rebuildCloudSub:"Clear this device and re-apply the cloud copy (cloud is untouched)"});
 
 function applyLang(){
   document.querySelectorAll("[data-i18n]").forEach(e=>{
@@ -2758,6 +2760,15 @@ const CHANGELOG_OLD=[
 ];
 // 1.5.3 更新日志（三语）
 const CHANGELOG_NEW=[
+  {v:"1.7.2",d:"2026-10-31",
+   sum:{sc:"账号页加【从云端重建本机】；历史修复兜底",tc:"帳號頁加「從雲端重建本機」",en:"Add rebuild-from-cloud; history recovery"},
+   items:{sc:["账号页新增【从云端重建本机】：清掉本机这份序列/历史，按云端全量重新落地（不删云端）。历史显示不全时点它即可恢复。",
+              "修复：云端账号 key 与本机不同时按账号名自动合并，不再多出重复账号。"],
+          tc:["帳號頁新增【從雲端重建本機】：清掉本機這份，按雲端全量重新落地（不刪雲端）。",
+              "修正：雲端帳號 key 與本機不同時依帳號名合併，不再多出重複帳號。"],
+          en:["New Rebuild from cloud on the account page: clears this device's copy and re-applies the cloud data (cloud untouched). Use it when history looks incomplete.",
+              "Fixed: cloud/local account keys are matched by name; no more duplicate accounts."]}},
+
   {v:"1.7.1",d:"2026-10-31",
    sum:{sc:"修复历史只显示到旧日期（同步应用中断）",tc:"修正歷史只顯示到舊日期",en:"Fix history stopping at old dates"},
    items:{sc:["修复：网页同步时，账号文档应用后会抛出一个 JS 错误（别名保存函数作用域不对），导致后面的序列/历史文档全部不再应用——所以历史一直停在 218-219。现在会完整应用，云端有到 10月31 #250 都能拉下来。",
@@ -3372,6 +3383,20 @@ function stateObj() { return { ACCTS: ACCTS, curAcc: curAcc, lang: lang, colors:
     });
   }
 
+  /// 从云端重建本机：清掉当前账号的序列/历史，按云端全量重新落地
+  function rebuildFromCloud() {
+    var c = cloud(); if (!c || !c.token || st.busy) return;
+    st.busy = true; st.error = ""; render();
+    request("GET", "/api/sync?since=0", null, c.token).then(function (r) {
+      applyRemote(r.docs || [], r.rev || 0);
+      snap = snapshot();
+      refreshAll(); saveQuiet(); save(); render();
+      toast(lang === "en" ? "Rebuilt from cloud" : "已从云端重建");
+    }).catch(function (e) {
+      st.error = errText(e); render();
+    }).then(function () { st.busy = false; render(); });
+  }
+
   function showMerge(rc, a) {
     var rows = Object.keys(a.seq || {}).length;
     var hist = (a.hist || []).reduce(function (n, g) { return n + g.length - 1; }, 0);
@@ -3565,6 +3590,8 @@ function stateObj() { return { ACCTS: ACCTS, curAcc: curAcc, lang: lang, colors:
     if (q) {
       q.textContent = on ? (st.busy ? T("syncing") : T("syncNow")) : T("syncLogin");
       q.style.display = on ? "" : "none";
+      var rb = el("rebuildCloud");
+      if (rb) rb.style.display = on ? "" : "none";
       q.onclick = function () { if (on) syncNow(); else openLogin(); };
     }
   }
@@ -3608,6 +3635,7 @@ function stateObj() { return { ACCTS: ACCTS, curAcc: curAcc, lang: lang, colors:
     var uc = el("mergeUseCloud"); if (uc) uc.addEventListener("click", useCloud);
     var ul = el("mergeUseLocal"); if (ul) ul.addEventListener("click", useLocal);
     var mc = el("mergeCancel"); if (mc) mc.addEventListener("click", function () { pending = null; closeMerge(); });
+    var rb = el("rebuildCloud"); if (rb) rb.addEventListener("click", rebuildFromCloud);
     render();
     // 打开页面先把云端全量拉一次（建立云端 key → 本机 key 映射，避免增量拉取丢历史）
     var c0 = cloud();
@@ -3622,7 +3650,7 @@ function stateObj() { return { ACCTS: ACCTS, curAcc: curAcc, lang: lang, colors:
   }
 
   return {
-    boot: boot, syncNow: syncNow, state: st, cloud: cloud, touch: touch,
+    boot: boot, syncNow: syncNow, state: st, cloud: cloud, touch: touch, rebuild: rebuildFromCloud,
     openRegister: openRegister, openLogin: openLogin, onAccountSwitch: onAccountSwitch,
     useCloud: useCloud, useLocal: useLocal
   };
