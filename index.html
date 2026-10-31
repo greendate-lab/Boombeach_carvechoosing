@@ -3575,6 +3575,9 @@ function stateObj() { return { ACCTS: ACCTS, curAcc: curAcc, lang: lang, colors:
     var ul = el("mergeUseLocal"); if (ul) ul.addEventListener("click", useLocal);
     var mc = el("mergeCancel"); if (mc) mc.addEventListener("click", function () { pending = null; closeMerge(); });
     render();
+    // 打开页面先把云端全量拉一次（建立云端 key → 本机 key 映射，避免增量拉取丢历史）
+    var c0 = cloud();
+    if (c0 && c0.token) prepareSession();
     setInterval(function () { if (st.auto) syncNow(); }, 30000);
   }
 
