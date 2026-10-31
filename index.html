@@ -469,7 +469,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <div class="about-hero">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
             <div style="font-size:16px;font-weight:700;text-align:center">海岛奇兵雕刻选择</div>
-            <div class="ver" style="text-align:center">Version 1.6.4</div>
+            <div class="ver" style="text-align:center">Version 1.6.5</div>
           </div>
           <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
         </div>
@@ -2029,6 +2029,7 @@ function saveState(){
       ws:[+w[0].value,+w[1].value,+w[2].value],cry,linesMode,customN,EFX_W,qinf:QUALITY_INF,
       theme:THEME,themePreset,daily:DAILY_GAIN_C,
       gain:document.getElementById("gainContent").innerHTML,lastGain:GAIN_PICKS,gainTime:GAIN_TIME,lastOpen:Date.now()}));
+    if(window.SyncUI && SyncUI.touch) SyncUI.touch();
   }catch(e){}
 }
 function loadState(){
@@ -2752,6 +2753,18 @@ const CHANGELOG_OLD=[
 ];
 // 1.5.3 更新日志（三语）
 const CHANGELOG_NEW=[
+  {v:"1.6.5",d:"2026-10-31",
+   sum:{sc:"改完自动同步；只有登录才问本地还是云端",tc:"改完自動同步；只有登入才問本機還是雲端",en:"Auto-sync on every change; only sign-in asks"},
+   items:{sc:["本地每改一次（确认建造、删历史、改序列、改设置）都会自动同步到云端，约 2.5 秒后推送；断网时先留在本地，恢复网络后自动补。",
+              "除了刚刚执行「登录」，同步一律不弹窗，自动以本地为准：把本地记录推上去覆盖云端同名记录，同时把云端独有的记录合并下来（绝不会删云端）。",
+              "只有登录那一刻，如果两边真的不一样，才会问【使用云端数据】/【使用本地数据】。"],
+          tc:["本機每改一次都會自動同步到雲端（約 2.5 秒後推送）；斷網先留在本機，恢復網路自動補。",
+              "除了剛執行「登入」，同步一律不彈窗，自動以本機為準：本機記錄覆蓋雲端同名記錄，同時把雲端獨有的記錄合併下來（絕不刪雲端）。",
+              "只有登入那一刻，兩邊真的不同才會問【使用雲端資料】/【使用本機資料】。"],
+          en:["Every local change is pushed automatically (~2.5s); offline changes stay local and sync when the network is back.",
+              "Except right after signing in, sync never asks and always takes local as the source of truth: local records overwrite same-named cloud records while cloud-only records are merged in (nothing is deleted).",
+              "Only at sign-in, if the two sides really differ, you get the cloud-vs-local choice."]}},
+
   {v:"1.6.4",d:"2026-10-31",
    sum:{sc:"修复：登录 B 把 A 吞掉",tc:"修正：登入 B 把 A 吃掉",en:"Fix: signing in as B swallowed A"},
    items:{sc:["修复：登录完 A 账号再登录 B 账号时，A 会被改名成 B（看起来像 A 消失了）。已绑过云的账号再登录别的账号现在会另开一个，A 原样保留；本机已有同名账号则直接切过去。"],
@@ -3138,7 +3151,10 @@ var SyncUI = (function () {
   var BASE = "https://carving-sync.pages.dev";
   var st = { device: "", auto: true, busy: false, error: "" };
   var snap = {};
-  var pending = null; // {rev, docs} 等用户决定用云端还是本地
+  var pending = null;
+  var afterLogin = false;
+  var quiet = false;
+  var touchTimer = null; // {rev, docs} 等用户决定用云端还是本地
 
   function el(id) { return document.getElementById(id); }
   function T(k) { return (I18N[lang] && I18N[lang][k]) || k; }
@@ -3194,6 +3210,19 @@ var SyncUI = (function () {
     SyncCore.collect(stateObj(), curAcc).forEach(function (d) { m[d.key] = JSON.stringify(d.json); });
     return m;
   }
+  /// 本地一改就排一次推送（2.5 秒防抖），有网就自动上云
+  function touch() {
+    if (quiet) return;
+    var c = cloud();
+    if (!c || !c.token) return;
+    clearTimeout(touchTimer);
+    touchTimer = setTimeout(function () { syncNow(); }, 2500);
+  }
+  function saveQuiet() {
+    quiet = true;
+    try { saveState(); } finally { quiet = false; }
+  }
+
   function refreshAll() {
     try {
       applyAccount(); renderAccList(); renderHistory(); renderRound(); renderHome();
@@ -3220,18 +3249,20 @@ var SyncUI = (function () {
     SyncCore.apply(stateObj(), docs || [], hooks());
     snap = {};
     (docs || []).forEach(function (d) { if (!d.deleted) snap[d.key] = JSON.stringify(d.json); });
-    refreshAll(); saveState(); save();
+    refreshAll(); saveQuiet(); save();
   }
 
   // 登录/注册后：先拉一次，判断要不要让用户选"云端 / 本地"
   function prepareSession() {
     var c = cloud(); if (!c || !c.token) return Promise.resolve(0);
+    var wasLogin = afterLogin;
+    afterLogin = false;
     c.rev = 0; snap = {};
     return request("GET", "/api/sync?since=0", null, c.token).then(function (r) {
       var docs = r.docs || [];
       var rc = remoteCount(docs);
       var a = ACCTS[curAcc];
-      if (rc > 0 && localHasData(a)) {
+      if (wasLogin && rc > 0 && localHasData(a)) {
         // 内容真不一样才问；刚同步过的两边一样，不该再弹
         // cfg 也算：设置不一样同样算"本地和云端不一致"
         function norm(key, str) { return str; }
@@ -3246,14 +3277,12 @@ var SyncUI = (function () {
           return 0;
         }
       }
-      if (rc === 0) {
-        // 云端是空的：以本地为准（不能反过来把本地清掉）
-        c.rev = r.rev || 0;
-        snap = {};
-        refreshAll();
-        return syncNow();
-      }
-      applyRemote(docs, r.rev);
+      // 平时（启动/切号/改完自动同步）一律本地优先：
+      // 把本地全部推上去覆盖云端同名记录，再拉回云端独有的记录（不删云端）
+      c.rev = r.rev || 0;
+      snap = {};
+      afterLogin = false;
+      refreshAll();
       return syncNow();
     });
   }
@@ -3298,7 +3327,7 @@ var SyncUI = (function () {
     }
     return chain.then(function () {
       snap = snapshot();
-      refreshAll(); saveState(); save();
+      refreshAll(); saveQuiet(); save();
       pending = null; closeMerge();
       toast(T("syncOK"));
       return syncNow();
@@ -3337,7 +3366,7 @@ var SyncUI = (function () {
       SyncCore.apply(S, r.docs || [], hooks());
       c.lastOk = Date.now();
       snap = snapshot();
-      refreshAll(); saveState(); save(); render();
+      refreshAll(); saveQuiet(); save(); render();
       return 1;
     }).catch(function (e) {
       st.error = errText(e);
@@ -3384,6 +3413,7 @@ var SyncUI = (function () {
         cloud();
         bind(user, r.token, el("syncRemember") && el("syncRemember").checked ? pass : "");
         st.busy = false; close(); refreshAll(); save();
+        afterLogin = true;
         return prepareSession().then(function () { return true; });
       })
       .catch(function (e) { st.busy = false; st.error = errText(e); render(); return false; });
@@ -3496,7 +3526,7 @@ var SyncUI = (function () {
   }
 
   return {
-    boot: boot, syncNow: syncNow, state: st, cloud: cloud,
+    boot: boot, syncNow: syncNow, state: st, cloud: cloud, touch: touch,
     openRegister: openRegister, openLogin: openLogin, onAccountSwitch: onAccountSwitch,
     useCloud: useCloud, useLocal: useLocal
   };
