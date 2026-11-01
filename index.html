@@ -474,7 +474,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <div class="about-hero">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
             <div style="font-size:16px;font-weight:700;text-align:center">海岛奇兵雕刻选择</div>
-            <div class="ver" style="text-align:center">Version 1.7.8</div>
+            <div class="ver" style="text-align:center">Version 1.7.9</div>
           </div>
           <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
         </div>
@@ -2595,13 +2595,13 @@ function gainHtml(picks,time){
 }
 // 最新一条历史（行号最大）：待领取/未领取高亮都从它推
 function newestHistEntry(a) {
-  var best = null;
-  ((a && a.hist) || []).forEach(function (g) {
-    (g || []).slice(1).forEach(function (it) {
-      if (it && (best === null || (it[0] || 0) > (best[0] || 0))) best = it;
-    });
-  });
-  return best;
+  // 日期组按"新→旧"排好；组内保持插入顺序（新加的在前）→ 第一条就是最近添加的
+  var hist = (a && a.hist) || [];
+  for (var i = 0; i < hist.length; i++) {
+    var g = hist[i];
+    if (g && g.length > 1) return g[1];
+  }
+  return null;
 }
 // 待领取（主页左上卡片）按账号渲染
 function renderGain(){
@@ -2807,6 +2807,12 @@ const CHANGELOG_OLD=[
 ];
 // 1.5.3 更新日志（三语）
 const CHANGELOG_NEW=[
+  {v:"1.7.9",d:"2026-11-02",
+   sum:{sc:"待领取又错位：改成按添加顺序取最新一条",tc:"待領取錯位：改為按加入順序",en:"Claim card: use most recently added entry"},
+   items:{sc:["修复：1.7.8 用「行号最大」找最新历史，但起始行是可以改小的（改小后再建造，行号反而变小），于是会拿到更早的那条，待领取就显示成另一个东西。现在改成按「最近添加」取：日期组按新到旧，组内保持添加顺序。"],
+          tc:["修正：1.7.8 用「行號最大」找最新歷史，起始行改小後會拿錯。現在改為按「最近加入」。"],
+          en:["Fixed: 1.7.8 picked the newest history by largest row number, which breaks when the start row is moved down. It now uses the most recently added entry."]}},
+
   {v:"1.7.8",d:"2026-11-01",
    sum:{sc:"待领取/未领取改为读历史",tc:"待領取/未領取改為讀歷史",en:"Claim card and unclaimed rows read history"},
    items:{sc:["主页「待领取」和序列里的「已建造未领取」高亮，改成直接按历史里最新一条（行号最大）来算，不再读那份单独存的副本。删掉/修改历史后它们会立即跟着变。",
@@ -3198,11 +3204,7 @@ var SyncCore = (function () {
     if (!a || !a.hist) return;
     a.hist.forEach(function (g) {
       if (!g || g.length < 3) return;
-      var head = g[0], items = g.slice(1);
-      items.sort(function (x, y) { return (y[0] || 0) - (x[0] || 0); });
-      g.length = 0;
-      g.push(head);
-      for (var i = 0; i < items.length; i++) g.push(items[i]);
+      // 组内保持插入顺序：起始行改小再建造时行号会变小，但它才是更新的
     });
     a.hist.sort(function (g1, g2) { return histDateKeyCore(g2) - histDateKeyCore(g1); });
   }
