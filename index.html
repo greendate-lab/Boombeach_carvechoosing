@@ -474,7 +474,7 @@ input[type=range]{width:100%;height:30px;accent-color:var(--gold)}
           <div class="about-hero">
             <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9l-4.5 3.8L17 19l-5-3-5 3 1.5-6.2L4 9l5.8-.4z"/></svg></div>
             <div style="font-size:16px;font-weight:700;text-align:center">海岛奇兵雕刻选择</div>
-            <div class="ver" style="text-align:center">Version 1.7.7</div>
+            <div class="ver" style="text-align:center">Version 1.7.8</div>
           </div>
           <div style="font-size:12.5px;color:var(--mut);line-height:1.7;margin-top:10px" data-i18n="aboutText"></div>
         </div>
@@ -1557,11 +1557,11 @@ function renderSeqView(){
   const keys=Object.keys(DATA).map(Number).sort((x,y)=>x-y);
   // 高亮范围：未领取（金色）= 本次已建造未领取的行；本次查询（蓝色）= 起始行及其后 3 行，共 4 行
   const q0=parseInt(document.getElementById("startLine").value)||1, q1=q0+3;
-  const un=(typeof GAIN_PICKS!=="undefined"&&GAIN_PICKS?GAIN_PICKS:[])
-    .map(p=>+(p&&(p.row!==undefined?p.row:(p.start!==undefined?p.start:(p.n!==undefined?p.n:0))))).filter(v=>v>0);
+  const _ne=newestHistEntry(ACCTS[curAcc]);
   // 未领取 = 上一轮已建造、还没领取的那几行（= 起始行之前的 4 行）；有明确行号时优先用行号
-  const uFrom=un.length?Math.min.apply(null,un):(q0-4>0?q0-4:null);
-  const uTo=un.length?Math.max.apply(null,un):(q0-4>0?q0-1:null);
+  let uFrom=null, uTo=null;
+  if(_ne){ const to=_ne[0]||0, n=(_ne[2]||[]).length; uFrom=Math.max(1,to-n); uTo=to-1; }
+  else if(q0-4>0){ uFrom=q0-4; uTo=q0-1; }
   let html='<div class="seqlegend"><span class="lg"><i class="sw u"></i>'+
     (lang==="en"?"built, not claimed":(lang==="tc"?"已建造未領取":"已建造未领取"))+
     '</span><span class="lg"><i class="sw q"></i>'+
@@ -1598,9 +1598,9 @@ function scrollSeqToUnclaimed(){
   const trs=body.querySelectorAll("tbody tr");
   if(!trs.length) return;
   const keys=Object.keys(DATA).map(Number).sort((x,y)=>x-y);
-  const un=(typeof GAIN_PICKS!=="undefined"&&GAIN_PICKS?GAIN_PICKS:[])
-    .map(p=>+(p&&(p.row!==undefined?p.row:(p.start!==undefined?p.start:p.n)))).filter(n=>n>0);
-  const anchor=un.length?Math.min.apply(null,un):(parseInt(document.getElementById("startLine").value)||1);
+  const _ne2=newestHistEntry(ACCTS[curAcc]);
+  const anchor=_ne2?Math.max(1,(_ne2[0]||1)-((_ne2[2]||[]).length)):(parseInt(document.getElementById("startLine").value)||1);
+
   let idx=keys.findIndex(k=>k>=anchor);
   if(idx<0) idx=keys.length-1;
   const h=trs[0].offsetHeight||26;
@@ -2593,10 +2593,27 @@ function gainHtml(picks,time){
     }).join("")+'</div>'+
     '<div class="gtime">'+I18N[lang].buildTime+(time?" \u00B7 "+time:"")+'</div>';
 }
+// 最新一条历史（行号最大）：待领取/未领取高亮都从它推
+function newestHistEntry(a) {
+  var best = null;
+  ((a && a.hist) || []).forEach(function (g) {
+    (g || []).slice(1).forEach(function (it) {
+      if (it && (best === null || (it[0] || 0) > (best[0] || 0))) best = it;
+    });
+  });
+  return best;
+}
 // 待领取（主页左上卡片）按账号渲染
 function renderGain(){
   const a=ACCTS[curAcc]||{};
-  GAIN_PICKS=a.gain||null; GAIN_TIME=a.gainTime||null;
+  // 只读历史：用最新一条历史渲染，a.gain 那份副本保持原样（不删不改）
+  const ne=newestHistEntry(a);
+  if(ne){
+    GAIN_PICKS=(ne[2]||[]).map(x=>[x[0],x[1],x[2]]);
+    GAIN_TIME=ne[1];
+  }else{
+    GAIN_PICKS=null; GAIN_TIME=null;
+  }
   document.getElementById("gainContent").innerHTML=
     (GAIN_PICKS&&GAIN_PICKS.length)?gainHtml(GAIN_PICKS,GAIN_TIME)
     :'<span class="gempty">'+I18N[lang].gainEmpty+'</span>';
@@ -2790,6 +2807,15 @@ const CHANGELOG_OLD=[
 ];
 // 1.5.3 更新日志（三语）
 const CHANGELOG_NEW=[
+  {v:"1.7.8",d:"2026-11-01",
+   sum:{sc:"待领取/未领取改为读历史",tc:"待領取/未領取改為讀歷史",en:"Claim card and unclaimed rows read history"},
+   items:{sc:["主页「待领取」和序列里的「已建造未领取」高亮，改成直接按历史里最新一条（行号最大）来算，不再读那份单独存的副本。删掉/修改历史后它们会立即跟着变。",
+              "只改了读取：写入逻辑和云端字段完全没动，a: 文档里的 gain 原样保留。"],
+          tc:["主頁「待領取」與序列的「已建造未領取」高亮改為讀歷史最新一條。",
+              "只改讀取，雲端欄位不動。"],
+          en:["The claim card and the unclaimed row highlight now derive from the newest history entry instead of the separate stored copy.",
+              "Read-only change: sync payload and stored fields untouched."]}},
+
   {v:"1.7.7",d:"2026-10-31",
    sum:{sc:"起始行提示跟历史；清掉占位账号",tc:"起始行提示跟歷史；清掉佔位帳號",en:"Start-line hint follows history; drop placeholder accounts"},
    items:{sc:["起始行下面的【上次记录到第 X 行】改成读取最后一条历史：删了历史就跟着回退，没有历史时才用 起始行-1。",
